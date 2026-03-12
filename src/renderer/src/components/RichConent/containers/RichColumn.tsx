@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, useTheme } from "@mui/material";
 import { IRichColumn, IRichContainerDefaults } from "../types";
-import RichRenderer, { getSeverityColor } from "..";
+import RichRenderer from "..";
 
 interface RichColumnProps {
     node: IRichColumn;
@@ -28,9 +28,6 @@ const RichColumn: React.FC<RichColumnProps> = ({ node, defaults }) => {
                 padding: defaults?.padding ?? 4,
                 width: getColSize(node.size),
                 minWidth: 0,
-                border: node.indicator && (node.severity ?? "default") !== "default" ? `1px solid ${getSeverityColor(node.severity, theme)}` : undefined,
-                borderLeft: node.indicator && (node.severity ?? "default") !== "default" ? `4px solid ${getSeverityColor(node.severity, theme)}` : undefined,
-                borderRadius: node.indicator && (node.severity ?? "default") !== "default" ? 1 : undefined,
             }}
         >
             {node.items.map((item, index) => (

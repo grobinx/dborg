@@ -112,15 +112,15 @@ const RichContentShowcase: React.FC = () => {
             <Paper>
                 <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems={{ xs: "flex-start", md: "center" }}>
                     <FormControlLabel
-                        control={<Switch checked={showFrames} onChange={(e) => setShowFrames(e.target.checked)} />}
+                        control={<Switch size="small" checked={showFrames} onChange={(e) => setShowFrames(e.target.checked)} />}
                         label="Pokaż ramki elementów"
                     />
                     <FormControlLabel
-                        control={<Switch checked={showJson} onChange={(e) => setShowJson(e.target.checked)} />}
+                        control={<Switch size="small" checked={showJson} onChange={(e) => setShowJson(e.target.checked)} />}
                         label="Pokaż JSON"
                     />
                     <FormControlLabel
-                        control={<Switch checked={compactMode} onChange={(e) => setCompactMode(e.target.checked)} />}
+                        control={<Switch size="small" checked={compactMode} onChange={(e) => setCompactMode(e.target.checked)} />}
                         label="Compact mode"
                     />
                     <Button size="small" onClick={randomTab}>

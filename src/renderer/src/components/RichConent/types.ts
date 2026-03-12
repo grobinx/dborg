@@ -62,7 +62,13 @@ export type RichNode =
     | IRichTable
     | IRichStat
     | IRichTimeline
+    /**
+     * Tablica węzłów jest traktowana jak wiersz (RichRow) z elementami ułożonymi poziomo.
+     */
     | RichNode[]
+    /**
+     * Prosty tekst lub liczba, renderowane jako RichText z domyślnym wariantem "body".
+     */
     | string | number
     | null | undefined;
 
@@ -176,7 +182,7 @@ export interface IRichChip extends IRichNode {
     /**
      * Badge wyświetlany na chipie (opcjonalnie)
      */
-    badge?: RichBadgeConfig;
+    badge?: IRichBadge;
 }
 
 /**
@@ -392,15 +398,6 @@ export interface IRichColumn extends IRichNode {
      * Szerokość kolumny (jak w Grid System: 1-12 lub "auto")
      */
     size?: RichColSize;
-    /**
-     * Poziom ważności wpływający na kolor punktora
-     */
-    severity?: RichSeverity;
-    /**
-     * Czy wyróżnić element listy (np. poprzez szerszy pasek z lewej strony w kolorze severity)
-     * @default false
-     */
-    indicator?: boolean;
 }
 
 /**
@@ -466,7 +463,7 @@ export interface IRichAction extends IRichNode, Omit<Action<void>, "groupId" | "
     /**
      * Badge wyświetlany na przycisku (opcjonalnie)
      */
-    badge?: RichBadgeConfig;
+    badge?: IRichBadge;
     /**
      * Poziom ważności wpływający na kolor przycisku
      */
@@ -550,7 +547,7 @@ export interface IRichListItem extends IRichNode {
 /**
  * Konfiguracja badge (znaczka) dla elementu.
  */
-export interface RichBadgeConfig {
+export interface IRichBadge {
     /**
      * Wartość wyświetlana w badge (liczba lub krótki tekst)
      */
@@ -677,10 +674,6 @@ export interface IRichStat extends IRichNode {
      * Etykieta opisująca metrykę
      */
     label: string;
-    /**
-     * Dodatkowy opis pod wartością
-     */
-    caption?: RichNode;
     /**
      * Kierunek trendu (opcjonalnie)
      */

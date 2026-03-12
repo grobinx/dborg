@@ -8,7 +8,7 @@ export type {
     RichTextVariant,
     RichNodeType,
     RichNode,
-    RichBadgeConfig as RichBadge,
+    IRichBadge as RichBadge,
 } from "./types";
 export type {
     IRichNode,
@@ -47,6 +47,7 @@ import RichCode from "./nodes/RichCode";
 import RichImage from "./nodes/RichImage";
 import RichAlert from "./nodes/RichAlert";
 import RichAction from "./nodes/RichAction";
+import RichStat from "./nodes/RichStat";
 
 // Containers (import second)
 import RichRow from "./containers/RichRow";
@@ -68,6 +69,7 @@ export { default as RichCode } from "./nodes/RichCode";
 export { default as RichImage } from "./nodes/RichImage";
 export { default as RichAlert } from "./nodes/RichAlert";
 export { default as RichAction } from "./nodes/RichAction";
+export { default as RichStat } from "./nodes/RichStat";
 
 // Export containers
 export { default as RichRow } from "./containers/RichRow";
@@ -131,6 +133,8 @@ const RichRenderer: React.FC<{
             return <RichCode node={node} defaults={defaults} />;
         case "image":
             return <RichImage node={node} defaults={defaults} />;
+        case "stat":
+            return <RichStat node={node} defaults={defaults} />;
         case "alert":
             return (
                 <Box sx={{ mb: 2 }}>

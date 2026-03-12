@@ -1,16 +1,16 @@
 import React from "react";
 import { Box, Typography, useTheme } from "@mui/material";
-import { IRichContainerDefaults, RichBadgeConfig } from "../types";
+import { IRichContainerDefaults, IRichBadge } from "../types";
 import UnboundBadge from "@renderer/components/UnboundBadge";
 import { ThemeColor } from "@renderer/types/colors";
 
 interface RichBadgeProps {
-    badge: RichBadgeConfig;
+    badge: IRichBadge;
     defaults?: IRichContainerDefaults;
 }
 
 const getPositionStyle = (
-    position: RichBadgeConfig["position"] = "top-right"
+    position: IRichBadge["position"] = "top-right"
 ): React.CSSProperties => {
     switch (position) {
         case "top-left":
