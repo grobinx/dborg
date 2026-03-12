@@ -654,11 +654,6 @@ export interface IRichTable extends IRichNode {
      * @default "bordered"
      */
     variant?: "bordered" | "striped" | "plain";
-    /**
-     * Kompaktowy wygląd
-     * @default false
-     */
-    dense?: boolean;
 }
 
 /**
