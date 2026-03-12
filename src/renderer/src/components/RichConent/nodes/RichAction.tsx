@@ -3,6 +3,7 @@ import { Box } from "@mui/material";
 import { IRichAction, IRichContainerDefaults } from "../types";
 import RichBadge from "./RichBadge";
 import { Button } from "@renderer/components/buttons/Button";
+import { ToolButton } from "@renderer/components/buttons/ToolButton";
 
 interface RichActionProps {
     node: IRichAction;
@@ -12,7 +13,11 @@ interface RichActionProps {
 const RichAction: React.FC<RichActionProps> = ({ node, defaults }) => {
     const content = (
         <Box className="RichNode-action" sx={{ display: "inline-block", position: "relative", alignSelf: "flex-start" }}>
-            <Button action={node} color={node.severity} size="small" />
+            {node.variant === "icon" ? (
+                <ToolButton action={node} color={node.severity} size="small" />
+            ) : (
+                <Button action={node} color={node.severity} size="small" />
+            )}
             {node.badge && (
                 <Box
                     sx={{

@@ -193,7 +193,7 @@ export interface IRichText extends IRichNode {
     /**
      * Tekst do wyświetlenia
      */
-    text: string;
+    text: string | number;
     /**
      * Poziom ważności wpływający na kolor
      */
@@ -376,7 +376,7 @@ export interface IRichRowGrid extends IRichRowBase {
     /**
      * Elementy w wierszu (ułożone poziomo)
      */
-    items: IRichColumn[];
+    items: (IRichColumn | IRichStat)[];
 }
 
 export type IRichRow = IRichRowInline | IRichRowGrid;
@@ -468,6 +468,10 @@ export interface IRichAction extends IRichNode, Omit<Action<void>, "groupId" | "
      * Poziom ważności wpływający na kolor przycisku
      */
     severity?: RichSeverity;
+    /**
+     * Wariant przycisku (pełny lub ikona - ikona bez labela)
+     */
+    variant?: "button" | "icon";
 }
 
 /**

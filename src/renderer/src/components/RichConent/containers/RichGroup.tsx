@@ -4,13 +4,15 @@ import { IRichContainerDefaults, IRichGroup } from "../types";
 import RichRenderer, { getSeverityColor } from "..";
 import { resolveIcon } from "@renderer/themes/icons";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
+import { Optional } from "@renderer/types/universal";
 
 interface RichGroupProps {
-    node: IRichGroup;
+    node: Optional<IRichGroup, "type" | "items">;
     defaults?: IRichContainerDefaults;
+    children?: React.ReactNode;
 }
 
-const RichGroup: React.FC<RichGroupProps> = ({ node, defaults }) => {
+const RichGroup: React.FC<RichGroupProps> = ({ node, defaults, children }) => {
     const theme = useTheme();
     const [expanded, setExpanded] = React.useState(node.defaultExpanded !== false);
 
@@ -63,9 +65,10 @@ const RichGroup: React.FC<RichGroupProps> = ({ node, defaults }) => {
             )}
             <Collapse in={!node.collapsible || expanded}>
                 <Box sx={{ padding: defaults?.padding ?? 8, display: "flex", flexDirection: "column", gap: node.gap ?? defaults?.gap ?? 8 }}>
-                    {node.items.map((item, index) => (
+                    {node.items?.map((item, index) => (
                         <RichRenderer key={index} node={item} defaults={defaults} />
                     ))}
+                    {children}
                 </Box>
             </Collapse>
         </Paper>

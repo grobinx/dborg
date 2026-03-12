@@ -3,9 +3,10 @@ import { Box, Tooltip, useTheme } from "@mui/material";
 import { IRichContainerDefaults, IRichIcon, RichSeverity } from "../types";
 import { resolveIcon } from "@renderer/themes/icons";
 import { getSeverityColor } from "..";
+import { Optional } from "@renderer/types/universal";
 
 interface RichIconProps {
-    node: IRichIcon;
+    node: Optional<IRichIcon, "type">;
     defaults?: IRichContainerDefaults;
 }
 

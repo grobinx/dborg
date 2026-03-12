@@ -16,7 +16,7 @@ const placeholderSvg = (
 
     const svg = [
         '<svg xmlns="http://www.w3.org/2000/svg" width="' + sourceWidth + '" height="' + sourceHeight + '" viewBox="0 0 ' + sourceWidth + " " + sourceHeight + '">',
-        '<defs>',
+        "<defs>",
         '<pattern id="grid" width="16" height="16" patternUnits="userSpaceOnUse">',
         '<path d="M 16 0 L 0 0 0 16" fill="none" stroke="#ffffff66" stroke-width="1" />',
         "</pattern>",
@@ -42,7 +42,7 @@ const fitDemoTallSrc = placeholderSvg("FIT DEMO", "dbeafe", "0f172a", 220, 420);
 const fitDemoSmallSrc = placeholderSvg("SMALL SRC", "fde68a", "78350f", 140, 60);
 
 export const richContentExamples: RichExampleMap = {
-    allTextVariants: [
+    "Tekst i markdown": [
         { type: "text", text: "Body / normal", variant: "body", severity: "default" },
         { type: "text", text: "Caption / info", variant: "caption", severity: "info" },
         { type: "text", text: "Label / warning", variant: "label", severity: "warning" },
@@ -52,45 +52,60 @@ export const richContentExamples: RichExampleMap = {
             type: "text",
             variant: "markdown",
             severity: "default",
-            text: `
-###### Markdown demo
-- **bold**
-- _italic_
-- \`inline code\`
-
-\`\`\`sql
-SELECT id, name
-FROM users
-WHERE active = true;
-\`\`\`
-            `.trim(),
+            text: [
+                "###### Markdown demo",
+                "- **bold**",
+                "- _italic_",
+                "- `inline code`",
+                "",
+                "```sql",
+                "SELECT id, name",
+                "FROM users",
+                "WHERE active = true;",
+                "```",
+            ].join("\n"),
         },
     ],
 
-    linksChipsBadges: [
+    "Linki, ikony, klawisze, odstępy": [
         { type: "link", text: "Strona projektu", href: "https://github.com", severity: "info", variant: "body" },
         { type: "link", href: "https://example.org/only-href", severity: "warning", variant: "caption" },
-        { type: "chip", text: "Draft", severity: "default" },
-        { type: "chip", text: "Info", severity: "info", badge: { value: 2, severity: "info" } },
-        { type: "chip", text: "Warn", severity: "warning", variant: "outlined", badge: { value: 12, max: 9, severity: "warning" } },
-        { type: "chip", text: "Error", severity: "error", badge: { value: "!", severity: "error" } },
-        { type: "chip", text: "Success", severity: "success", badge: { value: "OK", severity: "success" } },
-    ],
 
-    iconsKbdSpacerDivider: [
         { type: "icon", icon: "ℹ", severity: "info", tooltip: "Informacja" },
         { type: "icon", icon: "⚠", severity: "warning", tooltip: "Ostrzeżenie" },
         { type: "row", items: [{ type: "icon", icon: "⛔", severity: "error", tooltip: "Błąd" }, { type: "text", text: "Opis ikony" }] },
+
         { type: "divider" },
+
         { type: "row", gap: 8, items: [{ type: "text", text: "Ctrl+S:" }, { type: "kbd", keys: ["Ctrl", "S"] }] },
         { type: "row", gap: 8, items: [{ type: "text", text: "Command palette:" }, { type: "kbd", keys: "Ctrl+Shift+P" }] },
+
         { type: "divider" },
+
         { type: "row", items: [{ type: "text", text: "Lewa" }, { type: "spacer", size: "auto" }, { type: "text", text: "Prawa" }] },
         { type: "spacer", size: 16 },
         { type: "text", text: "Po spacerze 16px", variant: "caption" },
     ],
 
-    codeAndProgress: [
+    "Chipy, badge i statusy": [
+        { type: "chip", text: "Draft", severity: "default" },
+        { type: "chip", text: "Info", severity: "info", badge: { value: 2, severity: "info" } },
+        { type: "chip", text: "Warn", severity: "warning", variant: "outlined", badge: { value: 12, max: 9, severity: "warning" } },
+        { type: "chip", text: "Error", severity: "error", badge: { value: "!", severity: "error" } },
+        { type: "chip", text: "Success", severity: "success", badge: { value: "OK", severity: "success" } },
+        {
+            type: "row",
+            gap: 8,
+            items: [
+                { type: "text", text: "Status:" },
+                { type: "chip", text: "Draft", severity: "default" },
+                { type: "chip", text: "Running", severity: "info", badge: { value: 3, severity: "info" } },
+                { type: "chip", text: "Warning", severity: "warning", variant: "outlined", badge: { value: 12, max: 9, severity: "warning" } },
+            ],
+        },
+    ],
+
+    "Bloki kodu": [
         {
             type: "code",
             language: "sql",
@@ -118,35 +133,16 @@ WHERE active = true;
                 2
             ),
         },
+    ],
+
+    "Progress i alerty": [
         { type: "progress", label: "Indeksowanie", value: 18, showPercent: true, severity: "info" },
         { type: "progress", label: "Przetwarzanie", value: 54, bufferValue: 72, showPercent: true, severity: "warning" },
         { type: "progress", label: "Zakończono", value: 100, showPercent: true, severity: "success" },
         { type: "progress", label: "Rollback", value: 80, showPercent: true, severity: "error" },
-    ],
 
-    imagesFitModes: [
-        { type: "text", text: "To samo okno: 320x100", variant: "caption", severity: "info" },
+        { type: "divider" },
 
-        { type: "text", text: "fit: contain", variant: "label" },
-        { type: "image", src: fitDemoTallSrc, width: 320, height: 100, fit: "contain", alt: "contain" },
-
-        { type: "text", text: "fit: cover", variant: "label" },
-        { type: "image", src: fitDemoTallSrc, width: 320, height: 100, fit: "cover", alt: "cover" },
-
-        { type: "text", text: "fit: fill", variant: "label" },
-        { type: "image", src: fitDemoTallSrc, width: 320, height: 100, fit: "fill", alt: "fill" },
-
-        { type: "text", text: "fit: none", variant: "label" },
-        { type: "image", src: fitDemoTallSrc, width: 320, height: 100, fit: "none", alt: "none" },
-
-        { type: "text", text: "fit: scale-down (small src 140x60)", variant: "label" },
-        { type: "image", src: fitDemoSmallSrc, width: 320, height: 100, fit: "scale-down", alt: "scale-down" },
-
-        { type: "text", text: "fit: none with repeat-x", variant: "label" },
-        { type: "image", src: fitDemoTallSrc, width: 320, height: 100, fit: "none", repeat: "repeat-x", tileSize: 64 }
-    ],
-
-    alerts: [
         {
             type: "alert",
             severity: "info",
@@ -180,7 +176,39 @@ WHERE active = true;
         },
     ],
 
-    listModes: [
+    "Obrazki: fit i repeat": [
+        { type: "text", text: "To samo okno: 320x100", variant: "caption", severity: "info" },
+
+        { type: "text", text: "fit: default (contain)", variant: "label" },
+        { type: "image", src: fitDemoTallSrc, width: 320, height: 100, alt: "default-contain" },
+
+        { type: "text", text: "fit: contain", variant: "label" },
+        { type: "image", src: fitDemoTallSrc, width: 320, height: 100, fit: "contain", alt: "contain" },
+
+        { type: "text", text: "fit: cover", variant: "label" },
+        { type: "image", src: fitDemoTallSrc, width: 320, height: 100, fit: "cover", alt: "cover" },
+
+        { type: "text", text: "fit: fill", variant: "label" },
+        { type: "image", src: fitDemoTallSrc, width: 320, height: 100, fit: "fill", alt: "fill" },
+
+        { type: "text", text: "fit: none", variant: "label" },
+        { type: "image", src: fitDemoTallSrc, width: 320, height: 100, fit: "none", alt: "none" },
+
+        { type: "text", text: "fit: scale-down (small src 140x60)", variant: "label" },
+        { type: "image", src: fitDemoSmallSrc, width: 320, height: 100, fit: "scale-down", alt: "scale-down" },
+
+        { type: "text", text: "fit: none with repeat-x", variant: "label" },
+        { type: "image", src: fitDemoTallSrc, width: 320, height: 100, fit: "none", repeat: "repeat-x", tileSize: 64 },
+    ],
+
+    "Listy": [
+        {
+            type: "list",
+            listType: "bullet",
+            items: [
+                { type: "listitem", items: [{ type: "text", text: "Bullet item 1" }] },
+            ],
+        },
         {
             type: "list",
             listType: "bullet",
@@ -208,7 +236,18 @@ WHERE active = true;
         },
     ],
 
-    layoutRowsColumns: [
+    "Layout: row, column, grid, stat": [
+        {
+            type: "row",
+            align: "center",
+            justify: "space-between",
+            items: [{ type: "text", text: "Lewa strona" }, { type: "spacer", size: "auto" }, { type: "text", text: "Prawa strona", severity: "success" }],
+        },
+        {
+            type: "column",
+            size: "auto",
+            items: [{ type: "text", text: "Kolumna auto #1" }, { type: "text", text: "Kolumna auto #2", severity: "info" }, { type: "divider" }],
+        },
         {
             type: "row",
             layout: "grid",
@@ -238,20 +277,40 @@ WHERE active = true;
                 },
             ],
         },
+        { type: "divider" },
         {
             type: "row",
-            align: "center",
-            justify: "space-between",
-            items: [{ type: "text", text: "Lewa strona" }, { type: "spacer", size: "auto" }, { type: "text", text: "Prawa strona", severity: "success" }],
-        },
-        {
-            type: "column",
-            size: "auto",
-            items: [{ type: "text", text: "Kolumna auto #1" }, { type: "text", text: "Kolumna auto #2", severity: "info" }, { type: "divider" }],
+            items: [
+                { type: "stat", label: "Rows", value: "1 532", size: 3 },
+                { type: "stat", severity: "info", label: "Node Type", value: "Seq Scan", size: 3 },
+                { type: "stat", severity: "warning", label: "Execution Time", value: "622 ms", trend: "up", size: 3 },
+                { type: "stat", severity: "success", label: "Total Time", value: "580 ms", trend: "down", icon: "Clock", size: 3 },
+            ],
         },
     ],
 
-    actions: [
+    "Akcje": [
+        {
+            type: "action",
+            id: "act-basic",
+            label: "Uruchom",
+            tooltip: "Prosta akcja",
+            run: () => {
+                console.log("basic action");
+            },
+        },
+        {
+            type: "action",
+            id: "act-disabled",
+            label: "Niedostępna",
+            tooltip: "Ta akcja jest zablokowana",
+            icon: "Error",
+            disabled: true,
+            run: () => {
+                console.log("This should not run while disabled");
+            },
+            keySequence: ["Ctrl+Alt+D"],
+        },
         {
             type: "action",
             id: "act-sync",
@@ -267,21 +326,9 @@ WHERE active = true;
         },
         {
             type: "action",
-            id: "act-disabled",
-            label: `Niedostępna`,
-            tooltip: `Ta akcja jest zablokowana`,
-            icon: "Error",
-            disabled: true,
-            run: () => {
-                console.log("This should not run while disabled");
-            },
-            keySequence: ["Ctrl+Alt+D"],
-        },
-        {
-            type: "action",
             id: "act-selected",
-            label: `Tryb aktywny`,
-            description: `Wybrana akcja`,
+            label: "Tryb aktywny",
+            description: "Wybrana akcja",
             selected: () => true,
             loading: () => false,
             icon: "CheckBoxChecked",
@@ -289,9 +336,27 @@ WHERE active = true;
                 console.log("selected action");
             },
         },
+        {
+            type: "action",
+            id: "act-loading",
+            label: "Ładowanie",
+            tooltip: "Trwa ładowanie...",
+            run: () => { console.log("loading action"); },
+            loading: () => true,
+        },
+        {
+            type: "action",
+            variant: "icon",
+            id: "act-icon-only",
+            label: "Tylko ikona",
+            icon: "Settings",
+            run: () => {
+                console.log("icon only action");
+            },
+        }
     ],
 
-    megaScenario: [
+    "Scenariusz kompleksowy": [
         {
             type: "group",
             title: "Query Analyzer: Full Demo",
@@ -386,7 +451,9 @@ WHERE active = true;
                             id: "open-docs",
                             label: "Open Docs",
                             icon: "OpenFile",
-                            run: () => { window.open("https://www.postgresql.org/docs/", "_blank"); },
+                            run: () => {
+                                window.open("https://www.postgresql.org/docs/", "_blank");
+                            },
                         },
                     ],
                 },
@@ -394,41 +461,42 @@ WHERE active = true;
                     type: "group",
                     title: "Execution Plan Snapshot",
                     collapsible: true,
-                    items: [{
-                        type: "row",
-                        items: [
-                            {
-                                type: "stat",
-                                severity: "info",
-                                label: "Node Type",
-                                value: "Seq Scan",
-                                size: 2,
-                            },
-                            {
-                                type: "stat",
-                                severity: "warning",
-                                label: "Planing Time",
-                                value: "120 ms",
-                                size: 2,
-                            },
-                            {
-                                type: "stat",
-                                severity: "warning",
-                                label: "Execution Time",
-                                value: "622 ms",
-                                size: 2,
-                            },
-                            {
-                                type: "stat",
-                                severity: "success",
-                                label: "Total Time",
-                                value: "580 ms",
-                                trend: "down",
-                                icon: "Clock",
-                                size: 2,
-                            }
-                        ],
-                    }],
+                    items: [
+                        {
+                            type: "row",
+                            items: [
+                                {
+                                    type: "stat",
+                                    severity: "info",
+                                    label: "Node Type",
+                                    value: "Seq Scan",
+                                    size: 2,
+                                },
+                                {
+                                    type: "stat",
+                                    label: "Planing Time",
+                                    value: "120 ms",
+                                    size: 2,
+                                },
+                                {
+                                    type: "stat",
+                                    severity: "warning",
+                                    label: "Execution Time",
+                                    value: "622 ms",
+                                    size: 2,
+                                },
+                                {
+                                    type: "stat",
+                                    severity: "success",
+                                    label: "Total Time",
+                                    value: "580 ms",
+                                    trend: "down",
+                                    icon: "Clock",
+                                    size: 2,
+                                },
+                            ],
+                        },
+                    ],
                 },
                 { type: "image", src: placeholderSvg("Execution Plan Snapshot", "eaf2ff", "1b263b"), width: "100%", height: 140, fit: "cover" },
             ],

@@ -1,14 +1,16 @@
 import React from "react";
 import { List } from "@mui/material";
 import { IRichContainerDefaults, IRichList } from "../types";
+import { Optional } from "@renderer/types/universal";
 const RichRenderer = React.lazy(() => import("../index").then(m => ({ default: m.RichRenderer })));
 
 interface RichListProps {
-    node: IRichList;
+    node: Optional<IRichList, "type" | "items">;
     defaults?: IRichContainerDefaults;
+    children?: React.ReactNode;
 }
 
-const RichList: React.FC<RichListProps> = ({ node, defaults }) => {
+const RichList: React.FC<RichListProps> = ({ node, defaults, children }) => {
     const getListStyleType = (listType?: "bullet" | "numbered" | "none") => {
         switch (listType) {
             case "numbered":
@@ -33,9 +35,10 @@ const RichList: React.FC<RichListProps> = ({ node, defaults }) => {
                 },
             }}
         >
-            {node.items.map((item, index) => (
+            {node.items?.map((item, index) => (
                 <RichRenderer key={index} node={item} defaults={defaults} />
             ))}
+            {children}
         </List>
     );
 };

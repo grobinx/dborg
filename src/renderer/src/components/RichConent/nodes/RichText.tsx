@@ -4,9 +4,10 @@ import { IRichContainerDefaults, IRichText, RichSeverity, RichTextVariant } from
 import { getSeverityColor } from "..";
 import Markdown from "react-markdown";
 import Code from "@renderer/components/Code";
+import { Optional } from "@renderer/types/universal";
 
 interface RichTextProps {
-    node: IRichText;
+    node: Optional<IRichText, "type">;
     defaults?: IRichContainerDefaults;
 }
 
@@ -45,7 +46,7 @@ const RichText: React.FC<RichTextProps> = ({ node, defaults }) => {
                         code: Code,
                     }), [theme, defaults])}
                 >
-                    {node.text}
+                    {`${node.text}`}
                 </Markdown>
             </Box >
         )

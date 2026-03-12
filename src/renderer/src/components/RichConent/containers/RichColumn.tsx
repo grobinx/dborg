@@ -1,21 +1,23 @@
 import React from "react";
 import { Box, useTheme } from "@mui/material";
-import { IRichColumn, IRichContainerDefaults } from "../types";
+import { IRichColumn, IRichContainerDefaults, RichColSize } from "../types";
 import RichRenderer from "..";
+import { Optional } from "@renderer/types/universal";
 
 interface RichColumnProps {
-    node: IRichColumn;
+    node: Optional<IRichColumn, "type" | "items">;
     defaults?: IRichContainerDefaults;
+    children?: React.ReactNode;
 }
 
-const RichColumn: React.FC<RichColumnProps> = ({ node, defaults }) => {
+const RichColumn: React.FC<RichColumnProps> = ({ node, defaults, children }) => {
     const theme = useTheme();
 
-    const getColSize = (size?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | "auto") => {
+    const getColSize = (size?: RichColSize) => {
         if (size === "auto" || size === undefined) {
             return "auto";
         }
-        return `${(size / 12) * 100}%`;
+        return `calc(${(size / 12) * 100}% - ${(node.gap ?? defaults?.gap ?? 4)}px)`;
     };
 
     return (
@@ -30,9 +32,10 @@ const RichColumn: React.FC<RichColumnProps> = ({ node, defaults }) => {
                 minWidth: 0,
             }}
         >
-            {node.items.map((item, index) => (
+            {node.items?.map((item, index) => (
                 <RichRenderer key={index} node={item} defaults={defaults} />
             ))}
+            {children}
         </Box>
     );
 };
