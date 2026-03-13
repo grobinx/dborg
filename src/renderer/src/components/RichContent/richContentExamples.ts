@@ -422,14 +422,10 @@ export const richContentExamples: RichExampleMap = {
                     severity: "warning",
                     icon: "Warning",
                     label: "Wykryto kosztowny plan wykonania",
-                    description: {
-                        type: "row",
-                        gap: 8,
-                        items: [
-                            { type: "chip", text: "Seq Scan", severity: "warning", variant: "outlined" },
-                            { type: "text", text: "Brak indeksu na `users(active, created_at)`", variant: "markdown" },
-                        ],
-                    },
+                    description: [
+                        { type: "chip", text: "Seq Scan", severity: "warning", variant: "outlined" },
+                        { type: "text", text: "Brak indeksu na `users(active, created_at)`", variant: "markdown" },
+                    ],
                 },
                 {
                     timestamp: "14:23:08",
