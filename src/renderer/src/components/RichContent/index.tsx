@@ -56,7 +56,10 @@ import RichRow from "./containers/RichRow";
 import RichColumn from "./containers/RichColumn";
 import RichGroup from "./containers/RichGroup";
 import RichList from "./containers/RichList";
-import RichListItem from "./containers/RichListItem";
+
+// Export not typed components
+export { default as RichBadge } from "./nodes/RichBadge";
+export { default as RichListItem } from "./containers/RichListItem";
 
 // Export nodes
 export { default as RichText } from "./nodes/RichText";
@@ -80,7 +83,6 @@ export { default as RichRow } from "./containers/RichRow";
 export { default as RichColumn } from "./containers/RichColumn";
 export { default as RichGroup } from "./containers/RichGroup";
 export { default as RichList } from "./containers/RichList";
-export { default as RichListItem } from "./containers/RichListItem";
 export { default as RichContainer } from "./containers/RichContainer";
 
 export const getSeverityColor = (severity: RichSeverity | undefined, theme: Theme, contrastText: boolean = false): string => {
@@ -155,8 +157,6 @@ const RichRenderer: React.FC<{
             return <RichGroup node={node} defaults={defaults} />;
         case "list":
             return <RichList node={node} defaults={defaults} />;
-        case "listitem":
-            return <RichListItem node={node} defaults={defaults} />;
         case "switch":
             return <RichSwitch node={node} defaults={defaults} />;
         case "timeline":

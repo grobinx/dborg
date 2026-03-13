@@ -2,6 +2,7 @@ import React from "react";
 import { List } from "@mui/material";
 import { IRichContainerDefaults, IRichList } from "../types";
 import { Optional } from "@renderer/types/universal";
+import RichListItem from "./RichListItem";
 const RichRenderer = React.lazy(() => import("../index").then(m => ({ default: m.RichRenderer })));
 
 interface RichListProps {
@@ -36,7 +37,7 @@ const RichList: React.FC<RichListProps> = ({ node, defaults, children }) => {
             }}
         >
             {node.items?.map((item, index) => (
-                <RichRenderer key={index} node={item} defaults={defaults} />
+                <RichListItem key={index} node={item} defaults={defaults} />
             ))}
             {children}
         </List>

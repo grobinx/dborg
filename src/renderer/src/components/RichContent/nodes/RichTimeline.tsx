@@ -104,7 +104,11 @@ const RichTimeline: React.FC<RichTimelineProps> = ({ node, defaults }) => {
                                 </Box>
 
                                 <Box sx={{ minWidth: 0, pb: index < lastIndex ? gap : 0 }}>
-                                    <RichRenderer node={item.description} defaults={defaults} />
+                                    {typeof item.description === "string" || typeof item.description === "number" ? (
+                                        <RichText node={{ text: item.description, variant: "description" }} defaults={defaults} />
+                                    ) : (
+                                        <RichRenderer node={item.description} defaults={defaults} />
+                                    )}
                                 </Box>
                             </>
                         )}

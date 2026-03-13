@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Typography, useTheme } from "@mui/material";
 import { styled, SxProps } from "@mui/material/styles";
-import { IRichContainerDefaults, IRichText, RichTextVariant } from "../types";
+import { IRichContainerDefaults, IRichText, RichTextVariant, RichTextVariantStyle, RichTextVariantStyles } from "../types";
 import { getSeverityColor } from "..";
 import Markdown from "react-markdown";
 import Code from "@renderer/components/Code";
@@ -13,16 +13,7 @@ interface RichTextProps {
     defaults?: IRichContainerDefaults;
 }
 
-interface VariantStyle {
-    fontSize: string;
-    lineHeight: number;
-    fontWeight: number;
-    letterSpacing?: string;
-    textTransform?: "uppercase";
-    component: React.ElementType;
-}
-
-export const RICH_TEXT_VARIANT_STYLES: Record<Exclude<RichTextVariant, "markdown">, VariantStyle> = {
+export const RICH_TEXT_VARIANT_STYLES: RichTextVariantStyles = {
     micro: { fontSize: "0.79em", lineHeight: 1.30, fontWeight: 400, component: "span" },
     caption: { fontSize: "0.89em", lineHeight: 1.35, fontWeight: 400, component: "span" },
     description: { fontSize: "0.95em", lineHeight: 1.45, fontWeight: 400, component: "p" },
@@ -44,7 +35,7 @@ const StyledRichTextRoot = styled(Box, {
     name: 'RichText',
     slot: "root",
     shouldForwardProp: (prop) => prop !== "ownerStyle",
-})<{ ownerStyle: VariantStyle }>(({ ownerStyle }) => ({
+})<{ ownerStyle: RichTextVariantStyle }>(({ ownerStyle }) => ({
     fontSize: ownerStyle.fontSize,
     lineHeight: ownerStyle.lineHeight,
     fontWeight: ownerStyle.fontWeight,
@@ -59,9 +50,10 @@ const RichTextRoot: React.FC<{
     variant: RichTextVariant; 
     children?: React.ReactNode; 
     className?: string; 
-    sx?: SxProps 
-}> = ({ component, variant, children, className, sx }) => {
-    const style = (variant ? RICH_TEXT_VARIANT_STYLES[variant] : undefined) ?? DEFAULT_VARIANT_STYLE;
+    sx?: SxProps;
+    textVariantStyles?: Partial<RichTextVariantStyles>;
+}> = ({ component, variant, children, className, sx, textVariantStyles: variantStyles }) => {
+    const style = (variant ? (variantStyles?.[variant] ?? RICH_TEXT_VARIANT_STYLES[variant]) : undefined) ?? DEFAULT_VARIANT_STYLE;
 
     return (
         <StyledRichTextRoot
@@ -88,13 +80,13 @@ const RichText: React.FC<RichTextProps> = ({ node, defaults }) => {
             <Box className="RichNode-markdown" sx={{ color: getSeverityColor(node.severity, theme) }}>
                 <Markdown
                     components={React.useMemo(() => ({
-                        p: (props) => <RichTextRoot variant="body" component="span" {...props} />,
-                        h1: (props) => <RichTextRoot variant="display" component="h1" {...props} />,
-                        h2: (props) => <RichTextRoot variant="title-lg" component="h2" {...props} />,
-                        h3: (props) => <RichTextRoot variant="title" component="h3" {...props} />,
-                        h4: (props) => <RichTextRoot variant="title-sm" component="h4" {...props} />,
-                        h5: (props) => <RichTextRoot variant="lead" component="p" {...props} />,
-                        h6: (props) => <RichTextRoot variant="body-strong" component="p" {...props} />,
+                        p: (props) => <RichTextRoot variant="body" component="span" textVariantStyles={defaults?.textVariantStyles} {...props} />,
+                        h1: (props) => <RichTextRoot variant="display" component="h1" textVariantStyles={defaults?.textVariantStyles} {...props} />,
+                        h2: (props) => <RichTextRoot variant="title-lg" component="h2" textVariantStyles={defaults?.textVariantStyles} {...props} />,
+                        h3: (props) => <RichTextRoot variant="title" component="h3" textVariantStyles={defaults?.textVariantStyles} {...props} />,
+                        h4: (props) => <RichTextRoot variant="title-sm" component="h4" textVariantStyles={defaults?.textVariantStyles} {...props} />,
+                        h5: (props) => <RichTextRoot variant="lead" component="p" textVariantStyles={defaults?.textVariantStyles} {...props} />,
+                        h6: (props) => <RichTextRoot variant="body-strong" component="p" textVariantStyles={defaults?.textVariantStyles} {...props} />,
                         code: Code,
                     }), [theme, defaults])}
                 >
@@ -104,12 +96,11 @@ const RichText: React.FC<RichTextProps> = ({ node, defaults }) => {
         );
     }
 
-    const style = (node.variant ? RICH_TEXT_VARIANT_STYLES[node.variant] : undefined) ?? DEFAULT_VARIANT_STYLE;
-
     return (
         <RichTextRoot
             variant={node.variant ?? "body"}
             sx={{ color: getSeverityColor(node.severity, theme) }}
+            textVariantStyles={defaults?.textVariantStyles}
         >
             {node.text}
         </RichTextRoot>

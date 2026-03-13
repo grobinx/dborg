@@ -32,11 +32,7 @@ const RichProgress: React.FC<RichProgressProps> = ({ node, defaults }) => {
             {(node.label || node.showPercent) && (
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     {node.label && <RichText node={{ text: node.label, variant: "caption" }} defaults={defaults} />}
-                    {node.showPercent && (
-                        <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
-                            {Math.round(node.value)}%
-                        </Typography>
-                    )}
+                    {node.showPercent && <RichText node={{ text: `${Math.round(node.value)}%`, variant: "caption" }} defaults={defaults} />}
                 </Box>
             )}
             <LinearProgress

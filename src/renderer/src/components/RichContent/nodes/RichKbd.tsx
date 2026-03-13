@@ -1,9 +1,10 @@
 import React from "react";
 import { IRichContainerDefaults, IRichKbd } from "../types";
 import { Shortcut } from "@renderer/components/Shortcut";
+import { Optional } from "@renderer/types/universal";
 
 interface RichKbdProps {
-    node: IRichKbd;
+    node: Optional<IRichKbd, "type">;
     defaults?: IRichContainerDefaults;
 }
 

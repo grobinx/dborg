@@ -27,6 +27,23 @@ export type RichTextVariant =
     | "markdown";
 
 /**
+ * Style dla wariantów tekstu w Rich Content, definiujący rozmiar, grubość i inne właściwości typograficzne.
+ */
+export interface RichTextVariantStyle {
+    fontSize: string;
+    lineHeight: number;
+    fontWeight: number;
+    letterSpacing?: string;
+    textTransform?: "uppercase";
+    component: React.ElementType;
+}
+
+/**
+ * Mapowanie wariantów tekstu na ich style typograficzne w Rich Content.
+ */
+export type RichTextVariantStyles = Record<Exclude<RichTextVariant, "markdown">, RichTextVariantStyle>;
+
+/**
  * Wariant chipów w Rich Content (np. dla alertów lub tagów).
  */
 export type RichChipVariant = "outlined" | "filled";
@@ -47,11 +64,26 @@ export type RichValue<V = any> = V | (() => Promise<V>);
  * Typ węzła w strukturze Rich Content.
  */
 export type RichNodeType =
-    | "text" | "link" | "chip" | "code" | "progress" | "group"
-    | "row" | "column" | "icon" | "divider"
-    | "spacer" | "alert" | "kbd" | "action" | "image"
-    | "list" | "listitem" | "switch" | "table"
-    | "stat" | "timeline";
+    | "text" 
+    | "link" 
+    | "chip" 
+    | "code" 
+    | "progress" 
+    | "group"
+    | "row" 
+    | "column" 
+    | "icon" 
+    | "divider"
+    | "spacer" 
+    | "alert" 
+    | "kbd" 
+    | "action" 
+    | "image"
+    | "list" 
+    | "switch" 
+    | "table"
+    | "stat" 
+    | "timeline";
 
 /**
  * Union type wszystkich możliwych węzłów Rich Content.
@@ -73,7 +105,6 @@ export type RichNode =
     | IRichAction
     | IRichImage
     | IRichList
-    | IRichListItem
     | IRichSwitch
     | IRichTable
     | IRichStat
@@ -128,6 +159,10 @@ export interface IRichContainerDefaults {
      * @default 4
      */
     radius?: number | string;
+    /**
+     * Zmienione style dla wariantów tekstu (np. body, caption) wewnątrz tego kontenera.
+     */
+    textVariantStyles?: Partial<RichTextVariantStyles>;
 }
 
 /**
@@ -156,9 +191,45 @@ export interface IRichContainer extends IRichContainerDefaults {
 }
 
 /**
+ * Metadane dla węzłów Rich Content, umożliwiające dodatkową kontrolę nad renderowaniem i interakcją.
+ */
+export interface IRichNodeMeta {
+    /**
+     * Stabilny identyfikator domenowy elementu
+     */
+    id?: string;
+    /**
+     * Klucz renderowania listy (jeśli potrzebny inny niż id)
+     */
+    key?: React.Key;
+    /**
+     * Atrybut pod testy e2e/integration
+     */
+    testId?: string;
+
+    /**
+     * Dodatkowe style/klasy na poziomie węzła
+     */
+    className?: string;
+    style?: React.CSSProperties;
+
+    /**
+     * Kontrola widoczności bez usuwania z danych
+     * @default false
+     */
+    hidden?: boolean;
+
+    /**
+     * Generyczny tooltip dla dowolnego węzła
+     */
+    tooltip?: RichNode;
+}
+
+
+/**
  * Bazowy interfejs dla wszystkich węzłów Rich Content.
  */
-export interface IRichNode {
+export interface IRichNode extends IRichNodeMeta {
     /**
      * Typ węzła
      */
@@ -185,7 +256,7 @@ export interface IRichChip extends IRichNode {
     /**
      * Tekst wyświetlany w chipie
      */
-    text: string;
+    text: RichNode;
     /**
      * Poziom ważności wpływający na kolor
      */
@@ -479,7 +550,7 @@ export interface IRichKbd extends IRichNode {
 /**
  * Button - prosty przycisk akcji.
  */
-export interface IRichAction extends IRichNode, Omit<Action<void>, "groupId" | "contextMenuGroupId" | "contextMenuOrder"> {
+export interface IRichAction extends Omit<IRichNode, "tooltip" | "id">, Omit<Action<void>, "groupId" | "contextMenuGroupId" | "contextMenuOrder"> {
     type: "action";
     /**
      * Badge wyświetlany na przycisku (opcjonalnie)
@@ -552,8 +623,7 @@ export interface IRichList extends IRichNode {
 /**
  * Element listy.
  */
-export interface IRichListItem extends IRichNode {
-    type: "listitem";
+export interface IRichListItem extends IRichNodeMeta {
     /**
      * Poziom ważności wpływający na kolor punktora
      */
@@ -572,7 +642,7 @@ export interface IRichListItem extends IRichNode {
 /**
  * Konfiguracja badge (znaczka) dla elementu.
  */
-export interface IRichBadge {
+export interface IRichBadge extends IRichNodeMeta {
     /**
      * Wartość wyświetlana w badge (liczba lub krótki tekst)
      */
@@ -601,7 +671,7 @@ export interface IRichSwitch extends IRichNode {
     /**
      * Etykieta wyświetlana obok przełącznika
      */
-    label?: string;
+    label?: RichNode;
     /**
      * Aktualny stan przełącznika
      */
@@ -623,7 +693,7 @@ export interface IRichSwitch extends IRichNode {
 /**
  * Definicja kolumny tabeli.
  */
-export interface IRichTableColumn {
+export interface IRichTableColumn extends Omit<IRichNodeMeta, "key"> {
     /**
      * Klucz kolumny (identyfikator)
      */
@@ -711,7 +781,7 @@ export interface IRichStat extends IRichNode {
 /**
  * Pojedyncze zdarzenie na osi czasu.
  */
-export interface IRichTimelineItem {
+export interface IRichTimelineItem extends IRichNodeMeta {
     /**
      * Treść zdarzenia
      */

@@ -41,13 +41,6 @@ const Tooltip: React.FC<TooltipProps> = ({ children, title, interactive = false,
             open={open}
             onOpen={handleOpen}
             onClose={handleClose}
-            slotProps={{
-                tooltip: {
-                    style: {
-                        padding: isReactNode ? 0 : undefined,
-                    }
-                }
-            }}
             {...props}
         >
             {children}

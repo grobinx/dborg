@@ -1,12 +1,12 @@
 import React from "react";
 import { ListItem, useTheme } from "@mui/material";
 import { IRichContainerDefaults, IRichListItem } from "../types";
-import RichRenderer, { getSeverityColor } from "../index";
+import RichRenderer, { getSeverityColor, RichText } from "../index";
 import clsx from "@renderer/utils/clsx";
 import { Optional } from "@renderer/types/universal";
 
 interface RichListItemProps {
-    node: Optional<IRichListItem, "type" | "items">;
+    node: IRichListItem;
     defaults?: IRichContainerDefaults;
     children?: React.ReactNode;
 }
@@ -34,7 +34,11 @@ const RichListItem: React.FC<RichListItemProps> = ({ node, defaults, children })
             }}
         >
             {node.items?.map((item, index) => (
-                <RichRenderer key={index} node={item} defaults={defaults} />
+                typeof item === "string" || typeof item === "number" ? (
+                    <RichText key={index} node={{ text: item, variant: "body" }} defaults={defaults} />
+                ) : (
+                    <RichRenderer key={index} node={item} defaults={defaults} />
+                )
             ))}
             {children}
         </ListItem>

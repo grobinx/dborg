@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, FormControlLabel, Switch, SwitchProps, useTheme } from "@mui/material";
 import { IRichContainerDefaults, IRichSwitch } from "../types";
-import { getSeverityColor, RichText } from "..";
+import RichRenderer, { getSeverityColor, RichText } from "..";
 
 interface RichSwitchProps {
     node: IRichSwitch;
@@ -42,17 +42,14 @@ const RichSwitch: React.FC<RichSwitchProps> = ({ node, defaults }) => {
             {node.label ? (
                 <FormControlLabel
                     control={control}
-                    label={node.label}
+                    label={typeof node.label === "string" || typeof node.label === "number" ?
+                        <RichText node={{ text: node.label, variant: "label" }} />
+                        : <RichRenderer node={node.label} defaults={defaults} />
+                    }
                     //color={getSeverityColor(node.severity, theme)}
                     sx={{
                         m: 0,
                         gap: defaults?.gap ?? 4,
-                        "& .MuiFormControlLabel-label": {
-                            color: getSeverityColor(node.severity, theme),
-                            fontFamily: defaults?.fontFamily,
-                            fontSize: defaults?.fontSize,
-                            fontWeight: defaults?.fontWeight,
-                        },
                     }}
                 />
             ) : (
