@@ -404,13 +404,13 @@ export const richContentExamples: RichExampleMap = {
                     timestamp: "14:23:01",
                     severity: "info",
                     icon: "Info",
-                    label: { type: "text", text: "Połączono z bazą danych", variant: "body" },
+                    label: "Połączono z bazą danych",
                     description: { type: "text", text: "Host: localhost:5432 / DB: dborg", variant: "caption" },
                 },
                 {
                     timestamp: "14:23:03",
                     severity: "success",
-                    label: { type: "text", text: "Wykonano zapytanie SELECT", variant: "body" },
+                    label: "Wykonano zapytanie SELECT",
                     description: {
                         type: "code",
                         language: "sql",
@@ -421,7 +421,7 @@ export const richContentExamples: RichExampleMap = {
                     timestamp: "14:23:05",
                     severity: "warning",
                     icon: "Warning",
-                    label: { type: "text", text: "Wykryto kosztowny plan wykonania", variant: "body" },
+                    label: "Wykryto kosztowny plan wykonania",
                     description: {
                         type: "row",
                         gap: 8,
@@ -435,7 +435,7 @@ export const richContentExamples: RichExampleMap = {
                     timestamp: "14:23:08",
                     severity: "error",
                     icon: "Error",
-                    label: { type: "text", text: "Przekroczono limit czasu zapytania", variant: "body" },
+                    label: "Przekroczono limit czasu zapytania",
                     description: {
                         type: "alert",
                         severity: "error",
@@ -450,12 +450,12 @@ export const richContentExamples: RichExampleMap = {
                 {
                     timestamp: "14:23:10",
                     severity: "info",
-                    label: { type: "text", text: "Rozłączono z bazą danych", variant: "body" },
+                    label: "Rozłączono z bazą danych",
                 },
                 {
                     timestamp: "14:23:12",
                     severity: "info",
-                    label: { type: "text", text: "Program został zamknięty", variant: "body" },
+                    label: "Program został zamknięty",
                 }
             ],
         },

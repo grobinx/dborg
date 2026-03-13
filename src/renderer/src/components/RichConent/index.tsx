@@ -49,6 +49,7 @@ import RichAlert from "./nodes/RichAlert";
 import RichAction from "./nodes/RichAction";
 import RichStat from "./nodes/RichStat";
 import RichSwitch from "./nodes/RichSwitch";
+import RichTimeline from "./nodes/RichTimeline";
 
 // Containers (import second)
 import RichRow from "./containers/RichRow";
@@ -56,7 +57,6 @@ import RichColumn from "./containers/RichColumn";
 import RichGroup from "./containers/RichGroup";
 import RichList from "./containers/RichList";
 import RichListItem from "./containers/RichListItem";
-import RichTimeline from "./containers/RichTimeline";
 
 // Export nodes
 export { default as RichText } from "./nodes/RichText";
@@ -73,6 +73,7 @@ export { default as RichAlert } from "./nodes/RichAlert";
 export { default as RichAction } from "./nodes/RichAction";
 export { default as RichStat } from "./nodes/RichStat";
 export { default as RichSwitch } from "./nodes/RichSwitch";
+export { default as RichTimeline } from "./nodes/RichTimeline";
 
 // Export containers
 export { default as RichRow } from "./containers/RichRow";
@@ -81,7 +82,6 @@ export { default as RichGroup } from "./containers/RichGroup";
 export { default as RichList } from "./containers/RichList";
 export { default as RichListItem } from "./containers/RichListItem";
 export { default as RichContainer } from "./containers/RichContainer";
-export { default as RichTimeline } from "./containers/RichTimeline";
 
 export const getSeverityColor = (severity: RichSeverity | undefined, theme: Theme, contrastText: boolean = false): string => {
     switch (severity) {

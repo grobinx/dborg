@@ -694,7 +694,7 @@ export interface IRichTimelineItem {
     /**
      * Treść zdarzenia
      */
-    label: RichNode;
+    label: string;
     /**
      * Dodatkowy opis
      */

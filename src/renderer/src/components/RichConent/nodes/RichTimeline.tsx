@@ -80,7 +80,7 @@ const RichTimeline: React.FC<RichTimelineProps> = ({ node, defaults }) => {
                                 alignItems: "center",
                             }}
                         >
-                            <RichRenderer node={item.label} defaults={defaults} />
+                            <RichText node={{ text: item.label, variant: "label" }} defaults={defaults} />
                         </Box>
 
                         {/* Rząd 2: pusto | pionowa kreska | caption */}
