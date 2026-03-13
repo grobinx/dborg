@@ -636,7 +636,7 @@ export interface IRichListItem extends IRichNodeMeta {
     /**
      * Zawartość elementu listy
      */
-    items: RichNode[];
+    content: RichNode;
 }
 
 /**

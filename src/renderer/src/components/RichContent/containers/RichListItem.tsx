@@ -33,13 +33,11 @@ const RichListItem: React.FC<RichListItemProps> = ({ node, defaults, children })
                 borderRadius: node.indicator && (node.severity ?? "default") !== "default" ? 1 : undefined,
             }}
         >
-            {node.items?.map((item, index) => (
-                typeof item === "string" || typeof item === "number" ? (
-                    <RichText key={index} node={{ text: item, variant: "body" }} defaults={defaults} />
-                ) : (
-                    <RichRenderer key={index} node={item} defaults={defaults} />
-                )
-            ))}
+            {typeof node.content === "string" || typeof node.content === "number" ? (
+                <RichText node={{ text: node.content, variant: "body" }} defaults={defaults} />
+            ) : (
+                <RichRenderer node={node.content} defaults={defaults} />
+            )}
             {children}
         </ListItem>
     );

@@ -206,32 +206,32 @@ export const richContentExamples: RichExampleMap = {
             type: "list",
             listType: "bullet",
             items: [
-                { type: "listitem", items: [{ type: "text", text: "Bullet item 1" }] },
+                { content: "Bullet item 1" },
             ],
         },
         {
             type: "list",
             listType: "bullet",
             items: [
-                { type: "listitem", items: [{ type: "text", text: "Bullet item 1" }] },
-                { type: "listitem", severity: "info", items: [{ type: "text", text: "Bullet info item" }, { type: "chip", text: "INFO", severity: "info" }] },
+                { content: "Bullet item 1" },
+                { severity: "info", content: ["Bullet info item", { type: "chip", text: "INFO", severity: "info" }] },
             ],
         },
         {
             type: "list",
             listType: "numbered",
             items: [
-                { type: "listitem", items: [{ type: "text", text: "Numbered item 1" }] },
-                { type: "listitem", severity: "warning", items: [{ type: "text", text: "Numbered warning item" }] },
-                { type: "listitem", severity: "error", items: [{ type: "text", text: "Numbered error item" }] },
+                { content: "Numbered item 1" },
+                { severity: "warning", content: "Numbered warning item" },
+                { severity: "error", content: "Numbered error item" },
             ],
         },
         {
             type: "list",
             listType: "none",
             items: [
-                { type: "listitem", severity: "warning", indicator: true, items: [{ type: "text", text: "List without markers #1" }] },
-                { type: "listitem", severity: "error", indicator: true, items: [{ type: "text", text: "List without markers #2" }] },
+                { severity: "warning", indicator: true, content: "List without markers #1" },
+                { severity: "error", indicator: true, content: "List without markers #2" },
             ],
         },
     ],
@@ -509,9 +509,9 @@ export const richContentExamples: RichExampleMap = {
                             type: "list",
                             listType: "numbered",
                             items: [
-                                { type: "listitem", items: [{ type: "text", text: "Dodaj indeks" }] },
-                                { type: "listitem", items: [{ type: "text", text: "Uruchom ANALYZE" }] },
-                                { type: "listitem", items: [{ type: "text", text: "Porównaj plan" }] },
+                                { content: [{ type: "text", text: "Dodaj indeks" }] },
+                                { content: [{ type: "text", text: "Uruchom ANALYZE" }] },
+                                { content: [{ type: "text", text: "Porównaj plan" }] },
                             ],
                         },
                     ],
