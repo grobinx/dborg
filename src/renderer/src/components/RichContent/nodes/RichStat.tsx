@@ -2,7 +2,7 @@ import React from "react";
 import { Box, Typography, useTheme } from "@mui/material";
 import { IRichStat, IRichContainerDefaults, RichColSize } from "../types";
 import { getSeverityColor, RichRow, RichText } from "..";
-import RichIcon from "../nodes/RichIcon";
+import RichIcon from "./RichIcon";
 
 interface RichStatProps {
     node: IRichStat;

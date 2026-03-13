@@ -15,7 +15,7 @@ import Tooltip from "@renderer/components/Tooltip";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import ButtonGroup from "@renderer/components/buttons/ButtonGroup";
 import { editorExtLanguages } from "@renderer/contexts/EditorContentManager";
-import { RichContainer } from "@renderer/components/RichConent";
+import { RichContainer } from "@renderer/components/RichContent";
 
 export const SQL_EDITOR_DELETE = "sql-editor:delete";
 export const SQL_EDITOR_CLOSE = "sql-editor:close";

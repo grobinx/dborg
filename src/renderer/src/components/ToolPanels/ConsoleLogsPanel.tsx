@@ -28,7 +28,7 @@ import { FormattedText } from "../useful/FormattedText";
 import { handleListNavigation } from "@renderer/hooks/useKeyboardNavigation";
 import { useScrollIntoView } from "@renderer/hooks/useScrollIntoView";
 import ButtonGroup from "../buttons/ButtonGroup";
-import { IRichContainer, RichContainer } from "../RichConent";
+import { IRichContainer, RichContainer } from "../RichContent";
 
 interface ConsoleLogState {
     showTime: boolean;

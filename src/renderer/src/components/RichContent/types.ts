@@ -10,7 +10,21 @@ export type RichSeverity = "default" | "info" | "warning" | "error" | "success";
 /**
  * Wariant typograficzny tekstu w Rich Content.
  */
-export type RichTextVariant = "body" | "caption" | "label" | "title" | "description" | "markdown";
+export type RichTextVariant =
+    | "micro"
+    | "caption"
+    | "description"
+    | "body"
+    | "body-strong"
+    | "lead"
+    | "label"
+    | "overline"
+    | "title-sm"
+    | "title"
+    | "title-lg"
+    | "display"
+    | "code-inline"
+    | "markdown";
 
 /**
  * Wariant chipów w Rich Content (np. dla alertów lub tagów).
