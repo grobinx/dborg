@@ -3,6 +3,7 @@ import { Box, useTheme } from "@mui/material";
 import { IRichColumn, IRichContainerDefaults, RichColSize } from "../types";
 import RichRenderer from "..";
 import { Optional } from "@renderer/types/universal";
+import clsx from "@renderer/utils/clsx";
 
 interface RichColumnProps {
     node: Optional<IRichColumn, "type" | "items">;
@@ -22,7 +23,11 @@ const RichColumn: React.FC<RichColumnProps> = ({ node, defaults, children }) => 
 
     return (
         <Box
-            className="RichContainer-column"
+            id={node.id}
+            hidden={node.hidden}
+            key={node.key ?? node.id}
+            className={clsx("RichContainer-column", node.className)}
+            style={node.style}
             sx={{
                 display: "flex",
                 flexDirection: "column",

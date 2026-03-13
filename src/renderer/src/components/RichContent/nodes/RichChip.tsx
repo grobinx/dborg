@@ -4,6 +4,7 @@ import { IRichChip, IRichContainerDefaults, RichSeverity } from "../types";
 import RichBadge from "./RichBadge";
 import RichRenderer from "..";
 import { Optional } from "@renderer/types/universal";
+import clsx from "@renderer/utils/clsx";
 
 interface RichChipProps {
     node: Optional<IRichChip, "type">;
@@ -14,7 +15,14 @@ const RichChip: React.FC<RichChipProps> = ({ node, defaults }) => {
     const theme = useTheme();
 
     return (
-        <Box className="RichNode-chip" sx={{ display: "inline-block", position: "relative", alignSelf: "flex-start" }}>
+        <Box
+            id={node.id}
+            hidden={node.hidden}
+            key={node.key ?? node.id}
+            className={clsx("RichNode-chip", node.className)}
+            style={node.style}
+            sx={{ display: "inline-block", position: "relative", alignSelf: "flex-start" }}
+        >
             <Chip
                 label={<RichRenderer node={node.text} defaults={defaults} />}
                 size="small"

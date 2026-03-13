@@ -38,6 +38,7 @@ interface ShortcutChordProps {
     dense?: boolean;
     sx?: SxProps;
     style?: React.CSSProperties;
+    id?: string;
 }
 
 function denseKey(key: string, dense: boolean): string {
@@ -95,6 +96,7 @@ function ShortcutChord({ keybinding, active = true, hidden = false, dense = fals
 }
 
 interface ShortcutProps {
+    id?: string;
     className?: string;
     keybindings: string[] | string;
     active?: boolean;
@@ -114,9 +116,11 @@ export function Shortcut({
     size = "small",
     dense = false,
     className,
+    id,
 }: ShortcutProps) {
     return (
         <ShortcutRootStyled
+            id={id}
             className={clsx(
                 className,
                 "Shortcut-root",

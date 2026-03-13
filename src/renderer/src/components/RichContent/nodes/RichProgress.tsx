@@ -3,6 +3,7 @@ import { LinearProgress, Box, Typography, useTheme } from "@mui/material";
 import { IRichContainerDefaults, IRichProgress, RichSeverity } from "../types";
 import { defaults } from "pg";
 import RichText from "./RichText";
+import clsx from "@renderer/utils/clsx";
 
 interface RichProgressProps {
     node: IRichProgress;
@@ -28,7 +29,13 @@ const RichProgress: React.FC<RichProgressProps> = ({ node, defaults }) => {
     };
 
     return (
-        <Box className="RichNode-progress">
+        <Box
+            id={node.id}
+            hidden={node.hidden}
+            key={node.key ?? node.id}
+            style={node.style}
+            className={clsx("RichNode-progress", node.className)}
+        >
             {(node.label || node.showPercent) && (
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     {node.label && <RichText node={{ text: node.label, variant: "caption" }} defaults={defaults} />}

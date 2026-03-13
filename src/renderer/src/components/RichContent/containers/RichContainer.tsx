@@ -3,6 +3,7 @@ import { Box } from "@mui/material";
 import { IRichContainer, IRichContainerDefaults } from "../types";
 import RichRenderer from "..";
 import { useSetting } from "@renderer/contexts/SettingsContext";
+import clsx from "@renderer/utils/clsx";
 
 interface RichContainerProps {
     node: IRichContainer;
@@ -22,12 +23,17 @@ const RichContainer: React.FC<RichContainerProps> = ({ node }) => {
             gap: node.gap ?? 4,
             fontWeight: node.fontWeight ?? "normal",
             radius: node.radius ?? 3,
+            textVariantStyles: node.textVariantStyles,
         } as IRichContainerDefaults;
-    }, [fontSize, fontFamily, fontFamilyMonospace]);
+    }, [fontSize, fontFamily, fontFamilyMonospace, node.fontFamily, node.fontFamilyMonospace, node.fontSize, node.fontWeight, node.gap, node.padding, node.radius, node.textVariantStyles]);
 
     return (
         <Box
-            className="RichContainer-container"
+            id={node.id}
+            hidden={node.hidden}
+            key={node.key ?? node.id}
+            className={clsx("RichContainer-container", node.className)}
+            style={node.style}
             sx={{
                 width: node.width ?? "100%",
                 height: node.height,

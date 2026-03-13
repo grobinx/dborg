@@ -2,6 +2,7 @@ import React from "react";
 import { Link, useTheme } from "@mui/material";
 import { IRichContainerDefaults, IRichLink, RichSeverity } from "../types";
 import { getSeverityColor } from "..";
+import clsx from "@renderer/utils/clsx";
 
 interface RichLinkProps {
     node: IRichLink;
@@ -28,12 +29,16 @@ const RichLink: React.FC<RichLinkProps> = ({ node }) => {
 
     return (
         <Link
-            className="RichNode-link"
+            id={node.id}
+            hidden={node.hidden}
+            key={node.key ?? node.id}
+            className={clsx("RichNode-link", node.className)}
+            style={node.style}
             href={node.href}
             target="_blank"
             rel="noopener noreferrer"
             variant={getVariantMapping(node.variant) as any}
-            sx={{ color: getSeverityColor(node.severity, theme) }}
+            sx={{ color: getSeverityColor(node.severity, theme), fontSize: "inherit", fontFamily: "inherit", fontWeight: "inherit" }}
         >
             {node.text || node.href}
         </Link>

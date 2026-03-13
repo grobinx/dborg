@@ -1,9 +1,52 @@
 import React from "react";
-import { List } from "@mui/material";
-import { IRichContainerDefaults, IRichList } from "../types";
+import { List, ListItem, useTheme } from "@mui/material";
+import { IRichContainerDefaults, IRichList, IRichListItem } from "../types";
 import { Optional } from "@renderer/types/universal";
-import RichListItem from "./RichListItem";
-const RichRenderer = React.lazy(() => import("../index").then(m => ({ default: m.RichRenderer })));
+import clsx from "@renderer/utils/clsx";
+import RichRenderer, { getSeverityColor, RichText } from "..";
+
+interface RichListItemProps {
+    node: IRichListItem;
+    defaults?: IRichContainerDefaults;
+    children?: React.ReactNode;
+}
+
+const RichListItem: React.FC<RichListItemProps> = ({ node, defaults, children }) => {
+    const theme = useTheme();
+
+    return (
+        <ListItem
+            id={node.id}
+            hidden={node.hidden}
+            key={node.key ?? node.id}
+            className={clsx(
+                "RichContainer-listItem",
+                (node.indicator && (node.severity ?? "default") !== "default") && "indicator",
+                node.className
+            )}
+            style={node.style}
+            sx={{
+                display: "list-item",
+                padding: 0,
+                color: node.indicator && (node.severity ?? "default") !== "default" ? undefined : getSeverityColor(node.severity, theme),
+                listStyleType: (node.severity ?? "default") !== "default" ? undefined : "inherit",
+                "::marker": {
+                    color: getSeverityColor(node.severity, theme),
+                },
+                border: node.indicator && (node.severity ?? "default") !== "default" ? `1px solid ${getSeverityColor(node.severity, theme)}` : undefined,
+                borderLeft: node.indicator && (node.severity ?? "default") !== "default" ? `4px solid ${getSeverityColor(node.severity, theme)}` : undefined,
+                borderRadius: node.indicator && (node.severity ?? "default") !== "default" ? 1 : undefined,
+            }}
+        >
+            {typeof node.content === "string" || typeof node.content === "number" ? (
+                <RichText node={{ text: node.content, variant: "body" }} defaults={defaults} />
+            ) : (
+                <RichRenderer node={node.content} defaults={defaults} />
+            )}
+            {children}
+        </ListItem>
+    );
+};
 
 interface RichListProps {
     node: Optional<IRichList, "type" | "items">;
@@ -25,14 +68,18 @@ const RichList: React.FC<RichListProps> = ({ node, defaults, children }) => {
 
     return (
         <List
-            className="RichContainer-list"
+            id={node.id}
+            hidden={node.hidden}
+            key={node.key ?? node.id}
+            className={clsx("RichContainer-list", node.className)}
+            style={node.style}
             sx={{
                 listStyleType: getListStyleType(node.listType),
                 padding: defaults?.padding ?? 8,
                 paddingLeft: node.listType && node.listType !== "none" ? "24px" : "0px",
                 margin: 0,
                 "& > li.indicator + li.indicator": {
-                    marginTop: defaults?.gap ?? 8,
+                    marginTop: defaults?.gap ?? 4,
                 },
             }}
         >

@@ -120,80 +120,9 @@ export type RichNode =
     | null | undefined;
 
 /**
- * Domyślne wartości dla kontenerów Rich Content (grupy, wiersze, kolumny).
- * Umożliwia ustawienie globalnych stylów i odstępów dla wszystkich elementów wewnątrz kontenera.
- */
-export interface IRichContainerDefaults {
-    /**
-     * Domyślny font dla zwykłego tekstu.
-     * @default ui/fontFamily
-     */
-    fontFamily?: string;
-    /**
-     * Domyślny font dla kodu/kbd/monospace.
-     * @default ui/fontFamilyMonospace
-     */
-    fontFamilyMonospace?: string;
-    /**
-     * Domyślny rozmiar fontu.
-     * @default ui/fontSize
-     */
-    fontSize?: number | string;
-    /**
-     * Domyślna grubość fontu.
-     * @default "normal"
-     */
-    fontWeight?: number | string;
-    /**
-     * Domyślny padding dla kontenera/grup.
-     * @default 8
-     */
-    padding?: number | string;
-    /**
-     * Domyślny gap między elementami.
-     * @default 8
-     */
-    gap?: RichGap;
-    /**
-     * Domyślna wartość radius dla elementów z obramowaniem (np. alert, chip).
-     * @default 4
-     */
-    radius?: number | string;
-    /**
-     * Zmienione style dla wariantów tekstu (np. body, caption) wewnątrz tego kontenera.
-     */
-    textVariantStyles?: Partial<RichTextVariantStyles>;
-}
-
-/**
- * Kontener dla elementów Rich Content, który może zawierać inne węzły.
- */
-export interface IRichContainer extends IRichContainerDefaults {
-    /**
-     * Elementy wewnątrz kontenera
-     */
-    items: RichNode[];
-    /**
-     * Szerokość kontenera (np. "100%", "auto", 300)
-     * @default "100%" 
-     */
-    width?: number | string;
-    /**
-     * Wysokość kontenera (np. "100%", "auto", 300)
-     * @default "auto"
-     */
-    height?: number | string;
-    /**
-     * Zachowanie zawartości przy przekroczeniu rozmiaru kontenera
-     * @default "auto"
-     */
-    overflow?: "visible" | "hidden" | "scroll" | "auto";
-}
-
-/**
  * Metadane dla węzłów Rich Content, umożliwiające dodatkową kontrolę nad renderowaniem i interakcją.
  */
-export interface IRichNodeMeta {
+export interface IRichMetadata {
     /**
      * Stabilny identyfikator domenowy elementu
      */
@@ -225,11 +154,81 @@ export interface IRichNodeMeta {
     tooltip?: RichNode;
 }
 
+/**
+ * Domyślne wartości dla kontenerów Rich Content (grupy, wiersze, kolumny).
+ * Umożliwia ustawienie globalnych stylów i odstępów dla wszystkich elementów wewnątrz kontenera.
+ */
+export interface IRichContainerDefaults {
+    /**
+     * Domyślny font dla zwykłego tekstu.
+     * @default ui/fontFamily
+     */
+    fontFamily?: string;
+    /**
+     * Domyślny font dla kodu/kbd/monospace.
+     * @default ui/fontFamilyMonospace
+     */
+    fontFamilyMonospace?: string;
+    /**
+     * Domyślny rozmiar fontu.
+     * @default ui/fontSize
+     */
+    fontSize?: number | string;
+    /**
+     * Domyślna grubość fontu.
+     * @default "normal"
+     */
+    fontWeight?: number | string;
+    /**
+     * Domyślny padding dla kontenera/grup.
+     * @default "4px 8px"
+     */
+    padding?: number | string;
+    /**
+     * Domyślny gap między elementami.
+     * @default 8
+     */
+    gap?: RichGap;
+    /**
+     * Domyślna wartość radius dla elementów z obramowaniem (np. alert, chip).
+     * @default 4
+     */
+    radius?: number | string;
+    /**
+     * Zmienione style dla wariantów tekstu (np. body, caption) wewnątrz tego kontenera.
+     */
+    textVariantStyles?: Partial<RichTextVariantStyles>;
+}
+
+/**
+ * Kontener dla elementów Rich Content, który może zawierać inne węzły.
+ */
+export interface IRichContainer extends IRichContainerDefaults, IRichMetadata {
+    /**
+     * Elementy wewnątrz kontenera
+     */
+    items: RichNode[];
+    /**
+     * Szerokość kontenera (np. "100%", "auto", 300)
+     * @default "100%" 
+     */
+    width?: number | string;
+    /**
+     * Wysokość kontenera (np. "100%", "auto", 300)
+     * @default "auto"
+     */
+    height?: number | string;
+    /**
+     * Zachowanie zawartości przy przekroczeniu rozmiaru kontenera
+     * @default "auto"
+     */
+    overflow?: "visible" | "hidden" | "scroll" | "auto";
+}
 
 /**
  * Bazowy interfejs dla wszystkich węzłów Rich Content.
  */
-export interface IRichNode extends IRichNodeMeta {
+export interface IRichNode extends IRichMetadata {
     /**
      * Typ węzła
      */
@@ -623,7 +622,7 @@ export interface IRichList extends IRichNode {
 /**
  * Element listy.
  */
-export interface IRichListItem extends IRichNodeMeta {
+export interface IRichListItem extends IRichMetadata {
     /**
      * Poziom ważności wpływający na kolor punktora
      */
@@ -642,7 +641,7 @@ export interface IRichListItem extends IRichNodeMeta {
 /**
  * Konfiguracja badge (znaczka) dla elementu.
  */
-export interface IRichBadge extends IRichNodeMeta {
+export interface IRichBadge extends IRichMetadata {
     /**
      * Wartość wyświetlana w badge (liczba lub krótki tekst)
      */
@@ -693,7 +692,7 @@ export interface IRichSwitch extends IRichNode {
 /**
  * Definicja kolumny tabeli.
  */
-export interface IRichTableColumn extends Omit<IRichNodeMeta, "key"> {
+export interface IRichTableColumn extends Omit<IRichMetadata, "key"> {
     /**
      * Klucz kolumny (identyfikator)
      */
@@ -781,7 +780,7 @@ export interface IRichStat extends IRichNode {
 /**
  * Pojedyncze zdarzenie na osi czasu.
  */
-export interface IRichTimelineItem extends IRichNodeMeta {
+export interface IRichTimelineItem extends IRichMetadata {
     /**
      * Treść zdarzenia
      */

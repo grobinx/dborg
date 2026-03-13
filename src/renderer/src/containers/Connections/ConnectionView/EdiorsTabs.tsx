@@ -307,7 +307,6 @@ export const EditorsTabs: React.FC<EditorsTabsOwnProps> = (props) => {
                                                     code: "...\n" + state.sampleLines + "\n...",
                                                 }
                                             ],
-                                            fontSize: "0.75rem",
                                         }} />
                                     }
                                     placement="right"

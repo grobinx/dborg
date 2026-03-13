@@ -2,7 +2,7 @@ import React from "react";
 import { Box, Typography, useTheme } from "@mui/material";
 import { styled, SxProps } from "@mui/material/styles";
 import { IRichContainerDefaults, IRichText, RichTextVariant, RichTextVariantStyle, RichTextVariantStyles } from "../types";
-import { getSeverityColor } from "..";
+import { getSeverityColor, RichCode } from "..";
 import Markdown from "react-markdown";
 import Code from "@renderer/components/Code";
 import { Optional } from "@renderer/types/universal";
@@ -45,20 +45,26 @@ const StyledRichTextRoot = styled(Box, {
     margin: 0,
 }));
 
-const RichTextRoot: React.FC<{ 
+const RichTextRoot: React.FC<{
+    id?: string;
+    hidden?: boolean;
+    style?: React.CSSProperties;
     component?: React.ElementType;
-    variant: RichTextVariant; 
-    children?: React.ReactNode; 
-    className?: string; 
+    variant: RichTextVariant;
+    children?: React.ReactNode;
+    className?: string;
     sx?: SxProps;
     textVariantStyles?: Partial<RichTextVariantStyles>;
-}> = ({ component, variant, children, className, sx, textVariantStyles: variantStyles }) => {
-    const style = (variant ? (variantStyles?.[variant] ?? RICH_TEXT_VARIANT_STYLES[variant]) : undefined) ?? DEFAULT_VARIANT_STYLE;
+}> = ({ id, hidden, style, component, variant, children, className, sx, textVariantStyles: variantStyles, ...other }) => {
+    const ownerStyle = (variant ? (variantStyles?.[variant] ?? RICH_TEXT_VARIANT_STYLES[variant]) : undefined) ?? DEFAULT_VARIANT_STYLE;
 
     return (
         <StyledRichTextRoot
-            as={component ?? style.component}
-            ownerStyle={style}
+            id={id}
+            hidden={hidden}
+            style={style}
+            as={component ?? ownerStyle.component}
+            ownerStyle={ownerStyle}
             className={clsx(
                 "RichText-root",
                 "RichNode-text",
@@ -66,6 +72,7 @@ const RichTextRoot: React.FC<{
                 className
             )}
             sx={sx}
+            {...other}
         >
             {children}
         </StyledRichTextRoot>
@@ -77,7 +84,14 @@ const RichText: React.FC<RichTextProps> = ({ node, defaults }) => {
 
     if (node.variant === "markdown") {
         return (
-            <Box className="RichNode-markdown" sx={{ color: getSeverityColor(node.severity, theme) }}>
+            <Box
+                id={node.id}
+                hidden={node.hidden}
+                key={node.key ?? node.id}
+                className={clsx("RichNode-text", "RichNode-markdown", node.className)}
+                style={node.style}
+                sx={{ color: getSeverityColor(node.severity, theme) }}
+            >
                 <Markdown
                     components={React.useMemo(() => ({
                         p: (props) => <RichTextRoot variant="body" component="span" textVariantStyles={defaults?.textVariantStyles} {...props} />,
@@ -87,7 +101,18 @@ const RichText: React.FC<RichTextProps> = ({ node, defaults }) => {
                         h4: (props) => <RichTextRoot variant="title-sm" component="h4" textVariantStyles={defaults?.textVariantStyles} {...props} />,
                         h5: (props) => <RichTextRoot variant="lead" component="p" textVariantStyles={defaults?.textVariantStyles} {...props} />,
                         h6: (props) => <RichTextRoot variant="body-strong" component="p" textVariantStyles={defaults?.textVariantStyles} {...props} />,
-                        code: Code,
+                        code: ({ className, children }) => {
+                            const language = className?.match(/language-(\w+)/)?.[1];
+                            const isInline = !className && !String(children).includes('\n');
+
+                            if (!isInline && language) {
+                                return <RichCode node={{ code: String(children).trim(), language }} defaults={defaults} />;
+                            } else if (!isInline) {
+                                <RichCode node={{ code: String(children).trim() }} defaults={defaults} />;
+                            } else {
+                                return <Code>{String(children).trim()}</Code>
+                            }
+                        },
                     }), [theme, defaults])}
                 >
                     {`${node.text}`}
@@ -98,6 +123,11 @@ const RichText: React.FC<RichTextProps> = ({ node, defaults }) => {
 
     return (
         <RichTextRoot
+            id={node.id}
+            hidden={node.hidden}
+            key={node.key ?? node.id}
+            className={clsx("RichNode-text", node.className)}
+            style={node.style}
             variant={node.variant ?? "body"}
             sx={{ color: getSeverityColor(node.severity, theme) }}
             textVariantStyles={defaults?.textVariantStyles}

@@ -1,6 +1,7 @@
 import React, { CSSProperties } from "react";
 import { Box, useTheme } from "@mui/material";
 import { IRichContainerDefaults, IRichImage } from "../types";
+import clsx from "@renderer/utils/clsx";
 
 interface RichImageProps {
     node: IRichImage;
@@ -35,7 +36,11 @@ const RichImage: React.FC<RichImageProps> = ({ node, defaults }) => {
 
         return (
             <Box
-                className="RichNode-image"
+                id={node.id}
+                hidden={node.hidden}
+                key={node.key ?? node.id}
+                className={clsx("RichNode-image", node.className)}
+                style={node.style}
                 role="img"
                 aria-label={node.alt || "Image"}
                 sx={{

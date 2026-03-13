@@ -59,7 +59,6 @@ import RichList from "./containers/RichList";
 
 // Export not typed components
 export { default as RichBadge } from "./nodes/RichBadge";
-export { default as RichListItem } from "./containers/RichListItem";
 
 // Export nodes
 export { default as RichText } from "./nodes/RichText";

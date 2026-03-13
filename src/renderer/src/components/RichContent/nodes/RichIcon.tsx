@@ -4,6 +4,7 @@ import { IRichContainerDefaults, IRichIcon, RichSeverity } from "../types";
 import { resolveIcon } from "@renderer/themes/icons";
 import { getSeverityColor } from "..";
 import { Optional } from "@renderer/types/universal";
+import clsx from "@renderer/utils/clsx";
 
 interface RichIconProps {
     node: Optional<IRichIcon, "type">;
@@ -15,7 +16,11 @@ const RichIcon: React.FC<RichIconProps> = ({ node }) => {
 
     const content = (
         <Box
-            className="RichNode-icon"
+            id={node.id}
+            hidden={node.hidden}
+            key={node.key ?? node.id}
+            className={clsx("RichNode-icon", node.className)}
+            style={node.style}
             sx={{
                 display: "inline-flex",
                 alignItems: "center",

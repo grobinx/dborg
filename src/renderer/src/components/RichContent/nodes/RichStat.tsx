@@ -3,6 +3,7 @@ import { Box, Typography, useTheme } from "@mui/material";
 import { IRichStat, IRichContainerDefaults, RichColSize } from "../types";
 import { getSeverityColor, RichRow, RichText } from "..";
 import RichIcon from "./RichIcon";
+import clsx from "@renderer/utils/clsx";
 
 interface RichStatProps {
     node: IRichStat;
@@ -38,7 +39,11 @@ const RichStat: React.FC<RichStatProps> = ({ node, defaults }) => {
 
     return (
         <Box
-            className="RichNode-stat"
+            id={node.id}
+            hidden={node.hidden}
+            key={node.key ?? node.id}
+            className={clsx("RichNode-stat", node.className)}
+            style={node.style}
             sx={{
                 display: "flex",
                 flexDirection: "column",

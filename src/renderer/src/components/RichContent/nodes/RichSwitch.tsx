@@ -2,6 +2,7 @@ import React from "react";
 import { Box, FormControlLabel, Switch, SwitchProps, useTheme } from "@mui/material";
 import { IRichContainerDefaults, IRichSwitch } from "../types";
 import RichRenderer, { getSeverityColor, RichText } from "..";
+import clsx from "@renderer/utils/clsx";
 
 interface RichSwitchProps {
     node: IRichSwitch;
@@ -33,7 +34,11 @@ const RichSwitch: React.FC<RichSwitchProps> = ({ node, defaults }) => {
 
     return (
         <Box
-            className="RichNode-switch"
+            id={node.id}
+            hidden={node.hidden}
+            key={node.key ?? node.id}
+            className={clsx("RichNode-switch", node.className)}
+            style={node.style}
             sx={{
                 display: "inline-flex",
                 alignSelf: "flex-start",

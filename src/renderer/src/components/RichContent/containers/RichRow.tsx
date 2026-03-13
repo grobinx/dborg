@@ -3,6 +3,7 @@ import { Box } from "@mui/material";
 import { IRichContainerDefaults, IRichRow } from "../types";
 import RichRenderer from "..";
 import { Optional } from "@renderer/types/universal";
+import clsx from "@renderer/utils/clsx";
 
 interface RichRowProps {
     node: Optional<IRichRow, "type" | "items">;
@@ -13,7 +14,11 @@ interface RichRowProps {
 const RichRow: React.FC<RichRowProps> = ({ node, defaults, children }) => {
     return (
         <Box
-            className="RichContainer-row"
+            id={node.id}
+            hidden={node.hidden}
+            key={node.key ?? node.id}
+            className={clsx("RichContainer-row", node.className)}
+            style={node.style}
             sx={{
                 display: "flex",
                 flexDirection: "row",

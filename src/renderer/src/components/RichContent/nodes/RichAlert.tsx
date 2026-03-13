@@ -2,7 +2,8 @@ import React from "react";
 import { Alert, AlertTitle, Box, useTheme } from "@mui/material";
 import { IRichAlert, IRichContainerDefaults, RichSeverity } from "../types";
 import { resolveIcon } from "@renderer/themes/icons";
-import RichRenderer from "..";
+import RichRenderer, { RichText } from "..";
+import clsx from "@renderer/utils/clsx";
 
 interface RichAlertProps {
     node: IRichAlert;
@@ -26,7 +27,11 @@ const RichAlert: React.FC<RichAlertProps> = ({ node, defaults }) => {
 
     return (
         <Alert
-            className="RichNode-alert"
+            id={node.id}
+            hidden={node.hidden}
+            key={node.key ?? node.id}
+            className={clsx("RichNode-alert", node.className)}
+            style={node.style}
             severity={getSeverityForAlert(node.severity)}
             icon={node.showIcon !== false && (resolveIcon(theme, node.icon))}
             slotProps={{
@@ -34,10 +39,19 @@ const RichAlert: React.FC<RichAlertProps> = ({ node, defaults }) => {
                     style: {
                         borderRadius: defaults?.radius ?? 4,
                         padding: defaults?.padding ?? 4,
-                        fontSize: defaults?.fontSize,
-                        fontFamily: defaults?.fontFamily,
-                        fontWeight: defaults?.fontWeight,
-                        gap: defaults?.gap ?? 8,
+                        fontSize: "inherit",
+                        fontFamily: "inherit",
+                        fontWeight: "inherit",
+                        gap: defaults?.gap ?? 4,
+                    }
+                },
+                message: {
+                    style: {
+                        padding: defaults?.padding ?? 4,
+                        fontSize: "inherit",
+                        fontFamily: "inherit",
+                        fontWeight: "inherit",
+                        gap: defaults?.gap ?? 4,
                     }
                 },
                 icon: {
@@ -49,7 +63,7 @@ const RichAlert: React.FC<RichAlertProps> = ({ node, defaults }) => {
         >
             {node.title && (
                 typeof node.title === "string" || typeof node.title === "number" ? (
-                    <AlertTitle>{node.title}</AlertTitle>
+                    <RichText node={{ text: node.title, variant: "title" }} />
                 ) : (
                     <RichRenderer node={node.title} defaults={defaults} />
                 )

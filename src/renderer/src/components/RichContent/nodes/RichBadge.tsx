@@ -3,6 +3,7 @@ import { Box, Typography, useTheme } from "@mui/material";
 import { IRichContainerDefaults, IRichBadge } from "../types";
 import UnboundBadge from "@renderer/components/UnboundBadge";
 import { ThemeColor } from "@renderer/types/colors";
+import clsx from "@renderer/utils/clsx";
 
 interface RichBadgeProps {
     badge: IRichBadge;
@@ -52,7 +53,14 @@ const RichBadge: React.FC<RichBadgeProps> = ({ badge }) => {
     };
 
     return (
-        <div className="RichNode-badge" style={{ position: "relative" }}>
+        <Box
+            id={badge.id}
+            hidden={badge.hidden}
+            key={badge.key ?? badge.id}
+            className={clsx("RichNode-badge", badge.className)}
+            style={badge.style}
+            sx={{ position: "relative" }}
+        >
             <UnboundBadge
                 content={getDisplayValue()}
                 sx={{
@@ -61,7 +69,7 @@ const RichBadge: React.FC<RichBadgeProps> = ({ badge }) => {
                 }}
                 color={badge.severity as ThemeColor}
             />
-        </div>
+        </Box>
     );
 };
 

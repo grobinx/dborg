@@ -4,6 +4,7 @@ import { IRichContainerDefaults, IRichTimeline, IRichTimelineItem } from "../typ
 import RichRenderer, { getSeverityColor, RichIcon, RichText } from "..";
 import { resolveIcon } from "@renderer/themes/icons";
 import { Optional } from "@renderer/types/universal";
+import clsx from "@renderer/utils/clsx";
 
 interface RichTimelineProps {
     node: Optional<IRichTimeline, "type">;
@@ -17,14 +18,18 @@ const getItemColor = (item: IRichTimelineItem, theme: any) => {
 
 const RichTimeline: React.FC<RichTimelineProps> = ({ node, defaults }) => {
     const theme = useTheme();
-    const gap = defaults?.gap ?? 8;
+    const gap = defaults?.gap ?? 4;
     const lastIndex = node.items.length - 1;
 
     const columnTemplate = node.items.some(item => item.timestamp) ? `${Math.max(...node.items.map(item => (item.timestamp?.length ?? 0) * 0.5))}em 1.5em minmax(0, 1fr)` : "1.5em minmax(0, 1fr)";
 
     return (
         <Box
-            className="RichNode-timeline"
+            id={node.id}
+            hidden={node.hidden}
+            key={node.key ?? node.id}
+            className={clsx("RichNode-timeline", node.className)}
+            style={node.style}
             sx={{
                 display: "flex",
                 flexDirection: "column",

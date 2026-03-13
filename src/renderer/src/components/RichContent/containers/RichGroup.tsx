@@ -5,6 +5,7 @@ import RichRenderer, { getSeverityColor, RichIcon, RichSpacer, RichText } from "
 import { resolveIcon } from "@renderer/themes/icons";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { Optional } from "@renderer/types/universal";
+import clsx from "@renderer/utils/clsx";
 
 interface RichGroupProps {
     node: Optional<IRichGroup, "type" | "items">;
@@ -18,7 +19,11 @@ const RichGroup: React.FC<RichGroupProps> = ({ node, defaults, children }) => {
 
     return (
         <Paper
-            className="RichContainer-group"
+            id={node.id}
+            hidden={node.hidden}
+            key={node.key ?? node.id}
+            className={clsx("RichContainer-group", node.className)}
+            style={node.style}
             sx={{
                 overflow: "hidden",
             }}
@@ -28,7 +33,7 @@ const RichGroup: React.FC<RichGroupProps> = ({ node, defaults, children }) => {
                     sx={{
                         display: "flex",
                         alignItems: "center",
-                        gap: defaults?.gap ?? 8,
+                        gap: defaults?.gap ?? 4,
                         padding: defaults?.padding ?? 8,
                         backgroundColor: getSeverityColor(node.severity, theme),
                         color: getSeverityColor(node.severity, theme, true),
@@ -61,7 +66,13 @@ const RichGroup: React.FC<RichGroupProps> = ({ node, defaults, children }) => {
                 </Box>
             )}
             <Collapse in={!node.collapsible || expanded}>
-                <Box sx={{ padding: defaults?.padding ?? 8, display: "flex", flexDirection: "column", gap: node.gap ?? defaults?.gap ?? 8 }}>
+                <Box sx={{
+                    padding: defaults?.padding ?? 8,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: node.gap ?? defaults?.gap ?? 4
+                }}
+                >
                     {node.items?.map((item, index) => (
                         <RichRenderer key={index} node={item} defaults={defaults} />
                     ))}

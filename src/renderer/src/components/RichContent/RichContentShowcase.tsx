@@ -13,9 +13,8 @@ import {
     Chip,
     Divider,
 } from "@mui/material";
-import { RichContainer, RichRenderer } from "./index";
+import { RichContainer, RichNode, RichRenderer } from "./index";
 import { richContentExamples } from "./richContentExamples";
-import { IRichTimelineItem, RichNode } from "./types";
 import { Button } from "../buttons/Button";
 
 const countNodes = (nodes: RichNode[]): number => {
@@ -38,9 +37,7 @@ const countNodes = (nodes: RichNode[]): number => {
             case "alert":
                 return 1 + node.items.reduce((acc: number, n) => acc + countNode(n), 0);
             case "list":
-                return 1 + node.items.reduce((acc: number, n) => acc + countNode(n), 0);
-            case "listitem":
-                return 1 + node.items.reduce((acc: number, n) => acc + countNode(n), 0);
+                return 1;
             case "timeline":
                 return 1;
             default:
@@ -71,10 +68,6 @@ const collectNodeTypes = (nodes: RichNode[]): string[] => {
         set.add(node.type);
         if (node.type === "group" || node.type === "row" || node.type === "column" || node.type === "alert") {
             node.items.forEach(walk);
-        } else if (node.type === "list") {
-            node.items.forEach(walk);
-        } else if (node.type === "listitem") {
-            node.items.forEach(walk);
         }
     };
 
@@ -89,7 +82,6 @@ const collectNodeTypes = (nodes: RichNode[]): string[] => {
 const RichContentShowcase: React.FC = () => {
     const theme = useTheme();
     const [activeTab, setActiveTab] = useState(0);
-    const [showFrames, setShowFrames] = useState(true);
     const [showJson, setShowJson] = useState(false);
     const [compactMode, setCompactMode] = useState(false);
 
@@ -100,11 +92,6 @@ const RichContentShowcase: React.FC = () => {
     const totalNodeCount = useMemo(() => countNodes(currentExample), [currentExample]);
     const usedTypes = useMemo(() => collectNodeTypes(currentExample), [currentExample]);
 
-    const randomTab = () => {
-        const next = Math.floor(Math.random() * exampleKeys.length);
-        setActiveTab(next);
-    };
-
     return (
         <Container maxWidth="xl" sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
             <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
@@ -114,10 +101,6 @@ const RichContentShowcase: React.FC = () => {
             <Paper>
                 <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems={{ xs: "flex-start", md: "center" }}>
                     <FormControlLabel
-                        control={<Switch size="small" checked={showFrames} onChange={(e) => setShowFrames(e.target.checked)} />}
-                        label="Pokaż ramki elementów"
-                    />
-                    <FormControlLabel
                         control={<Switch size="small" checked={showJson} onChange={(e) => setShowJson(e.target.checked)} />}
                         label="Pokaż JSON"
                     />
@@ -125,9 +108,6 @@ const RichContentShowcase: React.FC = () => {
                         control={<Switch size="small" checked={compactMode} onChange={(e) => setCompactMode(e.target.checked)} />}
                         label="Compact mode"
                     />
-                    <Button size="small" onClick={randomTab}>
-                        Losowy scenariusz
-                    </Button>
                     <Button
                         size="small"
                         onClick={() => console.log("Current key:", currentKey, "Current nodes:", currentExample)}
@@ -166,7 +146,13 @@ const RichContentShowcase: React.FC = () => {
 
                 <Divider sx={{ mb: 2 }} />
 
-                <RichContainer node={{ items: currentExample }} />
+                <RichContainer
+                    node={{
+                        items: currentExample,
+                        padding: compactMode ? "2px 4px" : undefined,
+                        gap: compactMode ? 2 : undefined,
+                    }}
+                />
 
                 {showJson && (
                     <Box
