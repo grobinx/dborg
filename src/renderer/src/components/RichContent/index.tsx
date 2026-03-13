@@ -101,8 +101,11 @@ export const getSeverityColor = (severity: RichSeverity | undefined, theme: Them
     }
 };
 
-export async function resolveRichValue<V = any>(resolvable: RichValue<V> | undefined): Promise<V | undefined> {
-    return typeof resolvable === "function" ? (resolvable as () => Promise<V>)() : resolvable;
+
+export async function resolveRichValue<V = any>(resolvable: RichValue<V>, set: React.Dispatch<React.SetStateAction<V | null>>): Promise<V | null> {
+    const value = typeof resolvable === "function" ? await (resolvable as () => Promise<V>)() : resolvable;
+    set(value);
+    return value;
 }
 
 /**

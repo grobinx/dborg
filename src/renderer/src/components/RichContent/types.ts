@@ -153,12 +153,14 @@ export type RichNodeType =
     | "switch"
     | "table"
     | "stat"
-    | "timeline";
+    | "timeline"
+    | "entity"
+    | "skeleton";
 
 /**
  * Union type wszystkich możliwych węzłów Rich Content.
  */
-export type RichNode =
+export type RichNode<V = any> =
     | IRichText
     | IRichLink
     | IRichChip
@@ -179,6 +181,7 @@ export type RichNode =
     | IRichTable
     | IRichStat
     | IRichTimeline
+    | IRichSkeleton<V>
     /**
      * Tablica węzłów jest traktowana jak wiersz (RichRow) z elementami ułożonymi poziomo.
      */
@@ -277,7 +280,7 @@ export interface IRichContainer extends IRichContainerDefaults, IRichMetadata {
     /**
      * Elementy wewnątrz kontenera
      */
-    items: RichNode[];
+    items: RichValue<RichNode[]>;
     /**
      * Szerokość kontenera (np. "100%", "auto", 300)
      * @default "100%" 
@@ -303,6 +306,27 @@ export interface IRichNode extends IRichMetadata {
      * Typ węzła
      */
     type: RichNodeType;
+}
+
+export interface IRichSkeleton<V> extends IRichNode {
+    type: "skeleton";
+    /**
+     * Szerokość szkieletu (np. "100%", "auto", 300)
+     */
+    width?: number | string;
+    /**
+     * Wysokość szkieletu (np. "100%", "auto", 300)
+     */
+    height?: number | string;
+    /**
+     * Wariant szkieletu (np. "rectangular", "circular", "text")
+     * @default "rectangular"
+     */
+    variant?: "rectangular" | "circular" | "text";
+    /**
+     * Funkcja zwracająca dane do renderowania po zakończeniu ładowania.
+     */
+    get: () => Promise<V>;
 }
 
 /**
@@ -391,7 +415,7 @@ export interface IRichCode extends IRichNode {
     /**
      * Kod do wyświetlenia
      */
-    code: string;
+    code: RichValue<string>;
     /**
      * Język składni (np. "sql", "json", "typescript")
      */
@@ -881,4 +905,54 @@ export interface IRichTimeline extends IRichNode {
      * Zdarzenia na osi czasu
      */
     items: IRichTimelineItem[];
+}
+
+/**
+ * Typ kształtu avatara.
+ */
+export type RichAvatarShape = "circle" | "square" | "rounded";
+
+/**
+ * Entity/Avatar - komponent prezentujący obiekt, osobę lub system.
+ */
+export interface IRichEntity extends IRichNode {
+    type: "entity";
+    /**
+     * Główna nazwa/tytuł encji (np. "Jan Kowalski", "Produkcyjna Baza Danych")
+     */
+    name: RichNode;
+    /**
+     * Opcjonalny krótki opis pod nazwą
+     */
+    description?: RichNode;
+    /**
+     * URL do obrazka avatara
+     */
+    src?: string;
+    /**
+     * Inicjały wyświetlane, gdy brak obrazka (np. "JK")
+     */
+    initials?: string;
+    /**
+     * Ikona zastępcza lub dekoracyjna
+     */
+    icon?: React.ReactNode | ThemeIconName;
+    /**
+     * Rozmiar całego bloku
+     * @default "medium"
+     */
+    size?: Size;
+    /**
+     * Kształt avatara
+     * @default "circle"
+     */
+    shape?: RichAvatarShape;
+    /**
+     * Poziom ważności (może wpływać na kolor obramowania lub tła inicjałów)
+     */
+    severity?: RichSeverity;
+    /**
+     * Czy encja jest w stanie "online/aktywnym" (mała kropka statusu)
+     */
+    status?: "online" | "offline" | "away" | "busy";
 }

@@ -1,3 +1,4 @@
+import { sleep } from "@renderer/utils/sleep";
 import { RichNode } from "./types";
 
 type RichExampleMap = Record<string, RichNode[]>;
@@ -110,14 +111,17 @@ export const richContentExamples: RichExampleMap = {
             type: "code",
             language: "sql",
             lineNumbers: true,
-            code: [
-                "EXPLAIN ANALYZE",
-                "SELECT u.id, u.email",
-                "  FROM users u",
-                " WHERE u.active = true",
-                " ORDER BY u.created_at DESC",
-                "LIMIT 25;",
-            ].join("\n"),
+            code: async () => {
+                await sleep(5);
+                return [
+                    "EXPLAIN ANALYZE",
+                    "SELECT u.id, u.email",
+                    "  FROM users u",
+                    " WHERE u.active = true",
+                    " ORDER BY u.created_at DESC",
+                    "LIMIT 25;",
+                ].join("\n")
+            },
         },
         {
             type: "code",
@@ -414,7 +418,10 @@ export const richContentExamples: RichExampleMap = {
                     description: {
                         type: "code",
                         language: "sql",
-                        code: "SELECT id, email FROM users WHERE active = true LIMIT 50;",
+                        code: async () => {
+                            await sleep(3);
+                            return "SELECT id, email FROM users WHERE active = true LIMIT 50;"
+                        },
                     },
                 },
                 {
