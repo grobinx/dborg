@@ -25,7 +25,7 @@ export const RICH_TEXT_VARIANT_STYLES: RichTextVariantStyles = {
     "title-sm": { fontSize: "1.26em", lineHeight: 1.30, fontWeight: 600, component: "h4" },
     title: { fontSize: "1.42em", lineHeight: 1.25, fontWeight: 600, component: "h3" },
     "title-lg": { fontSize: "1.60em", lineHeight: 1.20, fontWeight: 700, component: "h2" },
-    display: { fontSize: "1.80em", lineHeight: 1.15, fontWeight: 700, component: "h1" },
+    hero: { fontSize: "1.80em", lineHeight: 1.15, fontWeight: 700, component: "h1" },
     "code-inline": { fontSize: "0.92em", lineHeight: 1.40, fontWeight: 400, component: "code" },
 };
 
@@ -95,7 +95,7 @@ const RichText: React.FC<RichTextProps> = ({ node, defaults }) => {
                 <Markdown
                     components={React.useMemo(() => ({
                         p: (props) => <RichTextRoot variant="body" component="span" textVariantStyles={defaults?.textVariantStyles} {...props} />,
-                        h1: (props) => <RichTextRoot variant="display" component="h1" textVariantStyles={defaults?.textVariantStyles} {...props} />,
+                        h1: (props) => <RichTextRoot variant="hero" component="h1" textVariantStyles={defaults?.textVariantStyles} {...props} />,
                         h2: (props) => <RichTextRoot variant="title-lg" component="h2" textVariantStyles={defaults?.textVariantStyles} {...props} />,
                         h3: (props) => <RichTextRoot variant="title" component="h3" textVariantStyles={defaults?.textVariantStyles} {...props} />,
                         h4: (props) => <RichTextRoot variant="title-sm" component="h4" textVariantStyles={defaults?.textVariantStyles} {...props} />,

@@ -410,7 +410,7 @@ export const richContentExamples: RichExampleMap = {
                 {
                     timestamp: "14:23:03",
                     severity: "success",
-                    label: "Wykonano zapytanie SELECT",
+                    label: { type: "text", text: "Wykonano zapytanie SELECT", severity: "success", variant: "overline" },
                     description: {
                         type: "code",
                         language: "sql",
@@ -457,149 +457,202 @@ export const richContentExamples: RichExampleMap = {
         },
     ],
 
-    "Scenariusz kompleksowy": [
+    "Tabela": [
         {
-            type: "group",
-            title: "Query Analyzer: Full Demo",
-            icon: "Analyze",
-            severity: "info",
-            collapsible: true,
-            defaultExpanded: true,
-            items: [
+            type: "table",
+            title: { type: "text", text: "Top zapytań", variant: "title-sm" },
+            showHeader: true,
+            height: 200,
+            columns: [
                 {
-                    type: "row",
-                    layout: "grid",
-                    justify: "space-between",
-                    items: [
-                        {
-                            type: "column",
-                            size: 4,
-                            items: [
-                                { type: "text", text: "Status", variant: "label" },
-                                { type: "chip", text: "WARNING", severity: "warning", badge: { value: "!" } },
-                            ],
-                        },
-                        {
-                            type: "column",
-                            size: 4,
-                            items: [
-                                { type: "text", text: "Exec Time", variant: "label" },
-                                { type: "text", text: "742 ms", severity: "warning" },
-                            ],
-                        },
-                        {
-                            type: "column",
-                            size: 4,
-                            items: [
-                                { type: "text", text: "Rows", variant: "label" },
-                                { type: "text", text: "1 532", severity: "info" },
-                            ],
-                        },
-                    ],
-                },
-                { type: "divider" },
-                {
-                    type: "alert",
-                    severity: "warning",
-                    title: "Potential Optimization",
-                    showIcon: true,
-                    items: [
-                        { type: "text", text: "Rozważ indeks na `users(active, created_at)`.", variant: "markdown" },
-                        {
-                            type: "list",
-                            listType: "numbered",
-                            items: [
-                                { content: [{ type: "text", text: "Dodaj indeks" }] },
-                                { content: [{ type: "text", text: "Uruchom ANALYZE" }] },
-                                { content: [{ type: "text", text: "Porównaj plan" }] },
-                            ],
-                        },
-                    ],
+                    key: "query",
+                    header: { type: "text", text: "Zapytanie", variant: "label" },
+                    width: "45%",
+                    align: "start",
                 },
                 {
-                    type: "code",
-                    language: "sql",
-                    lineNumbers: true,
-                    code: [
-                        "Seq Scan on users",
-                        "  Filter: (active = true)",
-                        "  Rows Removed by Filter: 152341",
-                        "  Execution Time: 742.31 ms",
-                    ].join("\n"),
+                    key: "duration",
+                    header: { type: "text", text: "Czas", variant: "label" },
+                    width: 120,
+                    align: "end",
                 },
                 {
-                    type: "progress",
-                    label: "Applying recommendation",
-                    value: 35,
-                    bufferValue: 62,
-                    showPercent: true,
-                    severity: "info",
+                    key: "rows",
+                    header: { type: "text", text: "Wiersze", variant: "label" },
+                    width: 100,
+                    align: "end",
                 },
                 {
-                    type: "row",
-                    items: [
-                        {
-                            type: "action",
-                            id: "apply-index",
-                            label: "Apply Index",
-                            tooltip: "Wygeneruj DDL indeksu",
-                            icon: "Settings",
-                            run: () => console.log("apply index"),
-                            badge: { value: "new", severity: "success" },
-                        },
-                        {
-                            type: "action",
-                            id: "open-docs",
-                            label: "Open Docs",
-                            icon: "OpenFile",
-                            run: () => {
-                                window.open("https://www.postgresql.org/docs/", "_blank");
-                            },
-                        },
-                    ],
+                    key: "status",
+                    header: { type: "text", text: "Status", variant: "label" },
+                    width: 140,
+                    align: "center",
+                },
+            ],
+            rows: [
+                {
+                    query: {
+                        type: "code",
+                        code: "SELECT * FROM users WHERE active = true",
+                    },
+                    duration: { type: "text", text: "82 ms", variant: "body" },
+                    rows: { type: "text", text: 120, variant: "body" },
+                    status: { type: "chip", text: "OK", severity: "success", variant: "outlined" },
                 },
                 {
-                    type: "group",
-                    title: "Execution Plan Snapshot",
-                    collapsible: true,
-                    items: [
-                        {
-                            type: "row",
-                            items: [
-                                {
-                                    type: "stat",
-                                    severity: "info",
-                                    label: "Node Type",
-                                    value: "Seq Scan",
-                                    size: 2,
-                                },
-                                {
-                                    type: "stat",
-                                    label: "Planing Time",
-                                    value: "120 ms",
-                                    size: 2,
-                                },
-                                {
-                                    type: "stat",
-                                    severity: "warning",
-                                    label: "Execution Time",
-                                    value: "622 ms",
-                                    size: 2,
-                                },
-                                {
-                                    type: "stat",
-                                    severity: "success",
-                                    label: "Total Time",
-                                    value: "580 ms",
-                                    trend: "down",
-                                    icon: "Clock",
-                                    size: 2,
-                                },
-                            ],
-                        },
-                    ],
+                    query: {
+                        type: "code",
+                        code: "SELECT * FROM orders WHERE status = 'OPEN'",
+                    },
+                    duration: { type: "text", text: "622 ms", variant: "body-strong", severity: "warning" },
+                    rows: { type: "text", text: 5320, variant: "body" },
+                    status: { type: "chip", text: "SLOW", severity: "warning", variant: "outlined" },
                 },
-                { type: "image", src: placeholderSvg("Execution Plan Snapshot", "eaf2ff", "1b263b"), width: "100%", height: 140, fit: "cover" },
+                {
+                    query: {
+                        type: "row",
+                        gap: 6,
+                        items: [
+                            { type: "icon", icon: "Error", severity: "error" },
+                            { type: "code", code: "UPDATE invoices SET ..." },
+                        ],
+                    },
+                    duration: { type: "text", text: "timeout", variant: "body-strong", severity: "error" },
+                    rows: { type: "text", text: "-", variant: "body" },
+                    status: { type: "chip", text: "ERROR", severity: "error" },
+                },
+                {
+                    query: {
+                        type: "code",
+                        code: "SELECT id, email FROM customers LIMIT 1000",
+                    },
+                    duration: { type: "text", text: "145 ms", variant: "body" },
+                    rows: { type: "text", text: 1000, variant: "body" },
+                    status: { type: "chip", text: "OK", severity: "success", variant: "outlined" },
+                },
+                {
+                    query: {
+                        type: "code",
+                        code: "DELETE FROM sessions WHERE expires_at < now()",
+                    },
+                    duration: { type: "text", text: "2.3 s", variant: "body-strong", severity: "warning" },
+                    rows: { type: "text", text: 18600, variant: "body" },
+                    status: { type: "chip", text: "HEAVY", severity: "warning", variant: "outlined" },
+                },
+                {
+                    query: {
+                        type: "code",
+                        code: "VACUUM ANALYZE public.users",
+                    },
+                    duration: { type: "text", text: "4.8 s", variant: "body-strong", severity: "warning" },
+                    rows: { type: "text", text: "-", variant: "body" },
+                    status: { type: "chip", text: "MAINT", severity: "info", variant: "outlined" },
+                },
+                {
+                    query: {
+                        type: "code",
+                        code: "INSERT INTO audit_log(event, payload) VALUES (...)",
+                    },
+                    duration: { type: "text", text: "38 ms", variant: "body" },
+                    rows: { type: "text", text: 1, variant: "body" },
+                    status: { type: "chip", text: "OK", severity: "success", variant: "outlined" },
+                },
+            ],
+        },
+        {
+            type: "table",
+            title: { type: "text", text: "Aktywne sesje PostgreSQL", variant: "title-sm" },
+            showHeader: true,
+            columns: [
+                {
+                    key: "pid",
+                    header: "PID",
+                    width: 90,
+                    align: "end",
+                },
+                {
+                    key: "user",
+                    header: "Użytkownik",
+                    width: 150,
+                    align: "start",
+                },
+                {
+                    key: "database",
+                    header: "Baza",
+                    width: 140,
+                    align: "start",
+                },
+                {
+                    key: "client",
+                    header: "Klient",
+                    width: "22%",
+                    align: "start",
+                },
+                {
+                    key: "state",
+                    header: "Stan",
+                    width: 130,
+                    align: "center",
+                },
+                {
+                    key: "txAge",
+                    header: "Czas TX",
+                    width: 110,
+                    align: "end",
+                },
+                {
+                    key: "wait",
+                    header: "Lock wait",
+                    width: 120,
+                    align: "center",
+                },
+            ],
+            rows: [
+                {
+                    pid: 18342,
+                    user: "app_readonly",
+                    database: "dborg_prod",
+                    client: "10.10.4.23",
+                    state: { type: "chip", text: "active", severity: "success", variant: "outlined" },
+                    txAge: "00:00:03",
+                    wait: { type: "chip", text: "NO", severity: "success", variant: "outlined" },
+                },
+                {
+                    pid: 18355,
+                    user: "etl_worker",
+                    database: "dborg_prod",
+                    client: "10.10.7.11",
+                    state: { type: "chip", text: "idle in tx", severity: "warning", variant: "outlined" },
+                    txAge: { type: "text", text: "00:04:51", variant: "body-strong", severity: "warning" },
+                    wait: { type: "chip", text: "YES", severity: "warning", variant: "outlined" },
+                },
+                {
+                    pid: 18401,
+                    user: "reporting",
+                    database: "dborg_replica",
+                    client: "10.11.2.5",
+                    state: { type: "chip", text: "active", severity: "info", variant: "outlined" },
+                    txAge: "00:00:44",
+                    wait: { type: "chip", text: "NO", severity: "success", variant: "outlined" },
+                },
+                {
+                    pid: 18433,
+                    user: "migration",
+                    database: "dborg_prod",
+                    client: "10.10.9.90",
+                    state: { type: "chip", text: "blocked", severity: "error" },
+                    txAge: { type: "text", text: "00:12:09", variant: "body-strong", severity: "error" },
+                    wait: { type: "chip", text: "YES", severity: "error" },
+                },
+                {
+                    pid: 18457,
+                    user: "app_write",
+                    database: "dborg_prod",
+                    client: "10.10.4.44",
+                    state: { type: "chip", text: "idle", severity: "default", variant: "outlined" },
+                    txAge: "00:00:00",
+                    wait: { type: "chip", text: "NO", severity: "success", variant: "outlined" },
+                },
             ],
         },
     ],

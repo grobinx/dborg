@@ -2,7 +2,7 @@ import React from "react";
 import { Chip, Box, useTheme } from "@mui/material";
 import { IRichChip, IRichContainerDefaults, RichSeverity } from "../types";
 import RichBadge from "./RichBadge";
-import RichRenderer from "..";
+import RichRenderer, { RichText } from "..";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 
@@ -21,15 +21,20 @@ const RichChip: React.FC<RichChipProps> = ({ node, defaults }) => {
             key={node.key ?? node.id}
             className={clsx("RichNode-chip", node.className)}
             style={node.style}
-            sx={{ display: "inline-block", position: "relative", alignSelf: "flex-start" }}
+            sx={{ display: "inline-block", position: "relative", alignSelf: "flex-start", }}
         >
             <Chip
-                label={<RichRenderer node={node.text} defaults={defaults} />}
+                label={
+                    typeof node.text === "string" || typeof node.text === "number"
+                        ? <RichText node={{ type: "text", text: node.text, variant: "label" }} defaults={defaults} />
+                        : <RichRenderer node={node.text} defaults={defaults} />
+                }
                 size="small"
                 sx={{
                     paddingRight: node.badge ? (defaults?.padding ?? 8) : undefined,
                     fontSize: "inherit",
                     fontFamily: "inherit",
+                    lineHeight: "inherit",
                     height: "auto",
                 }}
                 variant={node.variant}

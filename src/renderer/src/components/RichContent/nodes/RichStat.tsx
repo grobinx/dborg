@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Typography, useTheme } from "@mui/material";
 import { IRichStat, IRichContainerDefaults, RichColSize } from "../types";
-import { getSeverityColor, RichRow, RichText } from "..";
+import RichRenderer, { getSeverityColor, RichRow, RichText } from "..";
 import RichIcon from "./RichIcon";
 import clsx from "@renderer/utils/clsx";
 
@@ -70,12 +70,16 @@ const RichStat: React.FC<RichStatProps> = ({ node, defaults }) => {
                     <RichText node={{ variant: "title", text: node.value, severity }} defaults={defaults} />
                 </Box>
                 {node.icon && (
-                    <RichIcon node={{ icon: node.icon, severity }} defaults={defaults} />
+                    <RichIcon node={{ icon: node.icon, severity, size: "large" }} defaults={defaults} />
                 )}
             </RichRow>
 
             {/* Etykieta */}
-            <RichText node={{ variant: "caption", text: node.label }} defaults={defaults} />
+            {typeof node.label === "string" || typeof node.label === "number" ? (
+                <RichText node={{ variant: "label", text: node.label }} defaults={defaults} />
+            ) : (
+                <RichRenderer node={node.label} defaults={defaults} />
+            )}
         </Box>
     );
 };

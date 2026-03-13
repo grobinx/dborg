@@ -11,19 +11,89 @@ export type RichSeverity = "default" | "info" | "warning" | "error" | "success";
  * Wariant typograficzny tekstu w Rich Content.
  */
 export type RichTextVariant =
+    /**
+     * Najmniejszy tekst pomocniczy.
+     * Użycie: metadane o niskim priorytecie (np. krótkie dopiski techniczne, małe statusy).
+     * Styl bazowy: 0.79em, lineHeight 1.30, fontWeight 400, component span.
+     */
     | "micro"
+    /**
+     * Mały podpis / adnotacja.
+     * Użycie: podpisy pod elementami, krótkie opisy wtórne.
+     * Styl bazowy: 0.89em, lineHeight 1.35, fontWeight 400, component span.
+     */
     | "caption"
+    /**
+     * Krótki opis treści, bardziej czytelny niż caption.
+     * Użycie: opis sekcji, opis elementu UI, tekst pomocniczy pod nagłówkiem.
+     * Styl bazowy: 0.95em, lineHeight 1.45, fontWeight 400, component p.
+     */
     | "description"
+    /**
+     * Podstawowy wariant tekstu.
+     * Użycie: główna treść akapitów i domyślny tekst w Rich Content.
+     * Styl bazowy: 1em, lineHeight 1.50, fontWeight 400, component p.
+     */
     | "body"
+    /**
+     * Tekst podstawowy z mocniejszym akcentem.
+     * Użycie: ważniejsze zdanie w akapicie bez zmiany poziomu nagłówka.
+     * Styl bazowy: 1em, lineHeight 1.50, fontWeight 600, component p.
+     */
     | "body-strong"
+    /**
+     * Akapit wprowadzający.
+     * Użycie: lead na początku sekcji lub krótkie podsumowanie przed treścią.
+     * Styl bazowy: 1.12em, lineHeight 1.45, fontWeight 400, component p.
+     */
     | "lead"
+    /**
+     * Etykieta o podwyższonej czytelności.
+     * Użycie: labelki pól, nazwy parametrów, krótkie nagłówki wierszy.
+     * Styl bazowy: 0.89em, lineHeight 1.30, fontWeight 600, letterSpacing 0.01em, component span.
+     */
     | "label"
+    /**
+     * Etykieta sekcyjna pisana wielkimi literami.
+     * Użycie: mały nadtytuł nad właściwym tytułem (kategoria, sekcja).
+     * Styl bazowy: 0.79em, lineHeight 1.25, fontWeight 600, letterSpacing 0.08em, uppercase, component span.
+     */
     | "overline"
+    /**
+     * Mały nagłówek sekcji.
+     * Użycie: tytuł podsekcji niższego poziomu.
+     * Styl bazowy: 1.26em, lineHeight 1.30, fontWeight 600, component h4.
+     */
     | "title-sm"
+    /**
+     * Standardowy tytuł sekcji.
+     * Użycie: główny nagłówek bloku treści.
+     * Styl bazowy: 1.42em, lineHeight 1.25, fontWeight 600, component h3.
+     */
     | "title"
+    /**
+     * Duży tytuł sekcji.
+     * Użycie: mocno eksponowane nagłówki większych paneli.
+     * Styl bazowy: 1.60em, lineHeight 1.20, fontWeight 700, component h2.
+     */
     | "title-lg"
-    | "display"
+    /**
+     * Największy nagłówek widoku.
+     * Użycie: tytuł strony/ekranu.
+     * Styl bazowy: 1.80em, lineHeight 1.15, fontWeight 700, component h1.
+     */
+    | "hero"
+    /**
+     * Kod inline w treści.
+     * Użycie: krótkie fragmenty kodu osadzone w zdaniu (np. nazwa parametru, komenda).
+     * Styl bazowy: 0.92em, lineHeight 1.40, fontWeight 400, component code.
+     */
     | "code-inline"
+    /**
+     * Tryb renderowania Markdown.
+     * Użycie: gdy tekst ma być parsowany jako Markdown; nie ma bezpośredniego wpisu w RichTextVariantStyles.
+     * Mapowanie nagłówków i paragrafów odbywa się w komponencie RichText.
+     */
     | "markdown";
 
 /**
@@ -64,25 +134,25 @@ export type RichValue<V = any> = V | (() => Promise<V>);
  * Typ węzła w strukturze Rich Content.
  */
 export type RichNodeType =
-    | "text" 
-    | "link" 
-    | "chip" 
-    | "code" 
-    | "progress" 
+    | "text"
+    | "link"
+    | "chip"
+    | "code"
+    | "progress"
     | "group"
-    | "row" 
-    | "column" 
-    | "icon" 
+    | "row"
+    | "column"
+    | "icon"
     | "divider"
-    | "spacer" 
-    | "alert" 
-    | "kbd" 
-    | "action" 
+    | "spacer"
+    | "alert"
+    | "kbd"
+    | "action"
     | "image"
-    | "list" 
-    | "switch" 
+    | "list"
+    | "switch"
     | "table"
-    | "stat" 
+    | "stat"
     | "timeline";
 
 /**
@@ -740,10 +810,9 @@ export interface IRichTable extends IRichNode {
      */
     showHeader?: boolean;
     /**
-     * Styl obramowania
-     * @default "bordered"
+     * Wysokość tabeli (np. "100%", "auto", 300) - jeśli zawartość przekroczy wysokość, pojawi się scroll
      */
-    variant?: "bordered" | "striped" | "plain";
+    height?: number | string;
 }
 
 /**
@@ -758,7 +827,7 @@ export interface IRichStat extends IRichNode {
     /**
      * Etykieta opisująca metrykę
      */
-    label: string;
+    label: RichNode;
     /**
      * Kierunek trendu (opcjonalnie)
      */

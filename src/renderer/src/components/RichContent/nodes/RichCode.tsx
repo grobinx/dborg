@@ -29,8 +29,8 @@ const RichCode: React.FC<RichCodeProps> = ({ node, defaults }) => {
                 padding: defaults?.padding ?? 4,
                 fontFamily: defaults?.fontFamilyMonospace ?? "monospace",
                 fontSize: "0.875em",
-                marginTop: defaults?.gap ?? 4,
-                marginBottom: defaults?.gap ?? 4,
+                marginTop: 0, //defaults?.gap ?? 4,
+                marginBottom: 0, //defaults?.gap ?? 4,
                 ...node.style,
             }}
             lineNumberStyle={{

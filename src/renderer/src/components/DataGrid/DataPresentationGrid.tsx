@@ -7,6 +7,7 @@ import {
     TableContainerProps,
     TableHead,
     TableRow,
+    TableRowProps,
     TableSortLabel,
     type TableCellProps,
     type TableProps,
@@ -33,9 +34,13 @@ export interface DataPresentationGridProps<T> {
     initialSort?: SortStateOptions;
     limit?: number;
     loading?: boolean;
+    showHeader?: boolean;
     slotProps?: {
         table?: Omit<TableProps, "children">;
         container?: Omit<TableContainerProps, "children">;
+        tr?: Omit<TableRowProps, "children">;
+        td?: Omit<TableCellProps, "children">;
+        th?: Omit<TableCellProps, "children">;
     };
 }
 
@@ -70,6 +75,7 @@ const getInitialSort = <T,>(
 export function DataPresentationGrid<T>({
     data,
     columns,
+    showHeader = true,
     initialSort,
     limit,
     loading,
@@ -146,14 +152,14 @@ export function DataPresentationGrid<T>({
             )}
 
             <Table size="small" stickyHeader {...slotProps?.table}>
-                {columns && (
+                {showHeader && columns  && (
                     <TableHead>
-                        <TableRow>
+                        <TableRow {...slotProps?.tr}>
                             {columns.map((column) => {
                                 const active = sort?.key === column.key;
 
                                 return (
-                                    <TableCell key={column.key} align={column.align} sx={column.width ? { width: column.width } : undefined}>
+                                    <TableCell key={column.key} align={column.align} width={column.width} {...slotProps?.th}>
                                         {isSortable(column) ? (
                                             <TableSortLabel
                                                 active={active}
@@ -174,14 +180,14 @@ export function DataPresentationGrid<T>({
 
                 <TableBody>
                     {visibleRows.length === 0 ? (
-                        <TableRow>
-                            <TableCell colSpan={resolvedColumns.length}>{t("no-data", "No data")}</TableCell>
+                        <TableRow {...slotProps?.tr}>
+                            <TableCell colSpan={resolvedColumns.length} {...slotProps?.td}>{t("no-data", "No data")}</TableCell>
                         </TableRow>
                     ) : (
                         visibleRows.map((row, rowIndex) => (
-                            <TableRow key={rowIndex} hover>
+                            <TableRow key={rowIndex} hover {...slotProps?.tr}>
                                 {resolvedColumns.map((column) => (
-                                    <TableCell key={column.key} align={column.align}>
+                                    <TableCell key={column.key} align={column.align} width={column.width} {...slotProps?.td}>
                                         {column.formatter ?
                                             column.formatter(row[column.key], row, column.key)
                                             : valueToString(row[column.key], column.dataType ?? resolveDataTypeFromValue(row[column.key]) ?? "string")
