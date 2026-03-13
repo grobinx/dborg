@@ -36,7 +36,7 @@ const RichText: React.FC<RichTextProps> = ({ node, defaults }) => {
             <Box className="RichNode-markdown" sx={{ color: getSeverityColor(node.severity, theme) }}>
                 <Markdown
                     components={React.useMemo(() => ({
-                        p: (props) => <Typography {...props} component="span" className="paragraph" fontSize="inherit" fontWeight="inherit" lineHeight="inherit" />,
+                        p: (props) => <Typography {...props} component="span" className="paragraph" fontSize="inherit" fontWeight="inherit" lineHeight="inherit" padding={defaults?.padding ?? 8} />,
                         h1: (props) => <Typography variant="h1" fontSize="3em" {...props} />,
                         h2: (props) => <Typography variant="h2" fontSize="2.7em" {...props} />,
                         h3: (props) => <Typography variant="h3" fontSize="2.4em" {...props} />,

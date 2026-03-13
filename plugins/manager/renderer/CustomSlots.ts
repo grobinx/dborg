@@ -65,12 +65,12 @@ export interface SlotRuntimeContext {
 }
 
 export type ResolvableValue<C = SlotRuntimeContext, V = any> = V | ((context: C) => V);
-export type ResolvableAsyncValue<C = SlotRuntimeContext, V = any> = Promise<V> | ((context: C) => Promise<V>);
+export type ResolvableAsyncValue<C = SlotRuntimeContext, V = any> = V | ((context: C) => Promise<V>);
 
 export function resolveValue<T = SlotRuntimeContext, V = any>(resolvable: ResolvableValue<T, V> | undefined, context: T): V | undefined {
     return typeof resolvable === "function" ? (resolvable as (context: T) => V)(context) : resolvable;
 }
-export function resolveAsyncValue<T = SlotRuntimeContext, V = any>(resolvable: ResolvableAsyncValue<T, V> | undefined, context: T): Promise<V> | undefined {
+export async function resolveAsyncValue<T = SlotRuntimeContext, V = any>(resolvable: ResolvableAsyncValue<T, V> | undefined, context: T): Promise<V | undefined> {
     return typeof resolvable === "function" ? (resolvable as (context: T) => Promise<V>)(context) : resolvable;
 }
 

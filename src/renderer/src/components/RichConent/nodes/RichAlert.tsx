@@ -48,7 +48,7 @@ const RichAlert: React.FC<RichAlertProps> = ({ node, defaults }) => {
             }}
         >
             {node.title && (
-                typeof node.title === "string" ? (
+                typeof node.title === "string" || typeof node.title === "number" ? (
                     <AlertTitle>{node.title}</AlertTitle>
                 ) : (
                     <RichRenderer node={node.title} defaults={defaults} />

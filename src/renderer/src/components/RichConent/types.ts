@@ -27,6 +27,8 @@ export type RichGap = number | string;
  */
 export type RichColSize = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | "auto";
 
+export type RichValue<V = any> = V | (() => Promise<V>);
+
 /**
  * Typ węzła w strukturze Rich Content.
  */
@@ -296,6 +298,11 @@ export interface IRichIcon extends IRichNode {
      * Tooltip wyświetlany po najechaniu
      */
     tooltip?: string;
+    /**
+     * Rozmiar ikony
+     * @default "medium"
+     */
+    size?: Size;
 }
 
 /**
@@ -694,7 +701,7 @@ export interface IRichTimelineItem {
     /**
      * Treść zdarzenia
      */
-    label: string;
+    label: RichNode;
     /**
      * Dodatkowy opis
      */

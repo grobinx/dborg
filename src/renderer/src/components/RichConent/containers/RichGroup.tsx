@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Paper, Typography, Collapse, useTheme } from "@mui/material";
 import { IRichContainerDefaults, IRichGroup } from "../types";
-import RichRenderer, { getSeverityColor } from "..";
+import RichRenderer, { getSeverityColor, RichIcon, RichSpacer, RichText } from "..";
 import { resolveIcon } from "@renderer/themes/icons";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { Optional } from "@renderer/types/universal";
@@ -38,18 +38,15 @@ const RichGroup: React.FC<RichGroupProps> = ({ node, defaults, children }) => {
                     onClick={() => node.collapsible && setExpanded(!expanded)}
                 >
                     {node.icon && (
-                        <Box sx={{ display: "flex", alignItems: "center" }}>
-                            {resolveIcon(theme, node.icon)}
-                        </Box>
+                        <RichIcon node={{ icon: node.icon, size: "large" }} defaults={defaults} />
                     )}
                     {node.title && (
-                        typeof node.title === "string" ? (
-                            <Typography variant="subtitle2" sx={{ flex: 1 }}>
-                                {node.title}
-                            </Typography>
+                        typeof node.title === "string" || typeof node.title === "number" ? (
+                            <RichText node={{ text: node.title, variant: "title" }} defaults={defaults} />
                         ) : (
                             <RichRenderer node={node.title} defaults={defaults} />
                         ))}
+                    <RichSpacer node={{}} defaults={defaults} />
                     {node.collapsible && (
                         <ToolButton
                             size="small"

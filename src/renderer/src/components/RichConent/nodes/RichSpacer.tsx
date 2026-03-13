@@ -1,9 +1,10 @@
 import React from "react";
 import { Box } from "@mui/material";
 import { IRichContainerDefaults, IRichSpacer } from "../types";
+import { Optional } from "@renderer/types/universal";
 
 interface RichSpacerProps {
-    node: IRichSpacer;
+    node: Optional<IRichSpacer, "type">;
     defaults?: IRichContainerDefaults;
 }
 

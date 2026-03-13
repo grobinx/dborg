@@ -22,6 +22,7 @@ const RichIcon: React.FC<RichIconProps> = ({ node }) => {
                 justifyContent: "center",
                 color: getSeverityColor(node.severity, theme),
                 alignSelf: "center",
+                fontSize: node.size === "small" ? "0.75em" : node.size === "large" ? "1.6em" : undefined,
             }}
         >
             {resolveIcon(theme, node.icon)}

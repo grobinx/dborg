@@ -48,7 +48,7 @@ const RichTimeline: React.FC<RichTimelineProps> = ({ node, defaults }) => {
                         }}
                     >
                         {/* Rząd 1: timestamp | marker | label */}
-                        <Box sx={{ textAlign: "right", color: theme.palette.text.secondary, height: "100%" }}>
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", color: theme.palette.text.secondary, height: "100%" }}>
                             {item.timestamp && <RichText node={{ text: item.timestamp, variant: "caption" }} defaults={defaults} />}
                         </Box>
 
@@ -80,7 +80,11 @@ const RichTimeline: React.FC<RichTimelineProps> = ({ node, defaults }) => {
                                 alignItems: "center",
                             }}
                         >
-                            <RichText node={{ text: item.label, variant: "label" }} defaults={defaults} />
+                            {typeof item.label === "string" || typeof item.label === "number" ? (
+                                <RichText node={{ text: item.label, variant: "label" }} defaults={defaults} />
+                            ) : (
+                                <RichRenderer node={item.label} defaults={defaults} />
+                            )}
                         </Box>
 
                         {/* Rząd 2: pusto | pionowa kreska | caption */}

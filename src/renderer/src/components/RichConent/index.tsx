@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Theme } from "@mui/material";
-import { IRichContainerDefaults, RichNode, RichSeverity } from "./types";
+import { IRichContainerDefaults, RichNode, RichSeverity, RichValue } from "./types";
 
 // Types
 export type {
@@ -97,6 +97,10 @@ export const getSeverityColor = (severity: RichSeverity | undefined, theme: Them
             return "inherit";
     }
 };
+
+export async function resolveRichValue<V = any>(resolvable: RichValue<V> | undefined): Promise<V | undefined> {
+    return typeof resolvable === "function" ? (resolvable as () => Promise<V>)() : resolvable;
+}
 
 /**
  * Główny komponent renderujący węzły Rich Content.
