@@ -245,7 +245,7 @@ export const richContentExamples: RichExampleMap = {
             type: "list",
             listType: "numbered",
             items: [
-                { content: "Numbered item 1" },
+                { content: { type: "text", text: "Numbered item 1 (bold, italic)", decoration: ["bold", "italic"] } },
                 { severity: "warning", content: "Numbered warning item" },
                 { severity: "error", content: "Numbered error item" },
             ],

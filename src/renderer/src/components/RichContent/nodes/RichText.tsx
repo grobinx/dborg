@@ -129,7 +129,16 @@ const RichText: React.FC<RichTextProps> = ({ node, defaults }) => {
             className={clsx("RichNode-text", node.className)}
             style={node.style}
             variant={node.variant ?? "body"}
-            sx={{ color: getSeverityColor(node.severity, theme) }}
+            sx={{ 
+                color: getSeverityColor(node.severity, theme),
+                fontFamily: node.decoration?.includes("monospace") ? defaults?.fontFamilyMonospace ?? theme.typography.monospaceFontFamily : undefined,
+                fontWeight: node.decoration?.includes("bold") ? "bold" : undefined,
+                fontStyle: node.decoration?.includes("italic") ? "italic" : undefined,
+                textDecoration: [
+                    node.decoration?.includes("underline") ? "underline" : undefined,
+                    node.decoration?.includes("strikethrough") ? "line-through" : undefined
+                ].filter(Boolean).join(" ")
+            }}
             textVariantStyles={defaults?.textVariantStyles}
         >
             {node.text}

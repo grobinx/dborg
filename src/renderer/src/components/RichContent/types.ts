@@ -392,6 +392,8 @@ export interface IRichChip extends IRichNode {
     badge?: IRichBadge;
 }
 
+export type RichTextDecoration = "bold" | "italic" | "underline" | "strikethrough" | "monospace";
+
 /**
  * Prosty tekst z opcjonalnym formatowaniem.
  */
@@ -409,6 +411,10 @@ export interface IRichText extends IRichNode {
      * Wariant typograficzny (rozmiar, grubość czcionki)
      */
     variant?: RichTextVariant;
+    /**
+     * Dekoracje tekstu (np. pogrubienie, kursywa, podkreślenie)
+     */
+    decoration?: RichTextDecoration[];
 }
 
 /**
@@ -982,4 +988,189 @@ export interface IRichEntity extends IRichNode {
      * Czy encja jest w stanie "online/aktywnym" (mała kropka statusu)
      */
     status?: "online" | "offline" | "away" | "busy";
+}
+
+/**
+ * Quote - cytat z opcjonalnym autorem i akcentem kolorystycznym.
+ */
+export interface IRichQuote extends IRichNode {
+    type: "quote";
+    /**
+     * Treść cytatu
+     */
+    content: RichNode;
+    /**
+     * Opcjonalny autor lub źródło
+     */
+    caption?: RichNode;
+    /**
+     * Akcent kolorystyczny z lewej strony
+     */
+    severity?: RichSeverity;
+}
+
+/**
+ * Opis definicji pary label-value, często używany w listach właściwości lub FAQ.
+ */
+export interface IRichDescriptionItem {
+    /**
+     * Etykieta/klucz właściwości
+     */
+    label: RichNode;
+    /**
+     * Wartość właściwości
+     */
+    value: RichNode;
+    /** 
+     * Opcjonalna ikona pomocnicza przy etykiecie 
+     */
+    icon?: ThemeIconName;
+}
+
+/**
+ * Description - lista par label-value z opcjonalnym układem i szerokością kolumny labela.
+ */
+export interface IRichDescription extends IRichNode {
+    type: "description";
+    /**
+     * Elementy listy opisowej - pary label-value, które będą renderowane w formacie "label: value".
+     */
+    items: IRichDescriptionItem[];
+    /** 
+     * Szerokość kolumny labela w trybie horizontal 
+     */
+    labelWidth?: string | number;
+}
+
+/**
+ * Element drzewa - węzeł z etykietą i opcjonalnymi dziećmi, renderowany jako rozbudowany komponent drzewa.
+ */
+export interface IRichTreeItem extends IRichMetadata {
+    /**
+     * Etykieta elementu drzewa, która może być prostym tekstem lub złożonym węzłem RichNode (np. z ikoną, badge'em itp.).
+     */
+    label: RichNode;
+    /**
+     * Ikona elementu drzewa (opcjonalnie, może być użyta do oznaczenia typu elementu lub jego stanu)
+     */
+    icon?: ThemeIconName;
+    /**
+     * Dzieci elementu drzewa - jeśli podano, element będzie renderowany jako rozbudowany węzeł drzewa z możliwością rozwijania/zwijania.
+     */
+    children?: IRichTreeItem[];
+    /**
+     * Czy element drzewa jest domyślnie rozwinięty (jeśli ma dzieci)
+     */
+    expanded?: boolean;
+    /** 
+     * Akcja wywoływana po kliknięciu w element 
+     */
+    action?: IRichAction;
+}
+
+/**
+ * Drzewo - struktura hierarchiczna elementów, renderowana jako rozbudowany komponent drzewa z możliwością rozwijania/zwijania gałęzi.
+ */
+export interface IRichTree extends IRichNode {
+    type: "tree";
+    /**
+     * Elementy drzewa - lista węzłów, które będą renderowane jako gałęzie i liście drzewa. Każdy element może mieć swoje dzieci, tworząc zagnieżdżoną strukturę.
+     */
+    items: IRichTreeItem[];
+}
+
+/**
+ * Wskaźnik kroku - komponent prezentujący postęp w wieloetapowym procesie, z etykietami i ikonami dla każdego kroku.
+ */
+export interface IRichStep {
+    /**
+     * Etykieta kroku, która może być prostym tekstem lub złożonym węzłem RichNode (np. z ikoną, badge'em itp.).
+     */
+    label: RichNode;
+    /**
+     * Dodatkowy opis kroku, wyświetlany pod etykietą lub jako tooltip (opcjonalnie)
+     */
+    description?: RichNode;
+    /**
+     * Ikona reprezentująca krok (opcjonalnie, może być użyta do oznaczenia typu kroku lub jego stanu)
+     */
+    icon?: React.ReactNode | ThemeIconName;
+    /**
+     * Status kroku, który wpływa na jego wygląd (np. kolor, ikona) i informuje użytkownika o postępie w procesie.
+     * - "pending": krok jeszcze nie rozpoczęty, zwykle szary lub z ikoną zegara.
+     * - "current": aktualnie aktywny krok, zwykle wyróżniony kolorem lub ikoną wskazującą na aktywność.
+     * - "completed": krok zakończony, zwykle zielony lub z ikoną checkmarka.
+     * - "error": krok zakończony z błędem, zwykle czerwony lub z ikoną błędu.
+     */
+    status: "pending" | "current" | "completed" | "error";
+}
+
+/**
+ * Wskaźnik kroku - komponent prezentujący postęp w wieloetapowym procesie, z etykietami i ikonami dla każdego kroku.
+ * Może być renderowany w orientacji poziomej lub pionowej, z opcją automatycznego numerowania kroków.
+ */
+export interface IRichStepper extends IRichNode {
+    type: "stepper";
+    /**
+     * Kroki procesu, które będą renderowane jako kolejne etapy w wskaźniku. Każdy krok ma swoją etykietę, status i opcjonalną ikonę, co pozwala na jasne przedstawienie postępu użytkownikowi.
+     */
+    items: IRichStep[];
+    /** 
+     * Orientacja wskaźnika kroku 
+     */
+    orientation?: "horizontal" | "vertical";
+    /** 
+     * Czy kroki mają być numerowane automatycznie 
+     */
+    numbered?: boolean;
+}
+
+/**
+ * RichMetric - specjalny typ statu, który oprócz wartości i etykiety może zawierać mini-wykres (sparkline) oraz opis trendu, idealny do prezentacji kluczowych wskaźników wydajności (KPI).
+ */
+export interface IRichMetric extends IRichNode {
+    type: "metric";
+    /** 
+     * Uproszczona tablica wartości do wygenerowania mini-wykresu liniowego 
+     */
+    sparkline?: number[];
+    /**
+     * Etykieta opisująca metrykę
+     */
+    label: RichNode;
+    /**
+     * Poziom ważności wpływający na kolor wartości
+     */
+    severity?: RichSeverity;
+    /**
+     * Ikona obok wartości
+     */
+    icon?: React.ReactNode | ThemeIconName;
+    /**
+     * Rozmiar metryki (podobnie jak dla kolumn)
+     */
+    size?: RichColSize;
+}
+
+/**
+ * RichLogLine - specjalny typ wiersza logu, który oprócz treści logu może zawierać sygnaturę czasową, źródło logu i poziom logowania, idealny do prezentacji strumieni logów lub historii zdarzeń.
+ */
+export interface IRichLogLine extends IRichNode {
+    type: "log-line";
+    /** 
+     * Sygnatura czasowa w formacie ISO lub czytelnym 
+     */
+    timestamp?: RichNode;
+    /** 
+     * Nazwa modułu/źródła logu 
+     */
+    source?: RichNode;
+    /** 
+     * Treść logu 
+     */
+    message: RichNode;
+    /** 
+     * Poziom logowania (error, warn, info, debug) 
+     */
+    level?: "error" | "warn" | "info" | "debug" | "trace";
 }
