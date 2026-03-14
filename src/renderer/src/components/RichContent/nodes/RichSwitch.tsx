@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, FormControlLabel, Switch, SwitchProps, useTheme } from "@mui/material";
 import { IRichContainerDefaults, IRichSwitch } from "../types";
-import RichRenderer, { getSeverityColor, RichText } from "..";
+import RichRenderer from "..";
 import clsx from "@renderer/utils/clsx";
 
 interface RichSwitchProps {
@@ -47,10 +47,7 @@ const RichSwitch: React.FC<RichSwitchProps> = ({ node, defaults }) => {
             {node.label ? (
                 <FormControlLabel
                     control={control}
-                    label={typeof node.label === "string" || typeof node.label === "number" ?
-                        <RichText node={{ text: node.label, variant: "label" }} />
-                        : <RichRenderer node={node.label} defaults={defaults} />
-                    }
+                    label={<RichRenderer node={node.label} defaults={defaults} textVariant="label" />}
                     //color={getSeverityColor(node.severity, theme)}
                     sx={{
                         m: 0,

@@ -5,7 +5,7 @@ import { vs, vs2015 } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { IRichCode, IRichContainerDefaults } from "../types";
 import clsx from "@renderer/utils/clsx";
 import { Optional } from "@renderer/types/universal";
-import { resolveRichValue, RichIcon } from "..";
+import { resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
 
 interface RichCodeProps {
     node: Optional<IRichCode, "type">;
@@ -14,10 +14,10 @@ interface RichCodeProps {
 
 const RichCode: React.FC<RichCodeProps> = ({ node, defaults }) => {
     const theme = useTheme();
-    const [code, setCode] = React.useState<string | null>(null);
+    const [code, setCode] = React.useState<string | null>(resolveRichValue(node.code));
 
     React.useEffect(() => {
-        resolveRichValue(node.code, setCode);
+        resolveRichValueFromFunction(node.code, setCode);
     }, [node.code]);
 
     return (

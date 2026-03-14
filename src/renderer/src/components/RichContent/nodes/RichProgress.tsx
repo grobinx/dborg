@@ -1,9 +1,8 @@
 import React from "react";
-import { LinearProgress, Box, Typography, useTheme } from "@mui/material";
+import { LinearProgress, Box, useTheme } from "@mui/material";
 import { IRichContainerDefaults, IRichProgress, RichSeverity } from "../types";
-import { defaults } from "pg";
-import RichText from "./RichText";
 import clsx from "@renderer/utils/clsx";
+import RichRenderer, { RichText } from "..";
 
 interface RichProgressProps {
     node: IRichProgress;
@@ -38,7 +37,7 @@ const RichProgress: React.FC<RichProgressProps> = ({ node, defaults }) => {
         >
             {(node.label || node.showPercent) && (
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    {node.label && <RichText node={{ text: node.label, variant: "caption" }} defaults={defaults} />}
+                    {node.label && <RichRenderer node={node.label} defaults={defaults} textVariant="caption" />}
                     {node.showPercent && <RichText node={{ text: `${Math.round(node.value)}%`, variant: "caption" }} defaults={defaults} />}
                 </Box>
             )}

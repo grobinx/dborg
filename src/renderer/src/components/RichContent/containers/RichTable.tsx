@@ -4,7 +4,7 @@ import DataPresentationGrid, { DataPresentationGridColumn } from "@renderer/comp
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 import { IRichContainerDefaults, IRichTable, IRichTableRow, RichNode } from "../types";
-import RichRenderer, { RichText } from "..";
+import RichRenderer from "..";
 
 interface RichTableProps {
     node: Optional<IRichTable, "type">;
@@ -25,13 +25,10 @@ const toTableAlign = (align?: "start" | "center" | "end"): TableCellProps["align
 
 const renderRichValue = (value: RichNode | undefined, defaults?: IRichContainerDefaults): React.ReactNode => {
     if (value === null || value === undefined) return null;
-    if (typeof value === "string" || typeof value === "number") {
-        return <RichText node={{ type: "text", text: value, variant: "body" }} defaults={defaults} />;
-    }
     if (Array.isArray(value)) {
         return <RichRenderer node={{ type: "row", items: value }} defaults={defaults} />;
     }
-    return <RichRenderer node={value} defaults={defaults} />;
+    return <RichRenderer node={value} defaults={defaults} textVariant="body" />;
 };
 
 const RichTable: React.FC<RichTableProps> = ({ node, defaults }) => {
@@ -61,13 +58,7 @@ const RichTable: React.FC<RichTableProps> = ({ node, defaults }) => {
                 padding: defaults?.padding ?? 4,
             }}
         >
-            {node.title && (
-                typeof node.title === "string" || typeof node.title === "number" ? (
-                    <RichText node={{ type: "text", text: node.title, variant: "title-sm" }} defaults={defaults} />
-                ) : (
-                    <RichRenderer node={node.title} defaults={defaults} />
-                )
-            )}
+            {node.title && <RichRenderer node={node.title} defaults={defaults} textVariant="title-sm" />}
 
             <DataPresentationGrid<IRichTableRow>
                 data={node.rows}

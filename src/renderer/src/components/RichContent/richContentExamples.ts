@@ -419,7 +419,7 @@ export const richContentExamples: RichExampleMap = {
                         type: "code",
                         language: "sql",
                         code: async () => {
-                            await sleep(3);
+                            await sleep(Math.random() * 5 + 1);
                             return "SELECT id, email FROM users WHERE active = true LIMIT 50;"
                         },
                     },

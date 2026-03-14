@@ -147,6 +147,7 @@ const RichContentShowcase: React.FC = () => {
                 <Divider sx={{ mb: 2 }} />
 
                 <RichContainer
+                    key={currentKey}
                     node={{
                         items: currentExample,
                         padding: compactMode ? "2px 4px" : undefined,

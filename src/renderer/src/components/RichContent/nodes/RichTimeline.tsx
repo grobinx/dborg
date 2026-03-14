@@ -1,8 +1,7 @@
 import React from "react";
-import { Box, Typography, useTheme } from "@mui/material";
+import { Box, useTheme } from "@mui/material";
 import { IRichContainerDefaults, IRichTimeline, IRichTimelineItem } from "../types";
-import RichRenderer, { getSeverityColor, RichIcon, RichText } from "..";
-import { resolveIcon } from "@renderer/themes/icons";
+import RichRenderer, { getSeverityColor, RichIcon } from "..";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 
@@ -21,7 +20,7 @@ const RichTimeline: React.FC<RichTimelineProps> = ({ node, defaults }) => {
     const gap = defaults?.gap ?? 4;
     const lastIndex = node.items.length - 1;
 
-    const columnTemplate = node.items.some(item => item.timestamp) ? `${Math.max(...node.items.map(item => (item.timestamp?.length ?? 0) * 0.5))}em 1.5em minmax(0, 1fr)` : "1.5em minmax(0, 1fr)";
+    const columnTemplate = node.items.some(item => item.timestamp) ? `${Math.max(...node.items.map(item => (typeof item.timestamp === "string" ? item.timestamp.length : 12) * 0.5))}em 1.5em minmax(0, 1fr)` : "1.5em minmax(0, 1fr)";
 
     return (
         <Box
@@ -50,11 +49,12 @@ const RichTimeline: React.FC<RichTimelineProps> = ({ node, defaults }) => {
                             columnGap: gap,
                             rowGap: gap,
                             alignItems: "start",
+                            gap: gap,
                         }}
                     >
                         {/* Rząd 1: timestamp | marker | label */}
                         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", color: theme.palette.text.secondary, height: "100%" }}>
-                            {item.timestamp && <RichText node={{ text: item.timestamp, variant: "caption" }} defaults={defaults} />}
+                            {item.timestamp && <RichRenderer node={item.timestamp} defaults={defaults} textVariant="caption" />}
                         </Box>
 
                         <Box
@@ -85,11 +85,7 @@ const RichTimeline: React.FC<RichTimelineProps> = ({ node, defaults }) => {
                                 alignItems: "center",
                             }}
                         >
-                            {typeof item.label === "string" || typeof item.label === "number" ? (
-                                <RichText node={{ text: item.label, variant: "label" }} defaults={defaults} />
-                            ) : (
-                                <RichRenderer node={item.label} defaults={defaults} />
-                            )}
+                            <RichRenderer node={item.label} defaults={defaults} textVariant="label" />
                         </Box>
 
                         {/* Rząd 2: pusto | pionowa kreska | caption */}
@@ -108,12 +104,8 @@ const RichTimeline: React.FC<RichTimelineProps> = ({ node, defaults }) => {
                                     )}
                                 </Box>
 
-                                <Box sx={{ minWidth: 0, pb: index < lastIndex ? gap : 0 }}>
-                                    {typeof item.description === "string" || typeof item.description === "number" ? (
-                                        <RichText node={{ text: item.description, variant: "description" }} defaults={defaults} />
-                                    ) : (
-                                        <RichRenderer node={item.description} defaults={defaults} />
-                                    )}
+                                <Box sx={{ minWidth: 0 }}>
+                                    <RichRenderer node={item.description} defaults={defaults} textVariant="description" />
                                 </Box>
                             </>
                         )}

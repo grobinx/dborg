@@ -1,8 +1,8 @@
 import React from "react";
 import { Chip, Box, useTheme } from "@mui/material";
-import { IRichChip, IRichContainerDefaults, RichSeverity } from "../types";
+import { IRichChip, IRichContainerDefaults } from "../types";
 import RichBadge from "./RichBadge";
-import RichRenderer, { RichText } from "..";
+import RichRenderer from "..";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 
@@ -24,11 +24,7 @@ const RichChip: React.FC<RichChipProps> = ({ node, defaults }) => {
             sx={{ display: "inline-block", position: "relative", alignSelf: "flex-start", }}
         >
             <Chip
-                label={
-                    typeof node.text === "string" || typeof node.text === "number"
-                        ? <RichText node={{ type: "text", text: node.text, variant: "label" }} defaults={defaults} />
-                        : <RichRenderer node={node.text} defaults={defaults} />
-                }
+                label={<RichRenderer node={node.text} defaults={defaults} textVariant="label" />}
                 size="small"
                 sx={{
                     paddingRight: node.badge ? (defaults?.padding ?? 8) : undefined,

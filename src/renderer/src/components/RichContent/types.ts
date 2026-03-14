@@ -185,12 +185,12 @@ export type RichNode<V = any> =
     /**
      * Tablica węzłów jest traktowana jak wiersz (RichRow) z elementami ułożonymi poziomo.
      */
-    | RichNode[]
+    | RichNode<V>[]
     /**
      * Prosty tekst lub liczba, renderowane jako RichText z domyślnym wariantem "body".
      */
     | string | number
-    | null | undefined;
+    | null;
 
 /**
  * Metadane dla węzłów Rich Content, umożliwiające dodatkową kontrolę nad renderowaniem i interakcją.
@@ -447,7 +447,7 @@ export interface IRichProgress extends IRichNode {
     /**
      * Etykieta postępu
      */
-    label?: string;
+    label?: RichNode;
     /**
      * Poziom ważności wpływający na kolor paska
      */
@@ -847,7 +847,7 @@ export interface IRichStat extends IRichNode {
     /**
      * Wyświetlana wartość (np. "1 234", "42 MB", "99.9%")
      */
-    value: string | number;
+    value: RichNode;
     /**
      * Etykieta opisująca metrykę
      */
@@ -889,7 +889,7 @@ export interface IRichTimelineItem extends IRichMetadata {
     /**
      * Sygnatura czasowa (wyświetlana jako tekst)
      */
-    timestamp?: string;
+    timestamp?: RichNode;
     /**
      * Ikona zastępująca domyślną kropkę
      */

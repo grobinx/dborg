@@ -1,12 +1,13 @@
 import React from "react";
-import { Alert, AlertTitle, Box, useTheme } from "@mui/material";
+import { Alert, useTheme } from "@mui/material";
 import { IRichAlert, IRichContainerDefaults, RichSeverity } from "../types";
 import { resolveIcon } from "@renderer/themes/icons";
-import RichRenderer, { RichText } from "..";
+import RichRenderer from "..";
 import clsx from "@renderer/utils/clsx";
+import { Optional } from "@renderer/types/universal";
 
 interface RichAlertProps {
-    node: IRichAlert;
+    node: Optional<IRichAlert, "type">;
     defaults?: IRichContainerDefaults;
 }
 
@@ -61,13 +62,7 @@ const RichAlert: React.FC<RichAlertProps> = ({ node, defaults }) => {
                 }
             }}
         >
-            {node.title && (
-                typeof node.title === "string" || typeof node.title === "number" ? (
-                    <RichText node={{ text: node.title, variant: "title" }} />
-                ) : (
-                    <RichRenderer node={node.title} defaults={defaults} />
-                )
-            )}
+            {node.title && <RichRenderer node={node.title} defaults={defaults} textVariant="title" />}
             {node.items.map((item, index) => (
                 <RichRenderer key={index} node={item} defaults={defaults} />
             ))}

@@ -1,7 +1,7 @@
 import React from "react";
-import { Box, Typography, useTheme } from "@mui/material";
+import { Box, useTheme } from "@mui/material";
 import { IRichStat, IRichContainerDefaults, RichColSize } from "../types";
-import RichRenderer, { getSeverityColor, RichRow, RichText } from "..";
+import RichRenderer, { getSeverityColor, RichRow } from "..";
 import RichIcon from "./RichIcon";
 import clsx from "@renderer/utils/clsx";
 
@@ -67,7 +67,7 @@ const RichStat: React.FC<RichStatProps> = ({ node, defaults }) => {
                     {node.trend && (
                         <RichIcon node={{ icon: getTrendIcon(node.trend), severity }} defaults={defaults} />
                     )}
-                    <RichText node={{ variant: "title", text: node.value, severity }} defaults={defaults} />
+                    <RichRenderer node={node.value} defaults={defaults} textVariant="title" textSeverity={severity} />
                 </Box>
                 {node.icon && (
                     <RichIcon node={{ icon: node.icon, severity, size: "large" }} defaults={defaults} />
@@ -75,11 +75,7 @@ const RichStat: React.FC<RichStatProps> = ({ node, defaults }) => {
             </RichRow>
 
             {/* Etykieta */}
-            {typeof node.label === "string" || typeof node.label === "number" ? (
-                <RichText node={{ variant: "label", text: node.label }} defaults={defaults} />
-            ) : (
-                <RichRenderer node={node.label} defaults={defaults} />
-            )}
+            <RichRenderer node={node.label} defaults={defaults} textVariant="label" />
         </Box>
     );
 };

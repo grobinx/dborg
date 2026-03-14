@@ -3,7 +3,7 @@ import { List, ListItem, useTheme } from "@mui/material";
 import { IRichContainerDefaults, IRichList, IRichListItem } from "../types";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
-import RichRenderer, { getSeverityColor, RichText } from "..";
+import RichRenderer, { getSeverityColor } from "..";
 
 interface RichListItemProps {
     node: IRichListItem;
@@ -38,11 +38,7 @@ const RichListItem: React.FC<RichListItemProps> = ({ node, defaults, children })
                 borderRadius: node.indicator && (node.severity ?? "default") !== "default" ? 1 : undefined,
             }}
         >
-            {typeof node.content === "string" || typeof node.content === "number" ? (
-                <RichText node={{ text: node.content, variant: "body" }} defaults={defaults} />
-            ) : (
-                <RichRenderer node={node.content} defaults={defaults} />
-            )}
+            <RichRenderer node={node.content} defaults={defaults} textVariant="body" />
             {children}
         </ListItem>
     );

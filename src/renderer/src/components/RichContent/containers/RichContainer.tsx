@@ -1,7 +1,7 @@
 import React from "react";
 import { Box } from "@mui/material";
 import { IRichContainer, IRichContainerDefaults, RichNode } from "../types";
-import RichRenderer, { resolveRichValue, RichIcon } from "..";
+import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
 import { useSetting } from "@renderer/contexts/SettingsContext";
 import clsx from "@renderer/utils/clsx";
 
@@ -13,7 +13,7 @@ const RichContainer: React.FC<RichContainerProps> = ({ node }) => {
     const [fontSize] = useSetting("ui", "fontSize");
     const [fontFamily] = useSetting("ui", "fontFamily");
     const [fontFamilyMonospace] = useSetting("ui", "fontFamilyMonospace");
-    const [items, setItems] = React.useState<RichNode[] | null>(null);
+    const [items, setItems] = React.useState<RichNode[] | null>(resolveRichValue(node.items));
 
     const defaults = React.useMemo(() => {
         return {
@@ -29,7 +29,7 @@ const RichContainer: React.FC<RichContainerProps> = ({ node }) => {
     }, [fontSize, fontFamily, fontFamilyMonospace, node.fontFamily, node.fontFamilyMonospace, node.fontSize, node.fontWeight, node.gap, node.padding, node.radius, node.textVariantStyles]);
 
     React.useEffect(() => {
-        resolveRichValue(node.items, setItems);
+        resolveRichValueFromFunction(node.items, setItems);
     }, [node.items]);
 
     return (

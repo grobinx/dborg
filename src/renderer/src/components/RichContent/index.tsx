@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Theme } from "@mui/material";
-import { IRichContainerDefaults, RichNode, RichSeverity, RichValue } from "./types";
+import { IRichContainerDefaults, RichNode, RichSeverity, RichTextVariant, RichValue } from "./types";
 
 // Types
 export type {
@@ -102,10 +102,18 @@ export const getSeverityColor = (severity: RichSeverity | undefined, theme: Them
 };
 
 
-export async function resolveRichValue<V = any>(resolvable: RichValue<V>, set: React.Dispatch<React.SetStateAction<V | null>>): Promise<V | null> {
-    const value = typeof resolvable === "function" ? await (resolvable as () => Promise<V>)() : resolvable;
-    set(value);
-    return value;
+export function resolveRichValue<V = any>(resolvable: RichValue<V>): V | null {
+    if (resolvable !== null && typeof resolvable !== "function") {
+        return resolvable;
+    }
+    return null;
+}
+
+export async function resolveRichValueFromFunction<V = any>(resolvable: RichValue<V>, set: React.Dispatch<React.SetStateAction<V | null>>) {
+    if (typeof resolvable === "function") {
+        const value = await (resolvable as () => Promise<V>)();
+        set(value);
+    }
 }
 
 /**
@@ -114,16 +122,24 @@ export async function resolveRichValue<V = any>(resolvable: RichValue<V>, set: R
  */
 const RichRenderer: React.FC<{
     node: RichNode;
-    defaults?: IRichContainerDefaults
-}> = ({ node, defaults }) => {
-    if (node === null || node === undefined) {
+    defaults?: IRichContainerDefaults;
+    /**
+     * Opcjonalny wariant tekstu dla prostych stringów/numberów. Domyślnie "body".
+     */
+    textVariant?: RichTextVariant;
+    /**
+     * Opcjonalny poziom ważności wpływający na kolor tekstu dla prostych stringów/numberów.
+     */
+    textSeverity?: RichSeverity;
+}> = ({ node, defaults, textVariant, textSeverity }) => {
+    if (node === null) {
         return null;
     }
 
     if (Array.isArray(node)) {
-        return <RichRow node={{ type: "row", items: node }} defaults={defaults} />;
+        return <RichRow node={{ items: node }} defaults={defaults} />;
     } else if (typeof node === "string" || typeof node === "number") {
-        return <RichText node={{ type: "text", text: String(node) }} defaults={defaults} />;
+        return <RichText node={{ text: String(node), variant: textVariant, severity: textSeverity }} defaults={defaults} />;
     }
     
     switch (node.type) {

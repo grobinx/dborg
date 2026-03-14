@@ -1,8 +1,7 @@
 import React from "react";
-import { Box, Paper, Typography, Collapse, useTheme } from "@mui/material";
+import { Box, Paper, Collapse, useTheme } from "@mui/material";
 import { IRichContainerDefaults, IRichGroup } from "../types";
-import RichRenderer, { getSeverityColor, RichIcon, RichSpacer, RichText } from "..";
-import { resolveIcon } from "@renderer/themes/icons";
+import RichRenderer, { getSeverityColor, RichIcon, RichSpacer } from "..";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
@@ -45,12 +44,7 @@ const RichGroup: React.FC<RichGroupProps> = ({ node, defaults, children }) => {
                     {node.icon && (
                         <RichIcon node={{ icon: node.icon, size: "large" }} defaults={defaults} />
                     )}
-                    {node.title && (
-                        typeof node.title === "string" || typeof node.title === "number" ? (
-                            <RichText node={{ text: node.title, variant: "title" }} defaults={defaults} />
-                        ) : (
-                            <RichRenderer node={node.title} defaults={defaults} />
-                        ))}
+                    {node.title && <RichRenderer node={node.title} defaults={defaults} textVariant="title" />}
                     <RichSpacer node={{}} defaults={defaults} />
                     {node.collapsible && (
                         <ToolButton
