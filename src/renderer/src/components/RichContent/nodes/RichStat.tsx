@@ -62,7 +62,7 @@ const RichStat: React.FC<RichStatProps> = ({ node, defaults }) => {
             }}
         >
             {/* Wartość + Ikona + Trend */}
-            <RichRow node={{ justify: "space-between" }} defaults={defaults}>
+            <RichRow node={{ justify: "space-between", items: [] }} defaults={defaults}>
                 <Box sx={{ display: "flex", alignItems: "baseline", gap: 4 }}>
                     {node.trend && (
                         <RichIcon node={{ icon: getTrendIcon(node.trend), severity }} defaults={defaults} />

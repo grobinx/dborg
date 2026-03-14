@@ -89,7 +89,13 @@ export const richContentExamples: RichExampleMap = {
     ],
 
     "Chipy, badge i statusy": [
-        { type: "chip", text: "Draft", severity: "default" },
+        {
+            type: "chip",
+            text: async () => {
+                await sleep(Math.random() * 5 + 0.5);
+                return "Draft"
+            },
+        },
         { type: "chip", text: "Info", severity: "info", badge: { value: 2, severity: "info" } },
         { type: "chip", text: "Warn", severity: "warning", variant: "outlined", badge: { value: 12, max: 9, severity: "warning" } },
         { type: "chip", text: "Error", severity: "error", badge: { value: "!", severity: "error" } },
@@ -99,7 +105,13 @@ export const richContentExamples: RichExampleMap = {
             gap: 8,
             items: [
                 { type: "text", text: "Status:" },
-                { type: "chip", text: "Draft", severity: "default" },
+                {
+                    type: "chip",
+                    text: async () => {
+                        await sleep(Math.random() * 5 + 0.5);
+                        return "Draft"
+                    },
+                },
                 { type: "chip", text: "Running", severity: "info", badge: { value: 3, severity: "info" } },
                 { type: "chip", text: "Warning", severity: "warning", variant: "outlined", badge: { value: 12, max: 9, severity: "warning" } },
             ],
@@ -214,12 +226,20 @@ export const richContentExamples: RichExampleMap = {
             ],
         },
         {
-            type: "list",
-            listType: "bullet",
-            items: [
-                { content: "Bullet item 1" },
-                { severity: "info", content: ["Bullet info item", { type: "chip", text: "INFO", severity: "info" }] },
-            ],
+            type: "skeleton",
+            times: 5,
+            width: "40%",
+            value: async () => {
+                await sleep(Math.random() * 5 + 1);
+                return {
+                    type: "list",
+                    listType: "bullet",
+                    items: [
+                        { content: "Bullet item 1" },
+                        { severity: "info", content: ["Bullet info item", { type: "chip", text: "INFO", severity: "info" }] },
+                    ],
+                };
+            }
         },
         {
             type: "list",
@@ -499,17 +519,46 @@ export const richContentExamples: RichExampleMap = {
             rows: [
                 {
                     query: {
-                        type: "code",
-                        code: "SELECT * FROM users WHERE active = true",
+                        type: "skeleton",
+                        height: "1.8em",
+                        value: async () => {
+                            await sleep(Math.random() * 5 + 1);
+                            return { type: "code", code: "SELECT * FROM users WHERE active = true" };
+                        },
                     },
-                    duration: { type: "text", text: "82 ms", variant: "body" },
-                    rows: { type: "text", text: 120, variant: "body" },
-                    status: { type: "chip", text: "OK", severity: "success", variant: "outlined" },
+                    duration: {
+                        type: "skeleton",
+                        height: "1.8em",
+                        value: async () => {
+                            await sleep(Math.random() * 5 + 1);
+                            return { type: "text", text: "82 ms", variant: "body" };
+                        },
+                    },
+                    rows: {
+                        type: "skeleton",
+                        height: "1.8em",
+                        value: async () => {
+                            await sleep(Math.random() * 5 + 1);
+                            return { type: "text", text: 120, variant: "body" };
+                        },
+                    },
+                    status: {
+                        type: "skeleton",
+                        height: "1.8em",
+                        value: async () => {
+                            await sleep(Math.random() * 5 + 1);
+                            return { type: "chip", text: "OK", severity: "success", variant: "outlined" };
+                        },
+                    },
                 },
                 {
                     query: {
-                        type: "code",
-                        code: "SELECT * FROM orders WHERE status = 'OPEN'",
+                        type: "skeleton",
+                        height: "1.8em",
+                        value: async () => {
+                            await sleep(Math.random() * 5 + 1);
+                            return { type: "code", code: "SELECT * FROM orders WHERE status = 'OPEN'" };
+                        },
                     },
                     duration: { type: "text", text: "622 ms", variant: "body-strong", severity: "warning" },
                     rows: { type: "text", text: 5320, variant: "body" },
@@ -517,21 +566,43 @@ export const richContentExamples: RichExampleMap = {
                 },
                 {
                     query: {
-                        type: "row",
-                        gap: 6,
-                        items: [
-                            { type: "icon", icon: "Error", severity: "error" },
-                            { type: "code", code: "UPDATE invoices SET ..." },
-                        ],
+                        type: "skeleton",
+                        height: "1.8em",
+                        value: async () => {
+                            await sleep(Math.random() * 5 + 1);
+                            return {
+                                type: "row",
+                                gap: 6,
+                                items: [
+                                    { type: "icon", icon: "Error", severity: "error" },
+                                    { type: "code", code: "UPDATE invoices SET ..." },
+                                ],
+                            };
+                        },
                     },
-                    duration: { type: "text", text: "timeout", variant: "body-strong", severity: "error" },
+                    duration: {
+                        type: "skeleton",
+                        variant: "custom",
+                        custom: [{ type: "icon", icon: "Loading" }, "Loading..."],
+                        value: async () => {
+                            await sleep(Math.random() * 5 + 1);
+                            return { type: "text", text: "timeout", variant: "body-strong", severity: "error" };
+                        }
+                    },
                     rows: { type: "text", text: "-", variant: "body" },
                     status: { type: "chip", text: "ERROR", severity: "error" },
                 },
                 {
                     query: {
-                        type: "code",
-                        code: "SELECT id, email FROM customers LIMIT 1000",
+                        type: "skeleton",
+                        height: "1.8em",
+                        value: async () => {
+                            await sleep(Math.random() * 5 + 0.5);
+                            return {
+                                type: "code",
+                                code: "SELECT id, email FROM customers LIMIT 1000",
+                            };
+                        },
                     },
                     duration: { type: "text", text: "145 ms", variant: "body" },
                     rows: { type: "text", text: 1000, variant: "body" },
@@ -539,8 +610,15 @@ export const richContentExamples: RichExampleMap = {
                 },
                 {
                     query: {
-                        type: "code",
-                        code: "DELETE FROM sessions WHERE expires_at < now()",
+                        type: "skeleton",
+                        height: "1.8em",
+                        value: async () => {
+                            await sleep(Math.random() * 5 + 1);
+                            return {
+                                type: "code",
+                                code: "DELETE FROM sessions WHERE expires_at < now()",
+                            };
+                        },
                     },
                     duration: { type: "text", text: "2.3 s", variant: "body-strong", severity: "warning" },
                     rows: { type: "text", text: 18600, variant: "body" },
@@ -548,8 +626,15 @@ export const richContentExamples: RichExampleMap = {
                 },
                 {
                     query: {
-                        type: "code",
-                        code: "VACUUM ANALYZE public.users",
+                        type: "skeleton",
+                        height: "1.8em",
+                        value: async () => {
+                            await sleep(Math.random() * 5 + 1);
+                            return {
+                                type: "code",
+                                code: "VACUUM ANALYZE public.users",
+                            };
+                        },
                     },
                     duration: { type: "text", text: "4.8 s", variant: "body-strong", severity: "warning" },
                     rows: { type: "text", text: "-", variant: "body" },

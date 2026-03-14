@@ -6,14 +6,14 @@ import dborgPackage from '../../package.json';
 //export const dborgReleaseName: string = "Schrodinger's Sprout";
 export const dborgReleaseName: string = "Louver Gate";
 export const dborgDuration: string = "2024-2026";
-export const dborgDate: string = "2026-03-14 10:38:06";
+export const dborgDate: string = "2026-03-14 19:14:46";
 export const dborgPreRelease: string = "dev";
 
 export const version: Pick<VersionBase, "major" | "minor" | "release" | "build" | "name" | "preRelease" | "toString"> = {
     major: 1,
     minor: 0,
     release: 7,
-    build: 473,
+    build: 474,
 
     preRelease: dborgPreRelease,
 

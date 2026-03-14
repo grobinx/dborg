@@ -1,17 +1,23 @@
 import React from "react";
 import { Box } from "@mui/material";
-import { IRichContainerDefaults, IRichRow } from "../types";
-import RichRenderer from "..";
+import { IRichContainerDefaults, IRichRow, RichNode } from "../types";
+import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 
 interface RichRowProps {
-    node: Optional<IRichRow, "type" | "items">;
+    node: Optional<IRichRow, "type">;
     defaults?: IRichContainerDefaults;
     children?: React.ReactNode;
 }
 
 const RichRow: React.FC<RichRowProps> = ({ node, defaults, children }) => {
+    const [items, setItems] = React.useState<RichNode[] | null>(resolveRichValue(node.items));
+
+    React.useEffect(() => {
+        resolveRichValueFromFunction(node.items, setItems);
+    }, [node.items]);
+
     return (
         <Box
             id={node.id}
@@ -29,9 +35,12 @@ const RichRow: React.FC<RichRowProps> = ({ node, defaults, children }) => {
                 flexWrap: "wrap",
             }}
         >
-            {node.items?.map((item: typeof node.items[number], index: number) => (
-                <RichRenderer key={index} node={item} defaults={defaults} />
-            ))}
+            {items === null ?
+                <RichIcon node={{ icon: "Loading" }} defaults={defaults} />
+                : items.map((item, index) => (
+                    <RichRenderer key={index} node={item} defaults={defaults} />
+                ))
+            }
             {children}
         </Box>
     );

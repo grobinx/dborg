@@ -17,64 +17,6 @@ import { RichContainer, RichNode, RichRenderer } from "./index";
 import { richContentExamples } from "./richContentExamples";
 import { Button } from "../buttons/Button";
 
-const countNodes = (nodes: RichNode[]): number => {
-    const countNode = (node: RichNode): number => {
-        if (node === null || node === undefined) {
-            return 0;
-        }
-
-        if (typeof node === "string" || typeof node === "number") {
-            return 1;
-        }
-        if (Array.isArray(node)) {
-            return 1 + node.map(n => countNode(n)).reduce((acc, count) => acc + count, 0);
-        }
-
-        switch (node.type) {
-            case "group":
-            case "row":
-            case "column":
-            case "alert":
-                return 1 + node.items.reduce((acc: number, n) => acc + countNode(n), 0);
-            case "list":
-                return 1;
-            case "timeline":
-                return 1;
-            default:
-                return 1;
-        }
-    };
-
-
-    return nodes.reduce((acc: number, node) => acc + countNode(node), 0);
-};
-
-const collectNodeTypes = (nodes: RichNode[]): string[] => {
-    const set = new Set<string>();
-
-    const walk = (node: RichNode) => {
-        if (node === null || node === undefined) {
-            return;
-        }
-        if (typeof node === "string" || typeof node === "number") {
-            set.add("text");
-            return;
-        }
-        if (Array.isArray(node)) {
-            set.add("row");
-            node.forEach(walk);
-            return;
-        }
-        set.add(node.type);
-        if (node.type === "group" || node.type === "row" || node.type === "column" || node.type === "alert") {
-            node.items.forEach(walk);
-        }
-    };
-
-    nodes.forEach(walk);
-    return Array.from(set).sort();
-};
-
 /**
  * Zaawansowany komponent testowy Rich Content.
  * Pokazuje rendering, statystyki, JSON i przełączniki diagnostyczne.
@@ -88,9 +30,6 @@ const RichContentShowcase: React.FC = () => {
     const exampleKeys = useMemo(() => Object.keys(richContentExamples), []);
     const currentKey = exampleKeys[activeTab];
     const currentExample = richContentExamples[currentKey] as RichNode[];
-
-    const totalNodeCount = useMemo(() => countNodes(currentExample), [currentExample]);
-    const usedTypes = useMemo(() => collectNodeTypes(currentExample), [currentExample]);
 
     return (
         <Container maxWidth="xl" sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
@@ -140,8 +79,6 @@ const RichContentShowcase: React.FC = () => {
                 <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems="center" sx={{ mb: 2 }}>
                     <Chip size="small" label={`Example: ${currentKey}`} />
                     <Chip size="small" color="primary" label={`Top-level items: ${currentExample.length}`} />
-                    <Chip size="small" color="secondary" label={`Total nodes (recursive): ${totalNodeCount}`} />
-                    <Chip size="small" variant="outlined" label={`Types used: ${usedTypes.length}`} />
                 </Stack>
 
                 <Divider sx={{ mb: 2 }} />
@@ -176,16 +113,6 @@ const RichContentShowcase: React.FC = () => {
                 )}
             </Paper>
 
-            <Paper sx={{ mt: 2, p: 2 }}>
-                <Typography variant="caption" component="div">
-                    Node types in this scenario:
-                </Typography>
-                <Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: "wrap", rowGap: 1 }}>
-                    {usedTypes.map((t) => (
-                        <Chip key={t} size="small" label={t} />
-                    ))}
-                </Stack>
-            </Paper>
         </Container>
     );
 };

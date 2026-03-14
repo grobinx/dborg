@@ -11,3 +11,7 @@ export { default as RichCode } from "./RichCode";
 export { default as RichImage } from "./RichImage";
 export { default as RichAlert } from "./RichAlert";
 export { default as RichAction } from "./RichAction";
+export { default as RichSkeleton } from "./RichSkeleton";
+export { default as RichStat } from "./RichStat";
+export { default as RichSwitch } from "./RichSwitch";
+export { default as RichTimeline } from "./RichTimeline";

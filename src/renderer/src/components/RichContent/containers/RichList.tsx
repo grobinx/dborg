@@ -1,9 +1,9 @@
 import React from "react";
 import { List, ListItem, useTheme } from "@mui/material";
-import { IRichContainerDefaults, IRichList, IRichListItem } from "../types";
+import { IRichContainerDefaults, IRichList, IRichListItem, RichNode } from "../types";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
-import RichRenderer, { getSeverityColor } from "..";
+import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
 
 interface RichListItemProps {
     node: IRichListItem;
@@ -13,6 +13,11 @@ interface RichListItemProps {
 
 const RichListItem: React.FC<RichListItemProps> = ({ node, defaults, children }) => {
     const theme = useTheme();
+    const [content, setContent] = React.useState<RichNode | null>(resolveRichValue(node.content));
+
+    React.useEffect(() => {
+        resolveRichValueFromFunction<RichNode>(node.content, setContent);
+    }, [node.content]);
 
     return (
         <ListItem
@@ -38,19 +43,28 @@ const RichListItem: React.FC<RichListItemProps> = ({ node, defaults, children })
                 borderRadius: node.indicator && (node.severity ?? "default") !== "default" ? 1 : undefined,
             }}
         >
-            <RichRenderer node={node.content} defaults={defaults} textVariant="body" />
+            {content === null ?
+                <RichIcon node={{ icon: "Loading" }} defaults={defaults} />
+                : <RichRenderer node={content} defaults={defaults} textVariant="body" />
+            }
             {children}
         </ListItem>
     );
 };
 
 interface RichListProps {
-    node: Optional<IRichList, "type" | "items">;
+    node: Optional<IRichList, "type">;
     defaults?: IRichContainerDefaults;
     children?: React.ReactNode;
 }
 
 const RichList: React.FC<RichListProps> = ({ node, defaults, children }) => {
+    const [items, setItems] = React.useState<IRichListItem[] | null>(resolveRichValue(node.items));
+
+    React.useEffect(() => {
+        resolveRichValueFromFunction(node.items, setItems);
+    }, [node.items]);
+
     const getListStyleType = (listType?: "bullet" | "numbered" | "none") => {
         switch (listType) {
             case "numbered":
@@ -79,9 +93,12 @@ const RichList: React.FC<RichListProps> = ({ node, defaults, children }) => {
                 },
             }}
         >
-            {node.items?.map((item, index) => (
-                <RichListItem key={index} node={item} defaults={defaults} />
-            ))}
+            {items === null ?
+                <RichIcon node={{ icon: "Loading" }} defaults={defaults} />
+                : items.map((item, index) => (
+                    <RichListItem key={index} node={item} defaults={defaults} />
+                ))
+            }
             {children}
         </List>
     );

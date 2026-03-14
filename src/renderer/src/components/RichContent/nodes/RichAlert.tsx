@@ -1,8 +1,8 @@
 import React from "react";
 import { Alert, useTheme } from "@mui/material";
-import { IRichAlert, IRichContainerDefaults, RichSeverity } from "../types";
+import { IRichAlert, IRichContainerDefaults, RichNode, RichSeverity } from "../types";
 import { resolveIcon } from "@renderer/themes/icons";
-import RichRenderer from "..";
+import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
 import clsx from "@renderer/utils/clsx";
 import { Optional } from "@renderer/types/universal";
 
@@ -13,6 +13,12 @@ interface RichAlertProps {
 
 const RichAlert: React.FC<RichAlertProps> = ({ node, defaults }) => {
     const theme = useTheme();
+    const [items, setItems] = React.useState<RichNode[] | null>(resolveRichValue(node.items));
+
+    React.useEffect(() => {
+        resolveRichValueFromFunction(node.items, setItems);
+    }, [node.items]);
+
     const getSeverityForAlert = (severity?: RichSeverity): "error" | "warning" | "info" | "success" => {
         switch (severity) {
             case "error":
@@ -63,9 +69,12 @@ const RichAlert: React.FC<RichAlertProps> = ({ node, defaults }) => {
             }}
         >
             {node.title && <RichRenderer node={node.title} defaults={defaults} textVariant="title" />}
-            {node.items.map((item, index) => (
-                <RichRenderer key={index} node={item} defaults={defaults} />
-            ))}
+            {items === null ?
+                <RichIcon node={{ icon: "Loading" }} defaults={defaults} />
+                : items.map((item, index) => (
+                    <RichRenderer key={index} node={item} defaults={defaults} />
+                ))
+            }
         </Alert>
     );
 };

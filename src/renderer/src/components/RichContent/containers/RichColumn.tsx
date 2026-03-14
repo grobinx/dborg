@@ -1,18 +1,22 @@
 import React from "react";
 import { Box, useTheme } from "@mui/material";
-import { IRichColumn, IRichContainerDefaults, RichColSize } from "../types";
-import RichRenderer from "..";
+import { IRichColumn, IRichContainerDefaults, RichColSize, RichNode } from "../types";
+import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 
 interface RichColumnProps {
-    node: Optional<IRichColumn, "type" | "items">;
+    node: Optional<IRichColumn, "type">;
     defaults?: IRichContainerDefaults;
     children?: React.ReactNode;
 }
 
 const RichColumn: React.FC<RichColumnProps> = ({ node, defaults, children }) => {
-    const theme = useTheme();
+    const [items, setItems] = React.useState<RichNode[] | null>(resolveRichValue(node.items));
+
+    React.useEffect(() => {
+        resolveRichValueFromFunction(node.items, setItems);
+    }, [node.items]);
 
     const getColSize = (size?: RichColSize) => {
         if (size === "auto" || size === undefined) {
@@ -37,9 +41,12 @@ const RichColumn: React.FC<RichColumnProps> = ({ node, defaults, children }) => 
                 minWidth: 0,
             }}
         >
-            {node.items?.map((item, index) => (
-                <RichRenderer key={index} node={item} defaults={defaults} />
-            ))}
+            {items === null ?
+                <RichIcon node={{ icon: "Loading" }} defaults={defaults} />
+                : items.map((item, index) => (
+                    <RichRenderer key={index} node={item} defaults={defaults} />
+                ))
+            }
             {children}
         </Box>
     );

@@ -50,6 +50,7 @@ import RichAction from "./nodes/RichAction";
 import RichStat from "./nodes/RichStat";
 import RichSwitch from "./nodes/RichSwitch";
 import RichTimeline from "./nodes/RichTimeline";
+import RichSkeleton from "./nodes/RichSkeleton";
 
 // Containers (import second)
 import RichRow from "./containers/RichRow";
@@ -77,6 +78,7 @@ export { default as RichAction } from "./nodes/RichAction";
 export { default as RichStat } from "./nodes/RichStat";
 export { default as RichSwitch } from "./nodes/RichSwitch";
 export { default as RichTimeline } from "./nodes/RichTimeline";
+export { default as RichSkeleton } from "./nodes/RichSkeleton";
 
 // Export containers
 export { default as RichRow } from "./containers/RichRow";
@@ -183,6 +185,8 @@ const RichRenderer: React.FC<{
             return <RichTimeline node={node} defaults={defaults} />;
         case "table":
             return <RichTable node={node} defaults={defaults} />;
+        case "skeleton":
+            return <RichSkeleton node={node} defaults={defaults} />;
         default:
             return <Box>Unknown node type: {(node as any).type}</Box>;
     }

@@ -160,7 +160,7 @@ export type RichNodeType =
 /**
  * Union type wszystkich możliwych węzłów Rich Content.
  */
-export type RichNode<V = any> =
+export type RichNode =
     | IRichText
     | IRichLink
     | IRichChip
@@ -181,11 +181,12 @@ export type RichNode<V = any> =
     | IRichTable
     | IRichStat
     | IRichTimeline
-    | IRichSkeleton<V>
+    | IRichSkeleton
+    | IRichCustomSkeleton
     /**
      * Tablica węzłów jest traktowana jak wiersz (RichRow) z elementami ułożonymi poziomo.
      */
-    | RichNode<V>[]
+    | RichNode[]
     /**
      * Prosty tekst lub liczba, renderowane jako RichText z domyślnym wariantem "body".
      */
@@ -308,8 +309,25 @@ export interface IRichNode extends IRichMetadata {
     type: RichNodeType;
 }
 
-export interface IRichSkeleton<V> extends IRichNode {
+export interface IRichSkeletonBase extends IRichNode {
     type: "skeleton";
+    /**
+     * Funkcja zwracająca dane do renderowania po zakończeniu ładowania.
+     */
+    value: () => Promise<RichNode>;
+}
+
+export type RichSkeletonVariant = "rectangular" | "circular" | "text";
+
+/**
+ * Szkielet (placeholder) wyświetlany podczas ładowania danych, z opcją niestandardowego komponentu szkieletu.
+ */
+export interface IRichSkeleton extends IRichSkeletonBase {
+    /**
+     * Wariant szkieletu (np. "rectangular", "circular", "text")
+     * @default "text"
+     */
+    variant?: RichSkeletonVariant;
     /**
      * Szerokość szkieletu (np. "100%", "auto", 300)
      */
@@ -319,14 +337,23 @@ export interface IRichSkeleton<V> extends IRichNode {
      */
     height?: number | string;
     /**
-     * Wariant szkieletu (np. "rectangular", "circular", "text")
-     * @default "rectangular"
+     * Liczba powtórzeń szkieletu (np. dla list) - jeśli podano, renderuje wiele szkieletów obok siebie.
      */
-    variant?: "rectangular" | "circular" | "text";
+    times?: number;
+}
+
+/**
+ * Niestandardowy komponent szkieletu, jeśli variant jest ustawiony na "custom".
+ */
+export interface IRichCustomSkeleton extends IRichSkeletonBase {
     /**
-     * Funkcja zwracająca dane do renderowania po zakończeniu ładowania.
+     * Wariant "custom" pozwala na pełną kontrolę nad wyglądem szkieletu poprzez podanie własnego węzła RichNode do renderowania podczas ładowania.
      */
-    get: () => Promise<V>;
+    variant: "custom";
+    /**
+     * Wypełniacz do renderowania niestandardowego szkieletu. Może być użyty do pokazania prostego placeholdera lub animacji podczas ładowania.
+     */
+    custom: RichNode;
 }
 
 /**
@@ -349,7 +376,7 @@ export interface IRichChip extends IRichNode {
     /**
      * Tekst wyświetlany w chipie
      */
-    text: RichNode;
+    text: RichValue<RichNode>;
     /**
      * Poziom ważności wpływający na kolor
      */
@@ -503,7 +530,7 @@ export interface IRichGroup extends IRichNode {
     /**
      * Elementy wewnątrz grupy
      */
-    items: RichNode[];
+    items: RichValue<RichNode[]>;
     /**
      * Poziom ważności grupy
      */
@@ -543,7 +570,7 @@ export interface IRichRowInline extends IRichRowBase {
     /**
      * Elementy w wierszu (ułożone poziomo)
      */
-    items: RichNode[];
+    items: RichValue<RichNode[]>;
     /**
      * Odstęp między elementami
      */
@@ -551,7 +578,7 @@ export interface IRichRowInline extends IRichRowBase {
 }
 
 /**
- * Kontener układający elementy poziomo (w wierszu).
+ * Kontener układający w postacie grid-u.
  */
 export interface IRichRowGrid extends IRichRowBase {
     /**
@@ -561,7 +588,7 @@ export interface IRichRowGrid extends IRichRowBase {
     /**
      * Elementy w wierszu (ułożone poziomo)
      */
-    items: (IRichColumn | IRichStat)[];
+    items: RichValue<(IRichColumn | IRichStat)[]>;
 }
 
 export type IRichRow = IRichRowInline | IRichRowGrid;
@@ -574,7 +601,7 @@ export interface IRichColumn extends IRichNode {
     /**
      * Elementy w kolumnie (ułożone pionowo)
      */
-    items: RichNode[];
+    items: RichValue<RichNode[]>;
     /**
      * Odstęp między elementami
      */
@@ -613,7 +640,7 @@ export interface IRichAlert extends IRichNode {
     /**
      * Elementy wewnątrz alertu
      */
-    items: RichNode[];
+    items: RichValue<RichNode[]>;
     /**
      * Poziom ważności wpływający na kolor tła i obramowania
      */
@@ -705,7 +732,7 @@ export interface IRichList extends IRichNode {
     /**
      * Elementy listy
      */
-    items: IRichListItem[];
+    items: RichValue<IRichListItem[]>;
     /**
      * Typ listy
      * @default "bullet"
@@ -729,7 +756,7 @@ export interface IRichListItem extends IRichMetadata {
     /**
      * Zawartość elementu listy
      */
-    content: RichNode;
+    content: RichValue<RichNode>;
 }
 
 /**
@@ -827,7 +854,7 @@ export interface IRichTable extends IRichNode {
     /**
      * Wiersze danych
      */
-    rows: IRichTableRow[];
+    rows: RichValue<IRichTableRow[]>;
     /**
      * Czy pokazać nagłówek tabeli
      * @default true

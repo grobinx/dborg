@@ -1,13 +1,13 @@
 import React from "react";
 import { Box, Paper, Collapse, useTheme } from "@mui/material";
-import { IRichContainerDefaults, IRichGroup } from "../types";
-import RichRenderer, { getSeverityColor, RichIcon, RichSpacer } from "..";
+import { IRichContainerDefaults, IRichGroup, RichNode } from "../types";
+import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromFunction, RichIcon, RichSpacer } from "..";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 
 interface RichGroupProps {
-    node: Optional<IRichGroup, "type" | "items">;
+    node: Optional<IRichGroup, "type">;
     defaults?: IRichContainerDefaults;
     children?: React.ReactNode;
 }
@@ -15,6 +15,11 @@ interface RichGroupProps {
 const RichGroup: React.FC<RichGroupProps> = ({ node, defaults, children }) => {
     const theme = useTheme();
     const [expanded, setExpanded] = React.useState(node.defaultExpanded !== false);
+    const [items, setItems] = React.useState<RichNode[] | null>(resolveRichValue(node.items));
+
+    React.useEffect(() => {
+        resolveRichValueFromFunction(node.items, setItems);
+    }, [node.items]);
 
     return (
         <Paper
@@ -67,9 +72,12 @@ const RichGroup: React.FC<RichGroupProps> = ({ node, defaults, children }) => {
                     gap: node.gap ?? defaults?.gap ?? 4
                 }}
                 >
-                    {node.items?.map((item, index) => (
-                        <RichRenderer key={index} node={item} defaults={defaults} />
-                    ))}
+                    {items === null ?
+                        <RichIcon node={{ icon: "Loading" }} defaults={defaults} />
+                        : items.map((item, index) => (
+                            <RichRenderer key={index} node={item} defaults={defaults} />
+                        ))
+                    }
                     {children}
                 </Box>
             </Collapse>

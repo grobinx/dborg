@@ -4,7 +4,7 @@ import DataPresentationGrid, { DataPresentationGridColumn } from "@renderer/comp
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 import { IRichContainerDefaults, IRichTable, IRichTableRow, RichNode } from "../types";
-import RichRenderer from "..";
+import RichRenderer, { resolveRichValue, resolveRichValueFromFunction } from "..";
 
 interface RichTableProps {
     node: Optional<IRichTable, "type">;
@@ -32,6 +32,12 @@ const renderRichValue = (value: RichNode | undefined, defaults?: IRichContainerD
 };
 
 const RichTable: React.FC<RichTableProps> = ({ node, defaults }) => {
+    const [rows, setRows] = React.useState<IRichTableRow[] | null>(resolveRichValue(node.rows));
+
+    React.useEffect(() => {
+        resolveRichValueFromFunction(node.rows, setRows);
+    }, [node.rows]);
+
     const columns = React.useMemo<DataPresentationGridColumn<IRichTableRow>[]>(() => {
         return node.columns.map((column) => ({
             key: column.key,
@@ -61,9 +67,10 @@ const RichTable: React.FC<RichTableProps> = ({ node, defaults }) => {
             {node.title && <RichRenderer node={node.title} defaults={defaults} textVariant="title-sm" />}
 
             <DataPresentationGrid<IRichTableRow>
-                data={node.rows}
+                data={rows ?? []}
                 columns={columns}
                 showHeader={node.showHeader}
+                loading={rows === null}
                 slotProps={{
                     container: {
                         sx: {

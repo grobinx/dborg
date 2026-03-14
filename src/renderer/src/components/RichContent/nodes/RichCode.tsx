@@ -1,5 +1,5 @@
 import React from "react";
-import { Paper, useTheme } from "@mui/material";
+import { Box, Paper, useTheme } from "@mui/material";
 import { Light as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vs, vs2015 } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { IRichCode, IRichContainerDefaults } from "../types";
@@ -46,7 +46,11 @@ const RichCode: React.FC<RichCodeProps> = ({ node, defaults }) => {
             >
                 {code}
             </SyntaxHighlighter >
-        ) : <RichIcon node={{ icon: "Loading" }} defaults={defaults} />
+        ) : (
+            <Box>
+                <RichIcon node={{ icon: "Loading" }} defaults={defaults} />
+            </Box>
+        )
     );
 };
 
