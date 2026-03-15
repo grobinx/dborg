@@ -15,3 +15,5 @@ export { default as RichSkeleton } from "./RichSkeleton";
 export { default as RichStat } from "./RichStat";
 export { default as RichSwitch } from "./RichSwitch";
 export { default as RichTimeline } from "./RichTimeline";
+export { default as RichMetric } from "./RichMetric";
+export { default as RichTime } from "./RichTime";

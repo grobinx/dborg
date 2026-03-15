@@ -139,6 +139,7 @@ export type RichNodeType =
     | "chip"
     | "code"
     | "progress"
+    | "section"
     | "group"
     | "row"
     | "column"
@@ -169,6 +170,7 @@ export type RichNode =
     | IRichCode
     | IRichProgress
     | IRichIcon
+    | IRichSection
     | IRichGroup
     | IRichRow
     | IRichColumn
@@ -539,8 +541,8 @@ export interface IRichIcon extends IRichNode {
 /**
  * Grupa elementów z opcjonalnym tytułem i możliwością zwijania.
  */
-export interface IRichGroup extends IRichNode {
-    type: "group";
+export interface IRichSection extends IRichNode {
+    type: "section";
     /**
      * Tytuł grupy (opcjonalnie)
      */
@@ -571,6 +573,14 @@ export interface IRichGroup extends IRichNode {
      * @default true
      */
     expanded?: boolean;
+}
+
+export interface IRichGroup extends IRichNode {
+    type: "group";
+    /**
+     * Lista elementów wewnątrz grupy
+     */
+    items: RichValue<RichNode[]>;
 }
 
 export interface IRichRowBase extends IRichNode {
@@ -674,7 +684,7 @@ export interface IRichAlert extends IRichNode {
     /**
      * Elementy wewnątrz alertu
      */
-    items: RichValue<RichNode[]>;
+    message: RichValue<RichNode>;
     /**
      * Poziom ważności wpływający na kolor tła i obramowania
      */

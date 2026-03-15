@@ -18,6 +18,7 @@ export type {
     IRichCode,
     IRichProgress,
     IRichIcon,
+    IRichSection,
     IRichGroup,
     IRichRow,
     IRichColumn,
@@ -31,6 +32,13 @@ export type {
     IRichContainer,
     IRichContainerDefaults,
     IRichBadge,
+    IRichStat,
+    IRichSwitch,
+    IRichTimeline,
+    IRichTable,
+    IRichSkeleton,
+    IRichMetric,
+    IRichTime,
 } from "./types";
 export { RichDivider } from "./types";
 
@@ -57,9 +65,10 @@ import RichTime from "./nodes/RichTime";
 // Containers (import second)
 import RichRow from "./containers/RichRow";
 import RichColumn from "./containers/RichColumn";
-import RichGroup from "./containers/RichGroup";
+import RichSection from "./containers/RichSection";
 import RichList from "./containers/RichList";
 import RichTable from "./containers/RichTable";
+import RichGroup from "./containers/RichGroup";
 
 // Export not typed components
 export { default as RichBadge } from "./nodes/RichBadge";
@@ -87,10 +96,11 @@ export { default as RichTime } from "./nodes/RichTime";
 // Export containers
 export { default as RichRow } from "./containers/RichRow";
 export { default as RichColumn } from "./containers/RichColumn";
-export { default as RichGroup } from "./containers/RichGroup";
+export { default as RichSection } from "./containers/RichSection";
 export { default as RichList } from "./containers/RichList";
 export { default as RichContainer } from "./containers/RichContainer";
 export { default as RichTable } from "./containers/RichTable";
+export { default as RichGroup } from "./containers/RichGroup";
 
 export const getSeverityColor = (severity: RichSeverity | undefined, theme: Theme, contrastText: boolean = false): string => {
     switch (severity) {
@@ -179,6 +189,8 @@ const RichRenderer: React.FC<{
             return <RichRow node={node} defaults={defaults} />;
         case "column":
             return <RichColumn node={node} defaults={defaults} />;
+        case "section":
+            return <RichSection node={node} defaults={defaults} />;
         case "group":
             return <RichGroup node={node} defaults={defaults} />;
         case "list":

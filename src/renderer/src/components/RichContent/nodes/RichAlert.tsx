@@ -13,11 +13,11 @@ interface RichAlertProps {
 
 const RichAlert: React.FC<RichAlertProps> = ({ node, defaults }) => {
     const theme = useTheme();
-    const [items, setItems] = React.useState<RichNode[] | null>(resolveRichValue(node.items));
+    const [message, setMessage] = React.useState<RichNode | null>(resolveRichValue(node.message));
 
     React.useEffect(() => {
-        resolveRichValueFromFunction(node.items, setItems);
-    }, [node.items]);
+        resolveRichValueFromFunction<RichNode>(node.message, setMessage);
+    }, [node.message]);
 
     const getSeverityForAlert = (severity?: RichSeverity): "error" | "warning" | "info" | "success" => {
         switch (severity) {
@@ -69,11 +69,9 @@ const RichAlert: React.FC<RichAlertProps> = ({ node, defaults }) => {
             }}
         >
             {node.title && <RichRenderer node={node.title} defaults={defaults} textVariant="title" />}
-            {items === null ?
+            {message === null ?
                 <RichIcon node={{ icon: "Loading" }} defaults={defaults} />
-                : items.map((item, index) => (
-                    <RichRenderer key={index} node={item} defaults={defaults} />
-                ))
+                : <RichRenderer node={message} defaults={defaults} />
             }
         </Alert>
     );

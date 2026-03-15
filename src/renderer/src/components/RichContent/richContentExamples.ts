@@ -164,31 +164,40 @@ export const richContentExamples: RichExampleMap = {
             severity: "info",
             title: "Info alert",
             showIcon: true,
-            items: [
-                { type: "text", text: "To jest komunikat informacyjny." },
-                { type: "link", href: "https://example.com/info", text: "Czytaj więcej" },
-            ],
+            message: {
+                type: "group",
+                items: [
+                    { type: "text", text: "To jest komunikat informacyjny." },
+                    { type: "link", href: "https://example.com/info", text: "Czytaj więcej" },
+                ]
+            },
         },
         {
             type: "alert",
             severity: "warning",
             title: "Warning alert",
             showIcon: true,
-            items: [
-                { type: "text", text: "Wykryto kosztowną operację." },
-                { type: "chip", text: "Seq Scan", severity: "warning" },
-                { type: "code", language: "sql", code: "SELECT * FROM orders WHERE status = 'OPEN';" },
-            ],
+            message: {
+                type: "group",
+                items: [
+                    { type: "text", text: "Wykryto kosztowną operację." },
+                    { type: "chip", text: "Seq Scan", severity: "warning" },
+                    { type: "code", language: "sql", code: "SELECT * FROM orders WHERE status = 'OPEN';" },
+                ],
+            },
         },
         {
             type: "alert",
             severity: "error",
             title: "Error alert",
             showIcon: true,
-            items: [
-                { type: "text", text: "Nie udało się wykonać zapytania.", severity: "error" },
-                { type: "kbd", keys: ["Ctrl", "Enter"] },
-            ],
+            message: {
+                type: "group",
+                items: [
+                    { type: "text", text: "Nie udało się wykonać zapytania.", severity: "error" },
+                    { type: "kbd", keys: ["Ctrl", "Enter"] },
+                ],
+            },
         },
     ],
 
@@ -309,15 +318,15 @@ export const richContentExamples: RichExampleMap = {
                 { type: "stat", severity: "info", label: "Node Type", value: "Seq Scan", size: 2 },
                 { type: "stat", severity: "warning", label: "Execution Time", value: "622 ms", trend: "up", size: 2 },
                 { type: "stat", severity: "success", label: "Total Time", value: "580 ms", trend: "down", icon: "Clock", size: 2 },
-                { 
-                    type: "metric", 
-                    severity: "warning", 
-                    label: "Metric node", 
-                    unit: " ms", 
+                {
+                    type: "metric",
+                    severity: "warning",
+                    label: "Metric node",
+                    unit: " ms",
                     size: 2,
                     sparkline: async () => {
                         await sleep(Math.random() * 5 + 1);
-                        return [10, 15, 8, 20, 18, 22, 19, 25, 30, 28, 7, 12, 15, 13, 10]; 
+                        return [10, 15, 8, 20, 18, 22, 19, 25, 30, 28, 7, 12, 15, 13, 10];
                     }
                 }
             ],
@@ -475,7 +484,7 @@ export const richContentExamples: RichExampleMap = {
                         severity: "error",
                         title: "Timeout",
                         showIcon: false,
-                        items: [
+                        message: [
                             { type: "text", text: "Zapytanie anulowane po 30s." },
                             { type: "text", text: "Spróbuj dodać filtr lub indeks.", variant: "caption" },
                         ],
