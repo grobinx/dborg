@@ -258,15 +258,6 @@ export const richContentExamples: RichExampleMap = {
                 { severity: "error", indicator: true, content: "List without markers #2" },
             ],
         },
-        { 
-            type: "group",
-            items: [
-                { type: "log-line", timestamp: "2024-01-01 12:00:00", level: "info", message: "Application started" },
-                { type: "log-line", timestamp: "2024-01-01 12:01:00", level: "warn", source: "System", message: "High memory usage detected" },
-                { type: "log-line", timestamp: "2024-01-01 12:02:00", level: "error", source: "System", message: "Unhandled exception occurred" },
-                { type: "log-line", timestamp: "2024-01-01 12:03:00", level: "info", source: "System", message: "Application stopped" },
-            ]
-        }
     ],
 
     "Layout: row, column, grid, stat": [
@@ -445,7 +436,7 @@ export const richContentExamples: RichExampleMap = {
             type: "timeline",
             items: [
                 {
-                    timestamp: "14:23:01",
+                    timestamp: { type: "time", value: "14:23:01", format: "relative" },
                     severity: "info",
                     icon: "Info",
                     label: "Połączono z bazą danych",

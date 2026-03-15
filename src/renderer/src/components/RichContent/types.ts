@@ -157,7 +157,7 @@ export type RichNodeType =
     | "entity"
     | "skeleton"
     | "metric"
-    ;
+    | "time";
 
 /**
  * Union type wszystkich możliwych węzłów Rich Content.
@@ -183,6 +183,7 @@ export type RichNode =
     | IRichTable
     | IRichStat
     | IRichTimeline
+    | IRichTime
     | IRichSkeleton
     | IRichCustomSkeleton
     | IRichMetric
@@ -275,6 +276,22 @@ export interface IRichContainerDefaults {
      * Zmienione style dla wariantów tekstu (np. body, caption) wewnątrz tego kontenera.
      */
     textVariantStyles?: Partial<RichTextVariantStyles>;
+}
+
+/**
+ * Węzeł reprezentujący element czasu, który może wyświetlać czas względny lub absolutny w zależności od formatu.
+ */
+export interface IRichTime extends IRichNode {
+    type: "time";
+    /** 
+     * Timestamp w formacie ISO lub Unix 
+     */
+    value: string | number;
+    /** 
+     * Format wyświetlania: "relative", "absolute", "full"
+     * @default "absolute"
+     */
+    format?: "relative" | "absolute" | "full";
 }
 
 /**
@@ -553,7 +570,7 @@ export interface IRichGroup extends IRichNode {
      * Czy grupa jest domyślnie rozwinięta (jeśli collapsible)
      * @default true
      */
-    defaultExpanded?: boolean;
+    expanded?: boolean;
 }
 
 export interface IRichRowBase extends IRichNode {

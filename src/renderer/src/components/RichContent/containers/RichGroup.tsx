@@ -14,7 +14,7 @@ interface RichGroupProps {
 
 const RichGroup: React.FC<RichGroupProps> = ({ node, defaults, children }) => {
     const theme = useTheme();
-    const [expanded, setExpanded] = React.useState(node.defaultExpanded !== false);
+    const [expanded, setExpanded] = React.useState(node.expanded !== false);
     const [items, setItems] = React.useState<RichNode[] | null>(resolveRichValue(node.items));
 
     React.useEffect(() => {
