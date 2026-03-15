@@ -47,8 +47,8 @@ const RichStat: React.FC<RichStatProps> = ({ node, defaults }) => {
             sx={{
                 display: "flex",
                 flexDirection: "column",
-                gap: 1,
-                padding: defaults?.padding ?? 3,
+                gap: defaults?.gap ?? 4,
+                padding: defaults?.padding ?? 4,
                 width: getColSize(node.size),
                 minWidth: 0,
                 border: isHighlighted ? `1px solid ${severityColor}` : `1px solid ${theme.palette.divider}`,
@@ -63,7 +63,7 @@ const RichStat: React.FC<RichStatProps> = ({ node, defaults }) => {
         >
             {/* Wartość + Ikona + Trend */}
             <RichRow node={{ justify: "space-between", items: [] }} defaults={defaults}>
-                <Box sx={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                <Box sx={{ display: "flex", alignItems: "baseline", gap: defaults?.gap ?? 4 }}>
                     {node.trend && (
                         <RichIcon node={{ icon: getTrendIcon(node.trend), severity }} defaults={defaults} />
                     )}

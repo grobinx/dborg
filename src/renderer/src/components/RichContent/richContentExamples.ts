@@ -280,13 +280,13 @@ export const richContentExamples: RichExampleMap = {
             items: [
                 {
                     type: "column",
-                    size: 3,
+                    size: 2,
                     gap: 6,
                     items: [{ type: "text", text: "col-3", variant: "label" }, { type: "chip", text: "A", severity: "info" }],
                 },
                 {
                     type: "column",
-                    size: 6,
+                    size: 2,
                     gap: 6,
                     items: [
                         { type: "text", text: "col-6", variant: "label" },
@@ -295,7 +295,7 @@ export const richContentExamples: RichExampleMap = {
                 },
                 {
                     type: "column",
-                    size: 3,
+                    size: 2,
                     gap: 6,
                     items: [{ type: "text", text: "col-3", variant: "label" }, { type: "icon", icon: "⚙", severity: "success" }],
                 },
@@ -305,10 +305,21 @@ export const richContentExamples: RichExampleMap = {
         {
             type: "row",
             items: [
-                { type: "stat", label: "Rows", value: "1 532", size: 3 },
-                { type: "stat", severity: "info", label: "Node Type", value: "Seq Scan", size: 3 },
-                { type: "stat", severity: "warning", label: "Execution Time", value: "622 ms", trend: "up", size: 3 },
-                { type: "stat", severity: "success", label: "Total Time", value: "580 ms", trend: "down", icon: "Clock", size: 3 },
+                { type: "stat", label: "Rows", value: "1 532", size: 2 },
+                { type: "stat", severity: "info", label: "Node Type", value: "Seq Scan", size: 2 },
+                { type: "stat", severity: "warning", label: "Execution Time", value: "622 ms", trend: "up", size: 2 },
+                { type: "stat", severity: "success", label: "Total Time", value: "580 ms", trend: "down", icon: "Clock", size: 2 },
+                { 
+                    type: "metric", 
+                    severity: "warning", 
+                    label: "Metric node", 
+                    unit: " ms", 
+                    size: 2,
+                    sparkline: async () => {
+                        await sleep(Math.random() * 5 + 1);
+                        return [10, 15, 8, 20, 18, 22, 19, 25, 30, 28, 7, 12, 15, 13, 10]; 
+                    }
+                }
             ],
         },
     ],

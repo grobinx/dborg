@@ -58,6 +58,7 @@ import RichColumn from "./containers/RichColumn";
 import RichGroup from "./containers/RichGroup";
 import RichList from "./containers/RichList";
 import RichTable from "./containers/RichTable";
+import RichMetric from "./nodes/RichMetric";
 
 // Export not typed components
 export { default as RichBadge } from "./nodes/RichBadge";
@@ -79,6 +80,7 @@ export { default as RichStat } from "./nodes/RichStat";
 export { default as RichSwitch } from "./nodes/RichSwitch";
 export { default as RichTimeline } from "./nodes/RichTimeline";
 export { default as RichSkeleton } from "./nodes/RichSkeleton";
+export { default as RichMetric } from "./nodes/RichMetric";
 
 // Export containers
 export { default as RichRow } from "./containers/RichRow";
@@ -187,6 +189,8 @@ const RichRenderer: React.FC<{
             return <RichTable node={node} defaults={defaults} />;
         case "skeleton":
             return <RichSkeleton node={node} defaults={defaults} />;
+        case "metric":
+            return <RichMetric node={node} defaults={defaults} />;
         default:
             return <Box>Unknown node type: {(node as any).type}</Box>;
     }

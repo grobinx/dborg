@@ -155,7 +155,8 @@ export type RichNodeType =
     | "stat"
     | "timeline"
     | "entity"
-    | "skeleton";
+    | "skeleton"
+    | "metric";
 
 /**
  * Union type wszystkich możliwych węzłów Rich Content.
@@ -183,6 +184,7 @@ export type RichNode =
     | IRichTimeline
     | IRichSkeleton
     | IRichCustomSkeleton
+    | IRichMetric
     /**
      * Tablica węzłów jest traktowana jak wiersz (RichRow) z elementami ułożonymi poziomo.
      */
@@ -581,6 +583,10 @@ export interface IRichRowInline extends IRichRowBase {
      * Odstęp między elementami
      */
     gap?: RichGap;
+    /**
+     * Padding wewnątrz wiersza
+     */
+    padding?: RichGap;
 }
 
 /**
@@ -594,7 +600,7 @@ export interface IRichRowGrid extends IRichRowBase {
     /**
      * Elementy w wierszu (ułożone poziomo)
      */
-    items: RichValue<(IRichColumn | IRichStat)[]>;
+    items: RichValue<RichNode[]>;
 }
 
 export type IRichRow = IRichRowInline | IRichRowGrid;
@@ -612,6 +618,10 @@ export interface IRichColumn extends IRichNode {
      * Odstęp między elementami
      */
     gap?: RichGap;
+    /**
+     * Padding wewnątrz kolumny
+     */
+    padding?: RichGap;
     /**
      * Szerokość kolumny (jak w Grid System: 1-12 lub "auto")
      */
@@ -1133,7 +1143,11 @@ export interface IRichMetric extends IRichNode {
     /** 
      * Uproszczona tablica wartości do wygenerowania mini-wykresu liniowego 
      */
-    sparkline?: number[];
+    sparkline: RichValue<number[]>;
+    /**
+     * Wyświetlana wartość metryki (np. "1 234", "42 MB", "99.9%")
+     */
+    unit?: string;
     /**
      * Etykieta opisująca metrykę
      */

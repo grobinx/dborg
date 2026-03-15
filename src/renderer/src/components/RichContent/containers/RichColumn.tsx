@@ -36,7 +36,7 @@ const RichColumn: React.FC<RichColumnProps> = ({ node, defaults, children }) => 
                 display: "flex",
                 flexDirection: "column",
                 gap: node.gap ?? defaults?.gap ?? 4,
-                padding: defaults?.padding ?? 4,
+                padding: node.padding ?? defaults?.padding ?? 4,
                 width: getColSize(node.size),
                 minWidth: 0,
             }}
