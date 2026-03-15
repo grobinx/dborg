@@ -49,8 +49,8 @@ const RichStat: React.FC<RichStatProps> = ({ node, defaults }) => {
                 flexDirection: "column",
                 gap: defaults?.gap ?? 4,
                 padding: defaults?.padding ?? 4,
-                width: getColSize(node.size),
-                flexGrow: node.size === "stretch" ? 1 : 0,
+                width: node.size === "stretch" ? "100%" : getColSize(node.size),
+                flexGrow: node.size === "stretch" ? 1 : undefined,
                 minWidth: 0,
             }}
         >

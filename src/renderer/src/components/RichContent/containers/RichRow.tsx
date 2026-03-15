@@ -33,6 +33,11 @@ const RichRow: React.FC<RichRowProps> = ({ node, defaults, children }) => {
                 justifyContent: node.justify || "start",
                 width: "100%",
                 flexWrap: "wrap",
+                ...(node.layout === "grid" && (node as any).gridTemplateColumns && {
+                    display: "grid",
+                    gridTemplateColumns: (node as any).gridTemplateColumns || `repeat(${items ? items.length : 1}, auto)`,
+                    gap: (node as any).gap ?? defaults?.gap ?? 4,
+                }),
             }}
         >
             {items === null ?

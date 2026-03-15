@@ -629,6 +629,10 @@ export interface IRichRowGrid extends IRichRowBase {
      * Elementy w wierszu (ułożone poziomo)
      */
     items: RichValue<RichNode[]>;
+    /**
+     * Szablon kolumn w gridzie (np. "1fr 1fr" dla dwóch równych kolumn, "auto auto" dla kolumn dopasowanych do zawartości, "100px 200px" dla kolumn o stałej szerokości)
+     */
+    gridTemplateColumns?: string;
 }
 
 export type IRichRow = IRichRowInline | IRichRowGrid;

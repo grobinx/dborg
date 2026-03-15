@@ -284,6 +284,22 @@ export const richContentExamples: RichExampleMap = {
         {
             type: "row",
             layout: "grid",
+            align: "center",
+            gridTemplateColumns: "10% 20% 30% auto",
+            items: [
+                { type: "text", text: "Testowy text" }, 
+                { type: "text", text: "Prawa strona", severity: "success" },
+                { type: "text", text: "Środkowa kolumna zajmuje."},
+                { type: "text", text: "Grid pozwala na precyzyjne." },
+                { type: "text", text: "W tym przykładzie mamy trzy kolumny." },
+                { type: "text", text: "o szerokościach 10%, 20% i 50%.", severity: "info" },
+                { type: "text", text: "oraz czwartą kolumnę auto, która zajmuje pozostałą przestrzeń." },
+                { type: "text", text: "Grid umożliwia tworzenie." },
+            ],
+        },
+        {
+            type: "row",
+            layout: "grid",
             align: "start",
             justify: "space-between",
             items: [
