@@ -5,6 +5,7 @@ import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromF
 import RichIcon from "./RichIcon";
 import clsx from "@renderer/utils/clsx";
 import { Optional } from "@renderer/types/universal";
+import SeverityBox from "../utils/SeverityBox";
 
 interface RichMetricProps {
     node: Optional<IRichMetric, "type">;
@@ -24,7 +25,7 @@ const RichMetric: React.FC<RichMetricProps> = ({ node, defaults }) => {
     }, [node.sparkline]);
 
     const getColSize = (size?: RichColSize) => {
-        if (size === "auto" || size === undefined) {
+        if (size === "auto" || size === "stretch" || size === undefined) {
             return "auto";
         }
         return `calc(${(size / 12) * 100}% - ${(defaults?.gap ?? 4)}px)`;
@@ -32,7 +33,6 @@ const RichMetric: React.FC<RichMetricProps> = ({ node, defaults }) => {
 
     const severity = node.severity ?? "default";
     const severityColor = getSeverityColor(severity, theme);
-    const isHighlighted = severity !== "default";
 
     const values = (sparkline ?? []).filter((v) => Number.isFinite(v));
     const hasSparkline = values.length >= 2;
@@ -59,27 +59,21 @@ const RichMetric: React.FC<RichMetricProps> = ({ node, defaults }) => {
     }, [hasSparkline, values]);
 
     return (
-        <Box
+        <SeverityBox
             id={node.id}
             hidden={node.hidden}
             key={node.key ?? node.id}
             className={clsx("RichNode-metric", node.className)}
             style={node.style}
+            severity={severity}
             sx={{
                 display: "flex",
                 flexDirection: "column",
                 gap: defaults?.gap ?? 4,
                 padding: defaults?.padding ?? 4,
                 width: getColSize(node.size),
+                flexGrow: node.size === "stretch" ? 1 : 0,
                 minWidth: 0,
-                border: isHighlighted ? `1px solid ${severityColor}` : `1px solid ${theme.palette.divider}`,
-                borderLeft: isHighlighted ? `4px solid ${severityColor}` : `4px solid ${theme.palette.divider}`,
-                borderRadius: 1,
-                backgroundColor: isHighlighted
-                    ? theme.palette.mode === "dark"
-                        ? `${severityColor}18`
-                        : `${severityColor}12`
-                    : undefined,
             }}
         >
             <RichRow node={{ items: [], align: "center" }} defaults={defaults}>
@@ -130,7 +124,7 @@ const RichMetric: React.FC<RichMetricProps> = ({ node, defaults }) => {
             </RichRow>
 
             <RichRenderer node={node.label} defaults={defaults} textVariant="label" />
-        </Box>
+        </SeverityBox>
     );
 };
 

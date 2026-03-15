@@ -126,7 +126,7 @@ export type RichGap = number | string;
 /**
  * Typ rozmiaru kolumny w układzie siatki (Grid System)
  */
-export type RichColSize = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | "auto";
+export type RichColSize = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | "auto" | "stretch";
 
 export type RichValue<V = any> = V | (() => Promise<V>);
 
@@ -156,7 +156,8 @@ export type RichNodeType =
     | "timeline"
     | "entity"
     | "skeleton"
-    | "metric";
+    | "metric"
+    ;
 
 /**
  * Union type wszystkich możliwych węzłów Rich Content.
@@ -773,6 +774,11 @@ export interface IRichListItem extends IRichMetadata {
      * Zawartość elementu listy
      */
     content: RichValue<RichNode>;
+    /**
+     * Odstęp pozycji listy
+     * @default "2px 4px"
+     */
+    padding?: RichGap;
 }
 
 /**
@@ -1055,15 +1061,7 @@ export interface IRichDescription extends IRichNode {
 /**
  * Element drzewa - węzeł z etykietą i opcjonalnymi dziećmi, renderowany jako rozbudowany komponent drzewa.
  */
-export interface IRichTreeItem extends IRichMetadata {
-    /**
-     * Etykieta elementu drzewa, która może być prostym tekstem lub złożonym węzłem RichNode (np. z ikoną, badge'em itp.).
-     */
-    label: RichNode;
-    /**
-     * Ikona elementu drzewa (opcjonalnie, może być użyta do oznaczenia typu elementu lub jego stanu)
-     */
-    icon?: ThemeIconName;
+export interface IRichTreeItem extends IRichListItem {
     /**
      * Dzieci elementu drzewa - jeśli podano, element będzie renderowany jako rozbudowany węzeł drzewa z możliwością rozwijania/zwijania.
      */
@@ -1072,10 +1070,6 @@ export interface IRichTreeItem extends IRichMetadata {
      * Czy element drzewa jest domyślnie rozwinięty (jeśli ma dzieci)
      */
     expanded?: boolean;
-    /** 
-     * Akcja wywoływana po kliknięciu w element 
-     */
-    action?: IRichAction;
 }
 
 /**
@@ -1167,24 +1161,38 @@ export interface IRichMetric extends IRichNode {
 }
 
 /**
- * RichLogLine - specjalny typ wiersza logu, który oprócz treści logu może zawierać sygnaturę czasową, źródło logu i poziom logowania, idealny do prezentacji strumieni logów lub historii zdarzeń.
+ * Pozycja logu - struktura reprezentująca pojedynczy wpis w logu, z informacjami o czasie, poziomie ważności, źródle i treści wiadomości.
  */
-export interface IRichLogLine extends IRichNode {
-    type: "log-line";
-    /** 
-     * Sygnatura czasowa w formacie ISO lub czytelnym 
+export interface IRichLogEntry {
+    /**
+     * Sygnatura czasowa wpisu logu (np. "2024-01-01 12:00:00" lub "5 minut temu")
      */
-    timestamp?: RichNode;
-    /** 
-     * Nazwa modułu/źródła logu 
+    timestamp?: string;
+    /**
+     * Poziom ważności wpisu logu, który może wpływać na kolor i ikonę (np. "debug", "info", "warn", "error", "trace")
      */
-    source?: RichNode;
-    /** 
-     * Treść logu 
+    level?: "debug" | "info" | "warn" | "error" | "trace";
+    /**
+     * Źródło lub kategoria wpisu logu (np. nazwa modułu, komponentu lub systemu, który wygenerował log)
      */
-    message: RichNode;
-    /** 
-     * Poziom logowania (error, warn, info, debug) 
+    source?: string;
+    /**
+     * Treść wiadomości logu, która może być prostym tekstem lub złożonym węzłem RichNode (np. z podświetleniem składni, linkami, chipami itp.)
      */
-    level?: "error" | "warn" | "info" | "debug" | "trace";
+    message: RichNode; 
+}
+
+/**
+ * Log - komponent do wyświetlania strumienia logów, z opcją wirtualnego scrollowania dla dużych ilości danych, podświetleniem składni i kontrolą nad formatowaniem wpisów logu.
+ */
+export interface IRichLog extends IRichNode {
+    type: "log";
+    /** 
+     * Tablica wpisów logów 
+     */
+    entries: RichValue<IRichLogEntry[]>;
+    /** 
+     * Wysokość okna logów (jeśli duża ilość danych, włączy się virtual scroll) 
+     */
+    height?: number | string;
 }

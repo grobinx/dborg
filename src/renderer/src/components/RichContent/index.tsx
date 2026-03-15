@@ -51,6 +51,7 @@ import RichStat from "./nodes/RichStat";
 import RichSwitch from "./nodes/RichSwitch";
 import RichTimeline from "./nodes/RichTimeline";
 import RichSkeleton from "./nodes/RichSkeleton";
+import RichMetric from "./nodes/RichMetric";
 
 // Containers (import second)
 import RichRow from "./containers/RichRow";
@@ -58,7 +59,6 @@ import RichColumn from "./containers/RichColumn";
 import RichGroup from "./containers/RichGroup";
 import RichList from "./containers/RichList";
 import RichTable from "./containers/RichTable";
-import RichMetric from "./nodes/RichMetric";
 
 // Export not typed components
 export { default as RichBadge } from "./nodes/RichBadge";

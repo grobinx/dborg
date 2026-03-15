@@ -4,6 +4,7 @@ import { IRichContainerDefaults, IRichList, IRichListItem, RichNode } from "../t
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
+import SeverityBox from "../utils/SeverityBox";
 
 interface RichListItemProps {
     node: IRichListItem;
@@ -20,7 +21,8 @@ const RichListItem: React.FC<RichListItemProps> = ({ node, defaults, children })
     }, [node.content]);
 
     return (
-        <ListItem
+        <SeverityBox
+            component={"li"}
             id={node.id}
             hidden={node.hidden}
             key={node.key ?? node.id}
@@ -30,17 +32,15 @@ const RichListItem: React.FC<RichListItemProps> = ({ node, defaults, children })
                 node.className
             )}
             style={node.style}
+            severity={node.indicator ? (node.severity ?? "default") : undefined}
             sx={{
                 display: "list-item",
-                padding: 0,
+                padding: node.padding ?? "0px 4px",
                 color: node.indicator && (node.severity ?? "default") !== "default" ? undefined : getSeverityColor(node.severity, theme),
                 listStyleType: (node.severity ?? "default") !== "default" ? undefined : "inherit",
                 "::marker": {
                     color: getSeverityColor(node.severity, theme),
                 },
-                border: node.indicator && (node.severity ?? "default") !== "default" ? `1px solid ${getSeverityColor(node.severity, theme)}` : undefined,
-                borderLeft: node.indicator && (node.severity ?? "default") !== "default" ? `4px solid ${getSeverityColor(node.severity, theme)}` : undefined,
-                borderRadius: node.indicator && (node.severity ?? "default") !== "default" ? 1 : undefined,
             }}
         >
             {content === null ?
@@ -48,7 +48,7 @@ const RichListItem: React.FC<RichListItemProps> = ({ node, defaults, children })
                 : <RichRenderer node={content} defaults={defaults} textVariant="body" />
             }
             {children}
-        </ListItem>
+        </SeverityBox>
     );
 };
 

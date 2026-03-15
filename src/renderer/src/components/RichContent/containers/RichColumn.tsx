@@ -19,7 +19,7 @@ const RichColumn: React.FC<RichColumnProps> = ({ node, defaults, children }) => 
     }, [node.items]);
 
     const getColSize = (size?: RichColSize) => {
-        if (size === "auto" || size === undefined) {
+        if (size === "auto" || size === "stretch" || size === undefined) {
             return "auto";
         }
         return `calc(${(size / 12) * 100}% - ${(node.gap ?? defaults?.gap ?? 4)}px)`;
@@ -38,6 +38,7 @@ const RichColumn: React.FC<RichColumnProps> = ({ node, defaults, children }) => 
                 gap: node.gap ?? defaults?.gap ?? 4,
                 padding: node.padding ?? defaults?.padding ?? 4,
                 width: getColSize(node.size),
+                flexGrow: node.size === "stretch" ? 1 : 0,
                 minWidth: 0,
             }}
         >
