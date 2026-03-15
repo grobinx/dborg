@@ -61,6 +61,8 @@ import RichTimeline from "./nodes/RichTimeline";
 import RichSkeleton from "./nodes/RichSkeleton";
 import RichMetric from "./nodes/RichMetric";
 import RichTime from "./nodes/RichTime";
+import RichBullet from "./nodes/RichBullet";
+import RichRefresh from "./nodes/RichRefresh";
 
 // Containers (import second)
 import RichRow from "./containers/RichRow";
@@ -92,6 +94,8 @@ export { default as RichTimeline } from "./nodes/RichTimeline";
 export { default as RichSkeleton } from "./nodes/RichSkeleton";
 export { default as RichMetric } from "./nodes/RichMetric";
 export { default as RichTime } from "./nodes/RichTime";
+export { default as RichBullet } from "./nodes/RichBullet";
+export { default as RichRefresh } from "./nodes/RichRefresh";
 
 // Export containers
 export { default as RichRow } from "./containers/RichRow";
@@ -207,6 +211,10 @@ const RichRenderer: React.FC<{
             return <RichMetric node={node} defaults={defaults} />;
         case "time":
             return <RichTime node={node} defaults={defaults} />;
+        case "bullet":
+            return <RichBullet node={node} defaults={defaults} />;
+        case "refresh":
+            return <RichRefresh node={node} defaults={defaults} />;
         default:
             return <Box>Unknown node type: {(node as any).type}</Box>;
     }

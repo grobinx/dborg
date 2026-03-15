@@ -1,11 +1,12 @@
 import React from "react";
 import { Box, Skeleton, useTheme } from "@mui/material";
 import { IRichContainerDefaults, IRichMetric, RichColSize } from "../types";
-import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromFunction, RichColumn, RichRow } from "..";
+import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromFunction, RichRow } from "..";
 import RichIcon from "./RichIcon";
 import clsx from "@renderer/utils/clsx";
 import { Optional } from "@renderer/types/universal";
 import SeverityBox from "../utils/SeverityBox";
+import Tooltip from "@renderer/components/Tooltip";
 
 interface RichMetricProps {
     node: Optional<IRichMetric, "type">;
@@ -58,7 +59,7 @@ const RichMetric: React.FC<RichMetricProps> = ({ node, defaults }) => {
             .join(" ");
     }, [hasSparkline, values]);
 
-    return (
+    const content = (
         <SeverityBox
             id={node.id}
             hidden={node.hidden}
@@ -126,6 +127,16 @@ const RichMetric: React.FC<RichMetricProps> = ({ node, defaults }) => {
             <RichRenderer node={node.label} defaults={defaults} textVariant="label" />
         </SeverityBox>
     );
+
+    if (node.tooltip) {
+        return (
+            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+                {content}
+            </Tooltip>
+        );
+    }
+
+    return content;
 };
 
 export default RichMetric;

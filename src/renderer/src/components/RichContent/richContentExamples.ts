@@ -287,9 +287,9 @@ export const richContentExamples: RichExampleMap = {
             align: "center",
             gridTemplateColumns: "10% 20% 30% auto",
             items: [
-                { type: "text", text: "Testowy text" }, 
+                { type: "row", items: [{ type: "bullet", severity: "error", pulse: true }, { type: "text", text: "Testowy text" }] },
                 { type: "text", text: "Prawa strona", severity: "success" },
-                { type: "text", text: "Środkowa kolumna zajmuje."},
+                { type: "text", text: "Środkowa kolumna zajmuje." },
                 { type: "text", text: "Grid pozwala na precyzyjne." },
                 { type: "text", text: "W tym przykładzie mamy trzy kolumny." },
                 { type: "text", text: "o szerokościach 10%, 20% i 50%.", severity: "info" },
@@ -330,21 +330,35 @@ export const richContentExamples: RichExampleMap = {
         {
             type: "row",
             items: [
-                { type: "stat", label: "Rows", value: "1 532", size: 2 },
+                { type: "stat", label: "Rows", value: { type: "row", items: [{ type: "bullet", severity: "success", pulse: true, tooltip: "This is a bullet tooltip" }, { type: "text", text: "1 532", variant: "title" }] }, size: 2 },
                 { type: "stat", severity: "info", label: "Node Type", value: "Seq Scan", size: 2 },
                 { type: "stat", severity: "warning", label: "Execution Time", value: "622 ms", trend: "up", size: 2 },
                 { type: "stat", severity: "success", label: "Total Time", value: "580 ms", trend: "down", icon: "Clock", size: 2 },
+                {
+                    type: "refresh",
+                    interval: 5000,
+                    refresh: {
+                        type: "metric",
+                        severity: "success",
+                        label: "Dynamic metric",
+                        unit: " req/s",
+                        size: 2,
+                        tooltip: "This is a metric node with refreshing random sparkline data",
+                        sparkline: async () => Array.from({ length: 10 }, () => Math.floor(Math.random() * 20) + 1),
+                    }
+                },
                 {
                     type: "metric",
                     severity: "warning",
                     label: "Metric node",
                     unit: " ms",
                     size: 2,
+                    tooltip: "This is a metric node with a sparkline chart",
                     sparkline: async () => {
                         await sleep(Math.random() * 5 + 1);
                         return [10, 15, 8, 20, 18, 22, 19, 25, 30, 28, 7, 12, 15, 13, 10];
                     }
-                }
+                },
             ],
         },
     ],

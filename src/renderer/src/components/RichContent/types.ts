@@ -158,7 +158,9 @@ export type RichNodeType =
     | "entity"
     | "skeleton"
     | "metric"
-    | "time";
+    | "time"
+    | "bullet"
+    | "refresh";
 
 /**
  * Union type wszystkich możliwych węzłów Rich Content.
@@ -189,6 +191,8 @@ export type RichNode =
     | IRichSkeleton
     | IRichCustomSkeleton
     | IRichMetric
+    | IRichBullet
+    | IRichRefresh
     /**
      * Tablica węzłów jest traktowana jak wiersz (RichRow) z elementami ułożonymi poziomo.
      */
@@ -232,6 +236,8 @@ export interface IRichMetadata {
      * Generyczny tooltip dla dowolnego węzła
      */
     tooltip?: RichNode;
+
+
 }
 
 /**
@@ -1226,4 +1232,28 @@ export interface IRichLog extends IRichNode {
      * Wysokość okna logów (jeśli duża ilość danych, włączy się virtual scroll) 
      */
     height?: number | string;
+}
+
+export interface IRichBullet extends IRichNode {
+    type: "bullet";
+    /**
+     * Poziom ważności wpływający na kolor kropki
+     */
+    severity: RichSeverity;
+    /** 
+     * Czy kropka ma pulsować 
+     */
+    pulse?: boolean;
+}
+
+export interface IRichRefresh extends IRichNode {
+    type: "refresh";
+    /**
+     * Interwał odświeżania danych w milisekundach - jeśli podano, komponent będzie automatycznie odświeżał dane co określony czas, wywołując ponownie funkcję value i aktualizując zawartość.
+     */
+    interval: number; 
+    /**
+     * Zawartość do renderowania, która będzie aktualizowana po każdym odświeżeniu. Może być dowolnym węzłem RichNode, co pozwala na dynamiczne aktualizowanie różnych typów treści (np. tekst, wykresy, tabele) w regularnych odstępach czasu.
+     */
+    refresh: RichNode;
 }

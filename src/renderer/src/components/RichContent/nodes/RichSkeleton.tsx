@@ -60,7 +60,6 @@ const RichSkeleton: React.FC<RichSkeletonProps> = ({ node, defaults }) => {
                             variant={variant}
                             width={node.width}
                             height={node.height}
-                            sx={{ borderRadius: defaults?.radius ?? 4 }}
                             animation="wave"
                         />
                     ))}
