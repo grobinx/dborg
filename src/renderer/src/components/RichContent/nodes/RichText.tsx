@@ -129,15 +129,18 @@ const RichText: React.FC<RichTextProps> = ({ node, defaults }) => {
             className={clsx("RichNode-text", node.className)}
             style={node.style}
             variant={node.variant ?? "body"}
-            sx={{ 
+            sx={{
                 color: getSeverityColor(node.severity, theme),
-                fontFamily: node.decoration?.includes("monospace") ? defaults?.fontFamilyMonospace ?? theme.typography.monospaceFontFamily : undefined,
+                fontFamily: node.decoration?.includes("monospace") || node.variant === "code-inline" ? defaults?.fontFamilyMonospace ?? theme.typography.monospaceFontFamily : undefined,
                 fontWeight: node.decoration?.includes("bold") ? "bold" : undefined,
                 fontStyle: node.decoration?.includes("italic") ? "italic" : undefined,
                 textDecoration: [
                     node.decoration?.includes("underline") ? "underline" : undefined,
                     node.decoration?.includes("strikethrough") ? "line-through" : undefined
-                ].filter(Boolean).join(" ")
+                ].filter(Boolean).join(" "),
+                backgroundColor: node.variant === "code-inline" ? (theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)') : undefined,
+                padding: node.variant === "code-inline" ? '0.1rem 0.3rem' : undefined,
+                borderRadius: node.variant === "code-inline" ? defaults?.radius : undefined,
             }}
             textVariantStyles={defaults?.textVariantStyles}
         >

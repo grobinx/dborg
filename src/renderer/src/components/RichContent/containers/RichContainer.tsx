@@ -23,7 +23,7 @@ const RichContainer: React.FC<RichContainerProps> = ({ node }) => {
             padding: node.padding ?? "4px 8px",
             gap: node.gap ?? 4,
             fontWeight: node.fontWeight ?? "normal",
-            radius: node.radius ?? 3,
+            radius: node.radius ?? "3px",
             textVariantStyles: node.textVariantStyles,
         } as IRichContainerDefaults;
     }, [fontSize, fontFamily, fontFamilyMonospace, node.fontFamily, node.fontFamilyMonospace, node.fontSize, node.fontWeight, node.gap, node.padding, node.radius, node.textVariantStyles]);

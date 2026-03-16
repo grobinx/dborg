@@ -1,5 +1,6 @@
 import { sleep } from "@renderer/utils/sleep";
-import { RichNode } from "./types";
+import { IRichText, RichNode, RichSeverity, RichTextVariant } from "./types";
+import { RICH_TEXT_VARIANT_STYLES } from "./nodes/RichText";
 
 type RichExampleMap = Record<string, RichNode[]>;
 
@@ -42,39 +43,66 @@ const placeholderSvg = (
 const fitDemoTallSrc = placeholderSvg("FIT DEMO", "dbeafe", "0f172a", 220, 420);
 const fitDemoSmallSrc = placeholderSvg("SMALL SRC", "fde68a", "78350f", 140, 60);
 
+const textVariantSeverities: RichSeverity[] = ["default", "info", "warning", "success", "error"];
+
+const describeTextVariantStyle = (variant: Exclude<RichTextVariant, "markdown">): string => {
+    const style = RICH_TEXT_VARIANT_STYLES[variant];
+    const details = [
+        `fontSize: ${style.fontSize}`,
+        `lineHeight: ${style.lineHeight}`,
+        `fontWeight: ${style.fontWeight}`,
+        `component: ${typeof style.component === "string" ? style.component : "custom"}`,
+    ];
+
+    if (style.letterSpacing) {
+        details.push(`letterSpacing: ${style.letterSpacing}`);
+    }
+
+    if (style.textTransform) {
+        details.push(`textTransform: ${style.textTransform}`);
+    }
+
+    return details.join(", ");
+};
+
+const nonMarkdownTextVariants = Object.keys(RICH_TEXT_VARIANT_STYLES) as Exclude<RichTextVariant, "markdown">[];
+
+const textAndMarkdownExamples: RichNode[] = [
+    ...nonMarkdownTextVariants.map((variant, index): IRichText => ({
+        type: "text",
+        variant,
+        severity: textVariantSeverities[index % textVariantSeverities.length],
+        text: `${variant} (${describeTextVariantStyle(variant)})`,
+    })),
+    {
+        type: "text",
+        variant: "markdown",
+        severity: "default",
+        text: [
+            "###### Markdown demo",
+            "- **bold**",
+            "- _italic_",
+            "- `inline code`",
+            "",
+            "```sql",
+            "SELECT id, name",
+            "FROM users",
+            "WHERE active = true;",
+            "```",
+        ].join("\n"),
+    },
+];
+
 export const richContentExamples: RichExampleMap = {
-    "Tekst i markdown": [
-        { type: "text", text: "Body / normal", variant: "body", severity: "default" },
-        { type: "text", text: "Caption / info", variant: "caption", severity: "info" },
-        { type: "text", text: "Label / warning", variant: "label", severity: "warning" },
-        { type: "text", text: "Title / success", variant: "title", severity: "success" },
-        { type: "text", text: "Description / default", variant: "description", severity: "default" },
-        {
-            type: "text",
-            variant: "markdown",
-            severity: "default",
-            text: [
-                "###### Markdown demo",
-                "- **bold**",
-                "- _italic_",
-                "- `inline code`",
-                "",
-                "```sql",
-                "SELECT id, name",
-                "FROM users",
-                "WHERE active = true;",
-                "```",
-            ].join("\n"),
-        },
-    ],
+    "Tekst i markdown": textAndMarkdownExamples,
 
     "Linki, ikony, klawisze, odstępy": [
         { type: "link", text: "Strona projektu", href: "https://github.com", severity: "info", variant: "body" },
         { type: "link", href: "https://example.org/only-href", severity: "warning", variant: "caption" },
 
-        { type: "icon", icon: "ℹ", severity: "info", tooltip: "Informacja" },
-        { type: "icon", icon: "⚠", severity: "warning", tooltip: "Ostrzeżenie" },
-        { type: "row", items: [{ type: "icon", icon: "⛔", severity: "error", tooltip: "Błąd" }, { type: "text", text: "Opis ikony" }] },
+        { type: "icon", icon: "Info", severity: "info", tooltip: "Informacja" },
+        { type: "icon", icon: "Warning", severity: "warning", tooltip: "Ostrzeżenie" },
+        { type: "row", items: [{ type: "icon", icon: "Error", severity: "error", tooltip: "Błąd" }, { type: "text", text: "Opis ikony" }] },
 
         { type: "divider" },
 
