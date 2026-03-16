@@ -12,6 +12,11 @@ interface RichActionProps {
 }
 
 const RichAction: React.FC<RichActionProps> = ({ node, defaults }) => {
+
+    if (node.excluded) {
+        return null;
+    }
+    
     const content = (
         <Box 
             id={node.id}
@@ -34,7 +39,7 @@ const RichAction: React.FC<RichActionProps> = ({ node, defaults }) => {
                         right: "-8px",
                     }}
                 >
-                    <RichBadge badge={node.badge} defaults={defaults} />
+                    <RichBadge node={node.badge} defaults={defaults} />
                 </Box>
             )}
         </Box>

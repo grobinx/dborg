@@ -3,6 +3,7 @@ import { Box, FormControlLabel, Switch, SwitchProps, useTheme } from "@mui/mater
 import { IRichContainerDefaults, IRichSwitch } from "../types";
 import RichRenderer from "..";
 import clsx from "@renderer/utils/clsx";
+import Tooltip from "@renderer/components/Tooltip";
 
 interface RichSwitchProps {
     node: IRichSwitch;
@@ -16,6 +17,10 @@ const RichSwitch: React.FC<RichSwitchProps> = ({ node, defaults }) => {
     React.useEffect(() => {
         setChecked(node.checked ?? false);
     }, [node.checked]);
+
+    if (node.excluded) {
+        return null;
+    }
 
     const color: SwitchProps["color"] = node.severity !== "default" ? node.severity : "primary";
 
@@ -32,7 +37,7 @@ const RichSwitch: React.FC<RichSwitchProps> = ({ node, defaults }) => {
         />
     );
 
-    return (
+    const result = (
         <Box
             id={node.id}
             hidden={node.hidden}
@@ -59,6 +64,17 @@ const RichSwitch: React.FC<RichSwitchProps> = ({ node, defaults }) => {
             )}
         </Box>
     );
+
+    if (node.tooltip) {
+        return (
+            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+                {result}
+            </Tooltip>
+        );
+    }
+
+    return result;
+
 };
 
 export default RichSwitch;

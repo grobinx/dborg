@@ -2,6 +2,8 @@ import React, { CSSProperties } from "react";
 import { Box, useTheme } from "@mui/material";
 import { IRichContainerDefaults, IRichImage } from "../types";
 import clsx from "@renderer/utils/clsx";
+import Tooltip from "@renderer/components/Tooltip";
+import RichRenderer from "..";
 
 interface RichImageProps {
     node: IRichImage;
@@ -25,6 +27,10 @@ const RichImage: React.FC<RichImageProps> = ({ node, defaults }) => {
                 return "contain";
         }
     };
+
+    if (node.excluded) {
+        return null;
+    }
 
     const shouldRepeat = !!node.repeat && node.repeat !== "no-repeat";
 
@@ -60,7 +66,7 @@ const RichImage: React.FC<RichImageProps> = ({ node, defaults }) => {
         );
     }
 
-    return (
+    const result = (
         <Box
             className="RichNode-image"
             role="img"
@@ -87,6 +93,17 @@ const RichImage: React.FC<RichImageProps> = ({ node, defaults }) => {
             />
         </Box>
     );
+
+    if (node.tooltip) {
+        return (
+            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+                {result}
+            </Tooltip>
+        );
+    }
+
+    return result;
+
 };
 
 export default RichImage;

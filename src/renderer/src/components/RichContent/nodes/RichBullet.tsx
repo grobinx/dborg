@@ -17,7 +17,11 @@ const RichBullet: React.FC<RichBulletProps> = ({ node, defaults }) => {
     const color = getSeverityColor(node.severity, theme);
     const bulletColor = color === "inherit" ? theme.palette.text.secondary : color;
 
-    const content = (
+    if (node.excluded) {
+        return null;
+    }
+
+    const result = (
         <Box
             id={node.id}
             hidden={node.hidden}
@@ -56,12 +60,12 @@ const RichBullet: React.FC<RichBulletProps> = ({ node, defaults }) => {
     if (node.tooltip) {
         return (
             <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
-                {content}
+                {result}
             </Tooltip>
         );
     }
 
-    return content;
+    return result;
 };
 
 export default RichBullet;

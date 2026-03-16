@@ -3,6 +3,8 @@ import { Box, useTheme } from "@mui/material";
 import { IRichContainerDefaults, IRichTime } from "../types";
 import clsx from "@renderer/utils/clsx";
 import { Optional } from "@renderer/types/universal";
+import Tooltip from "@renderer/components/Tooltip";
+import RichRenderer from "..";
 
 interface RichTimeProps {
     node: Optional<IRichTime, "type">;
@@ -109,7 +111,11 @@ const RichTime: React.FC<RichTimeProps> = ({ node, defaults }) => {
         }
     }, [date, node.format, node.value]);
 
-    return (
+    if (node.excluded) {
+        return null;
+    }
+
+    const result = (
         <Box
             id={node.id}
             hidden={node.hidden}
@@ -129,6 +135,16 @@ const RichTime: React.FC<RichTimeProps> = ({ node, defaults }) => {
             {displayValue}
         </Box>
     );
+
+    if (node.tooltip) {
+        return (
+            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+                {result}
+            </Tooltip>
+        );
+    }
+
+    return result;
 };
 
 export default RichTime;

@@ -5,7 +5,8 @@ import { vs, vs2015 } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { IRichCode, IRichContainerDefaults } from "../types";
 import clsx from "@renderer/utils/clsx";
 import { Optional } from "@renderer/types/universal";
-import { resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
+import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
+import Tooltip from "@renderer/components/Tooltip";
 
 interface RichCodeProps {
     node: Optional<IRichCode, "type">;
@@ -20,7 +21,11 @@ const RichCode: React.FC<RichCodeProps> = ({ node, defaults }) => {
         resolveRichValueFromFunction(node.code, setCode);
     }, [node.code]);
 
-    return (
+    if (node.excluded) {
+        return null;
+    }
+
+    const result = (
         code ? (
             <SyntaxHighlighter
                 id={node.id}
@@ -52,6 +57,17 @@ const RichCode: React.FC<RichCodeProps> = ({ node, defaults }) => {
             </Box>
         )
     );
+
+    if (node.tooltip) {
+        return (
+            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+                {result}
+            </Tooltip>
+        );
+    }
+
+    return result;
+
 };
 
 export default RichCode;

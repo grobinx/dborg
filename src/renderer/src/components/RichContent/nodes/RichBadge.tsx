@@ -4,9 +4,11 @@ import { IRichContainerDefaults, IRichBadge } from "../types";
 import UnboundBadge from "@renderer/components/UnboundBadge";
 import { ThemeColor } from "@renderer/types/colors";
 import clsx from "@renderer/utils/clsx";
+import Tooltip from "@renderer/components/Tooltip";
+import RichRenderer from "..";
 
 interface RichBadgeProps {
-    badge: IRichBadge;
+    node: IRichBadge;
     defaults?: IRichContainerDefaults;
 }
 
@@ -42,35 +44,49 @@ const getPositionStyle = (
     }
 };
 
-const RichBadge: React.FC<RichBadgeProps> = ({ badge }) => {
+const RichBadge: React.FC<RichBadgeProps> = ({ node: node, defaults }) => {
     const theme = useTheme();
 
     const getDisplayValue = () => {
-        if (badge.max !== undefined && typeof badge.value === "number" && badge.value > badge.max) {
-            return `${badge.max}+`;
+        if (node.max !== undefined && typeof node.value === "number" && node.value > node.max) {
+            return `${node.max}+`;
         }
-        return badge.value;
+        return node.value;
     };
 
-    return (
+    if (node.excluded) {
+        return null;
+    }
+
+    const result = (
         <Box
-            id={badge.id}
-            hidden={badge.hidden}
-            key={badge.key ?? badge.id}
-            className={clsx("RichNode-badge", badge.className)}
-            style={badge.style}
+            id={node.id}
+            hidden={node.hidden}
+            key={node.key ?? node.id}
+            className={clsx("RichNode-badge", node.className)}
+            style={node.style}
             sx={{ position: "relative" }}
         >
             <UnboundBadge
                 content={getDisplayValue()}
                 sx={{
                     position: "absolute",
-                    ...getPositionStyle(badge.position),
+                    ...getPositionStyle(node.position),
                 }}
-                color={badge.severity as ThemeColor}
+                color={node.severity as ThemeColor}
             />
         </Box>
     );
+
+    if (node.tooltip) {
+        return (
+            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+                {result}
+            </Tooltip>
+        );
+    }
+
+    return result;
 };
 
 export default RichBadge;

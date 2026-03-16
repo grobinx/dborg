@@ -233,6 +233,15 @@ export interface IRichMetadata {
      * @default false
      */
     hidden?: boolean;
+    
+    /**
+     * Jeśli true, element oraz wszystkie jego dzieci zostaną całkowicie 
+     * pominięte podczas procesu generowania i renderowania.
+     * Nie będzie po nim śladu w DOM ani w pamięci renderera.
+     * Z wyjątkiem przypadku w którym element ma lazy content, wtedy dane zostaną pobrane mimo, że nie zostaną wyrenderowane.
+     * @default false
+     */
+    excluded?: boolean;
 
     /**
      * Generyczny tooltip dla dowolnego węzła
@@ -535,10 +544,6 @@ export interface IRichIcon extends IRichNode {
      * Poziom ważności wpływający na kolor
      */
     severity?: RichSeverity;
-    /**
-     * Tooltip wyświetlany po najechaniu
-     */
-    tooltip?: string;
     /**
      * Rozmiar ikony
      * @default "medium"

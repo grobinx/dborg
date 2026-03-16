@@ -2,11 +2,12 @@ import React from "react";
 import { Box, Typography, useTheme } from "@mui/material";
 import { styled, SxProps } from "@mui/material/styles";
 import { IRichContainerDefaults, IRichText, RichTextVariant, RichTextVariantStyle, RichTextVariantStyles } from "../types";
-import { getSeverityColor, RichCode } from "..";
-import Markdown from "react-markdown";
+import RichRenderer, { getSeverityColor, RichCode } from "..";
+import Markdown, { Components } from "react-markdown";
 import Code from "@renderer/components/Code";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
+import Tooltip from "@renderer/components/Tooltip";
 
 interface RichTextProps {
     node: Optional<IRichText, "type">;
@@ -83,6 +84,32 @@ const RichText: React.FC<RichTextProps> = ({ node, defaults }) => {
     const theme = useTheme();
 
     if (node.variant === "markdown") {
+        const components: Components = React.useMemo(() => ({
+            p: (props) => <RichTextRoot variant="body" component="span" textVariantStyles={defaults?.textVariantStyles} {...props} />,
+            h1: (props) => <RichTextRoot variant="hero" component="h1" textVariantStyles={defaults?.textVariantStyles} {...props} />,
+            h2: (props) => <RichTextRoot variant="title-lg" component="h2" textVariantStyles={defaults?.textVariantStyles} {...props} />,
+            h3: (props) => <RichTextRoot variant="title" component="h3" textVariantStyles={defaults?.textVariantStyles} {...props} />,
+            h4: (props) => <RichTextRoot variant="title-sm" component="h4" textVariantStyles={defaults?.textVariantStyles} {...props} />,
+            h5: (props) => <RichTextRoot variant="lead" component="p" textVariantStyles={defaults?.textVariantStyles} {...props} />,
+            h6: (props) => <RichTextRoot variant="body-strong" component="p" textVariantStyles={defaults?.textVariantStyles} {...props} />,
+            code: ({ className, children }) => {
+                const language = className?.match(/language-(\w+)/)?.[1];
+                const isInline = !className && !String(children).includes('\n');
+
+                if (!isInline && language) {
+                    return <RichCode node={{ code: String(children).trim(), language }} defaults={defaults} />;
+                } else if (!isInline) {
+                    return <RichCode node={{ code: String(children).trim() }} defaults={defaults} />;
+                } else {
+                    return <Code>{String(children).trim()}</Code>
+                }
+            },
+        }), [theme, defaults])
+
+        if (node.excluded) {
+            return null;
+        }
+
         return (
             <Box
                 id={node.id}
@@ -93,27 +120,7 @@ const RichText: React.FC<RichTextProps> = ({ node, defaults }) => {
                 sx={{ color: getSeverityColor(node.severity, theme) }}
             >
                 <Markdown
-                    components={React.useMemo(() => ({
-                        p: (props) => <RichTextRoot variant="body" component="span" textVariantStyles={defaults?.textVariantStyles} {...props} />,
-                        h1: (props) => <RichTextRoot variant="hero" component="h1" textVariantStyles={defaults?.textVariantStyles} {...props} />,
-                        h2: (props) => <RichTextRoot variant="title-lg" component="h2" textVariantStyles={defaults?.textVariantStyles} {...props} />,
-                        h3: (props) => <RichTextRoot variant="title" component="h3" textVariantStyles={defaults?.textVariantStyles} {...props} />,
-                        h4: (props) => <RichTextRoot variant="title-sm" component="h4" textVariantStyles={defaults?.textVariantStyles} {...props} />,
-                        h5: (props) => <RichTextRoot variant="lead" component="p" textVariantStyles={defaults?.textVariantStyles} {...props} />,
-                        h6: (props) => <RichTextRoot variant="body-strong" component="p" textVariantStyles={defaults?.textVariantStyles} {...props} />,
-                        code: ({ className, children }) => {
-                            const language = className?.match(/language-(\w+)/)?.[1];
-                            const isInline = !className && !String(children).includes('\n');
-
-                            if (!isInline && language) {
-                                return <RichCode node={{ code: String(children).trim(), language }} defaults={defaults} />;
-                            } else if (!isInline) {
-                                <RichCode node={{ code: String(children).trim() }} defaults={defaults} />;
-                            } else {
-                                return <Code>{String(children).trim()}</Code>
-                            }
-                        },
-                    }), [theme, defaults])}
+                    components={components}
                 >
                     {`${node.text}`}
                 </Markdown>
@@ -121,7 +128,11 @@ const RichText: React.FC<RichTextProps> = ({ node, defaults }) => {
         );
     }
 
-    return (
+    if (node.excluded) {
+        return null;
+    }
+
+    const result = (
         <RichTextRoot
             id={node.id}
             hidden={node.hidden}
@@ -148,6 +159,16 @@ const RichText: React.FC<RichTextProps> = ({ node, defaults }) => {
             {node.text}
         </RichTextRoot>
     );
+
+    if (node.tooltip) {
+        return (
+            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+                {result}
+            </Tooltip>
+        );
+    }
+
+    return result;
 };
 
 export default RichText;

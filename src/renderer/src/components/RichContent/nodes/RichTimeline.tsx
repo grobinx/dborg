@@ -4,6 +4,7 @@ import { IRichContainerDefaults, IRichTimeline, IRichTimelineItem } from "../typ
 import RichRenderer, { getSeverityColor, RichIcon } from "..";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
+import Tooltip from "@renderer/components/Tooltip";
 
 interface RichTimelineProps {
     node: Optional<IRichTimeline, "type">;
@@ -20,9 +21,13 @@ const RichTimeline: React.FC<RichTimelineProps> = ({ node, defaults }) => {
     const gap = defaults?.gap ?? 4;
     const lastIndex = node.items.length - 1;
 
+    if (node.excluded) {
+        return null;
+    }
+
     const columnTemplate = node.items.some(item => item.timestamp) ? `${Math.max(...node.items.map(item => (typeof item.timestamp === "string" ? item.timestamp.length : 12) * 0.5))}em 1.5em minmax(0, 1fr)` : "1.5em minmax(0, 1fr)";
 
-    return (
+    const result = (
         <Box
             id={node.id}
             hidden={node.hidden}
@@ -114,6 +119,17 @@ const RichTimeline: React.FC<RichTimelineProps> = ({ node, defaults }) => {
             })}
         </Box>
     );
+
+    if (node.tooltip) {
+        return (
+            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+                {result}
+            </Tooltip>
+        );
+    }
+
+    return result;
+
 };
 
 export default RichTimeline;

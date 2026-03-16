@@ -5,6 +5,7 @@ import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 import { IRichContainerDefaults, IRichTable, IRichTableRow, RichNode } from "../types";
 import RichRenderer, { resolveRichValue, resolveRichValueFromFunction } from "..";
+import Tooltip from "@renderer/components/Tooltip";
 
 interface RichTableProps {
     node: Optional<IRichTable, "type">;
@@ -49,7 +50,11 @@ const RichTable: React.FC<RichTableProps> = ({ node, defaults }) => {
         }));
     }, [node.columns, defaults]);
 
-    return (
+    if (node.excluded) {
+        return null;
+    }
+
+    const result = (
         <Box
             id={node.id}
             hidden={node.hidden}
@@ -102,6 +107,17 @@ const RichTable: React.FC<RichTableProps> = ({ node, defaults }) => {
             />
         </Box>
     );
+
+    if (node.tooltip) {
+        return (
+            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+                {result}
+            </Tooltip>
+        );
+    }
+
+    return result;
+
 };
 
 export default RichTable;

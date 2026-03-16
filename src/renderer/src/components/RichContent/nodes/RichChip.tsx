@@ -5,6 +5,7 @@ import RichBadge from "./RichBadge";
 import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
+import Tooltip from "@renderer/components/Tooltip";
 
 interface RichChipProps {
     node: Optional<IRichChip, "type">;
@@ -19,7 +20,11 @@ const RichChip: React.FC<RichChipProps> = ({ node, defaults }) => {
         resolveRichValueFromFunction<RichNode>(node.text, setText);
     }, [node.text]);
 
-    return (
+    if (node.excluded) {
+        return null;
+    }
+
+    const result = (
         <Box
             id={node.id}
             hidden={node.hidden}
@@ -55,11 +60,21 @@ const RichChip: React.FC<RichChipProps> = ({ node, defaults }) => {
                         right: "-8px",
                     }}
                 >
-                    <RichBadge badge={node.badge} defaults={defaults} />
+                    <RichBadge node={node.badge} defaults={defaults} />
                 </Box>
             )}
         </Box>
     );
+
+    if (node.tooltip) {
+        return (
+            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+                {result}
+            </Tooltip>
+        );
+    }
+
+    return result;
 };
 
 export default RichChip;

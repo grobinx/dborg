@@ -5,6 +5,7 @@ import { resolveIcon } from "@renderer/themes/icons";
 import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
 import clsx from "@renderer/utils/clsx";
 import { Optional } from "@renderer/types/universal";
+import Tooltip from "@renderer/components/Tooltip";
 
 interface RichAlertProps {
     node: Optional<IRichAlert, "type">;
@@ -32,7 +33,11 @@ const RichAlert: React.FC<RichAlertProps> = ({ node, defaults }) => {
         }
     };
 
-    return (
+    if (node.excluded) {
+        return null;
+    }
+
+    const result = (
         <Alert
             id={node.id}
             hidden={node.hidden}
@@ -76,6 +81,17 @@ const RichAlert: React.FC<RichAlertProps> = ({ node, defaults }) => {
             }
         </Alert>
     );
+
+    if (node.tooltip) {
+        return (
+            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+                {result}
+            </Tooltip>
+        );
+    }
+
+    return result;
+
 };
 
 export default RichAlert;

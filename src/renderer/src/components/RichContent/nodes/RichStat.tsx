@@ -6,6 +6,7 @@ import RichIcon from "./RichIcon";
 import clsx from "@renderer/utils/clsx";
 import SeverityBox from "../utils/SeverityBox";
 import { Optional } from "@renderer/types/universal";
+import Tooltip from "@renderer/components/Tooltip";
 
 interface RichStatProps {
     node: Optional<IRichStat, "type">;
@@ -35,9 +36,13 @@ const RichStat: React.FC<RichStatProps> = ({ node, defaults }) => {
         return `calc(${(size / 12) * 100}% - ${(defaults?.gap ?? 4)}px)`;
     };
 
+    if (node.excluded) {
+        return null;
+    }
+
     const severity = node.severity ?? "default";
 
-    return (
+    const result = (
         <SeverityBox
             id={node.id}
             hidden={node.hidden}
@@ -72,6 +77,16 @@ const RichStat: React.FC<RichStatProps> = ({ node, defaults }) => {
             <RichRenderer node={node.label} defaults={defaults} textVariant="label" />
         </SeverityBox>
     );
+
+    if (node.tooltip) {
+        return (
+            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+                {result}
+            </Tooltip>
+        );
+    }
+
+    return result;
 };
 
 export default RichStat;

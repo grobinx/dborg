@@ -41,6 +41,10 @@ const RichSkeleton: React.FC<RichSkeletonProps> = ({ node, defaults }) => {
         };
     }, [node.value]);
 
+    if (node.excluded) {
+        return null;
+    }
+
     if (loading) {
         if (isCustomSkeleton(node)) {
             return <RichRenderer node={node.custom} defaults={defaults} />;

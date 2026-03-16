@@ -1,8 +1,9 @@
 import React from "react";
 import { Box, useTheme } from "@mui/material";
 import { IRichContainerDefaults, IRichSparkline } from "../types";
-import { resolveRichValue, resolveRichValueFromFunction } from "..";
+import RichRenderer, { resolveRichValue, resolveRichValueFromFunction } from "..";
 import { Optional } from "@renderer/types/universal";
+import Tooltip from "@renderer/components/Tooltip";
 
 interface Props {
     node: Optional<IRichSparkline, "type">;
@@ -31,7 +32,7 @@ const buildSmoothPath = (pts: Array<{ x: number; y: number }>) => {
     return d;
 };
 
-const RichSparkline: React.FC<Props> = ({ node }) => {
+const RichSparkline: React.FC<Props> = ({ node, defaults }) => {
     const theme = useTheme();
     const [values, setValues] = React.useState<number[] | null>(resolveRichValue(node.values));
     const lineRef = React.useRef<SVGPathElement | null>(null);
@@ -40,6 +41,10 @@ const RichSparkline: React.FC<Props> = ({ node }) => {
     React.useEffect(() => {
         resolveRichValueFromFunction(node.values, setValues);
     }, [node.values]);
+
+    if (node.excluded) {
+        return null;
+    }
 
     if (!values || values.length < 2) return null;
 
@@ -76,7 +81,7 @@ const RichSparkline: React.FC<Props> = ({ node }) => {
         setPathLength(path.getTotalLength());
     }, [linePath, node.animated]);
 
-    return (
+    const result = (
         <Box sx={{ width: node.width ?? "100%", height: node.height ?? 28, display: "flex", alignItems: "center", flex: 1, minWidth: 0 }}>
             <svg viewBox={`-2 -2 ${width + 4} ${height + 4}`} width="100%" height="100%" preserveAspectRatio="none">
                 {node.fill === "gradient" && (
@@ -123,6 +128,16 @@ const RichSparkline: React.FC<Props> = ({ node }) => {
             </svg>
         </Box>
     );
+
+    if (node.tooltip) {
+        return (
+            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+                {result}
+            </Tooltip>
+        );
+    }
+
+    return result;
 };
 
 export default RichSparkline;

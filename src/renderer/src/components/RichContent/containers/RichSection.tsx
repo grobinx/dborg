@@ -5,6 +5,7 @@ import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromF
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
+import Tooltip from "@renderer/components/Tooltip";
 
 interface RichSectionProps {
     node: Optional<IRichSection, "type">;
@@ -21,7 +22,11 @@ const RichSection: React.FC<RichSectionProps> = ({ node, defaults, children }) =
         resolveRichValueFromFunction(node.items, setItems);
     }, [node.items]);
 
-    return (
+    if (node.excluded) {
+        return null;
+    }
+
+    const result = (
         <Paper
             id={node.id}
             hidden={node.hidden}
@@ -83,6 +88,16 @@ const RichSection: React.FC<RichSectionProps> = ({ node, defaults, children }) =
             </Collapse>
         </Paper>
     );
+
+    if (node.tooltip) {
+        return (
+            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+                {result}
+            </Tooltip>
+        );
+    }
+
+    return result;
 };
 
 export default RichSection;

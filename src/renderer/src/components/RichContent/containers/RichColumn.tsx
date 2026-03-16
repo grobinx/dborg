@@ -4,6 +4,7 @@ import { IRichColumn, IRichContainerDefaults, RichColSize, RichNode } from "../t
 import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
+import Tooltip from "@renderer/components/Tooltip";
 
 interface RichColumnProps {
     node: Optional<IRichColumn, "type">;
@@ -25,7 +26,11 @@ const RichColumn: React.FC<RichColumnProps> = ({ node, defaults, children }) => 
         return `calc(${(size / 12) * 100}% - ${(node.gap ?? defaults?.gap ?? 4)}px)`;
     };
 
-    return (
+    if (node.excluded) {
+        return null;
+    }
+
+    const result = (
         <Box
             id={node.id}
             hidden={node.hidden}
@@ -51,6 +56,16 @@ const RichColumn: React.FC<RichColumnProps> = ({ node, defaults, children }) => 
             {children}
         </Box>
     );
+
+    if (node.tooltip) {
+        return (
+            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+                {result}
+            </Tooltip>
+        );
+    }
+
+    return result;
 };
 
 export default RichColumn;

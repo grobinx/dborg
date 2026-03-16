@@ -1,15 +1,16 @@
 import React from "react";
 import { Link, useTheme } from "@mui/material";
 import { IRichContainerDefaults, IRichLink, RichSeverity } from "../types";
-import { getSeverityColor } from "..";
+import RichRenderer, { getSeverityColor } from "..";
 import clsx from "@renderer/utils/clsx";
+import Tooltip from "@renderer/components/Tooltip";
 
 interface RichLinkProps {
     node: IRichLink;
     defaults?: IRichContainerDefaults;
 }
 
-const RichLink: React.FC<RichLinkProps> = ({ node }) => {
+const RichLink: React.FC<RichLinkProps> = ({ node, defaults }) => {
     const theme = useTheme();
 
     const getVariantMapping = (variant?: string) => {
@@ -27,7 +28,11 @@ const RichLink: React.FC<RichLinkProps> = ({ node }) => {
         }
     };
 
-    return (
+    if (node.excluded) {
+        return null;
+    }
+
+    const result = (
         <Link
             id={node.id}
             hidden={node.hidden}
@@ -43,6 +48,16 @@ const RichLink: React.FC<RichLinkProps> = ({ node }) => {
             {node.text || node.href}
         </Link>
     );
+
+    if (node.tooltip) {
+        return (
+            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+                {result}
+            </Tooltip>
+        );
+    }
+
+    return result;
 };
 
 export default RichLink;

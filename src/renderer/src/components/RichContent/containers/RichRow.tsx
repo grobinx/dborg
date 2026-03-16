@@ -4,6 +4,7 @@ import { IRichContainerDefaults, IRichRow, RichNode } from "../types";
 import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
+import Tooltip from "@renderer/components/Tooltip";
 
 interface RichRowProps {
     node: Optional<IRichRow, "type">;
@@ -18,7 +19,11 @@ const RichRow: React.FC<RichRowProps> = ({ node, defaults, children }) => {
         resolveRichValueFromFunction(node.items, setItems);
     }, [node.items]);
 
-    return (
+    if (node.excluded) {
+        return null;
+    }
+
+    const result = (
         <Box
             id={node.id}
             hidden={node.hidden}
@@ -49,6 +54,16 @@ const RichRow: React.FC<RichRowProps> = ({ node, defaults, children }) => {
             {children}
         </Box>
     );
+
+    if (node.tooltip) {
+        return (
+            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+                {result}
+            </Tooltip>
+        );
+    }
+
+    return result;
 };
 
 export default RichRow;

@@ -5,6 +5,7 @@ import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
 import SeverityBox from "../utils/SeverityBox";
+import Tooltip from "@renderer/components/Tooltip";
 
 interface RichListItemProps {
     node: IRichListItem;
@@ -20,7 +21,11 @@ const RichListItem: React.FC<RichListItemProps> = ({ node, defaults, children })
         resolveRichValueFromFunction<RichNode>(node.content, setContent);
     }, [node.content]);
 
-    return (
+    if (node.excluded) {
+        return null;
+    }
+
+    const result = (
         <SeverityBox
             component={"li"}
             id={node.id}
@@ -50,6 +55,16 @@ const RichListItem: React.FC<RichListItemProps> = ({ node, defaults, children })
             {children}
         </SeverityBox>
     );
+
+    if (node.tooltip) {
+        return (
+            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+                {result}
+            </Tooltip>
+        );
+    }
+
+    return result;
 };
 
 interface RichListProps {
