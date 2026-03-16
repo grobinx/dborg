@@ -9,6 +9,7 @@ import { ExplainResultKind, isErrorResult, isLoadingResult, PlanNode } from "./E
 import LoadingOverlay from "@renderer/components/useful/LoadingOverlay";
 import { ExplainPlanError } from "./ExplainPlanError";
 import React from "react";
+import { RichCallout, RichChip, RichCode, RichColumn, RichContainer, RichGroup, RichNode, RichSection, RichSpacer, RichText } from "@renderer/components/RichContent";
 
 interface Suggestion {
     type: 'warning' | 'info' | 'error';
@@ -16,7 +17,7 @@ interface Suggestion {
     description: string;
     node?: string;
     recommendation?: {
-        caption?: string;
+        caption: string;
         sql: string;
     }[];
 }
@@ -447,80 +448,56 @@ export const QueryAnalyzer: React.FC<{ plan: ExplainResultKind | null; options?:
     }
 
     return (
-        <Box sx={{ px: 8, py: 4, height: '100%', overflow: 'auto' }}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                {suggestions.map((sugg, idx) => {
-                    let borderColor: string;
+        <RichContainer node={{
+            items: suggestions.map((sugg): RichNode => ({
+                type: "section",
+                title: sugg.title,
+                severity: sugg.type,
+                collapsible: true,
+                items: [
+                    {
+                        type: "text",
+                        text: sugg.description,
+                        variant: "description",
+                    },
+                    sugg.node && {
+                        type: "chip",
+                        text: { type: "text", text: sugg.node, variant: "code" },
+                        variant: "outlined",
+                    },
+                    { type: "spacer" },
 
-                    if (sugg.type === 'error') {
-                        borderColor = theme.palette.error.main;
-                    } else if (sugg.type === 'warning') {
-                        borderColor = theme.palette.warning.main;
-                    } else {
-                        borderColor = theme.palette.info.main;
-                    }
-
-                    return (
-                        <Paper
-                            key={idx}
-                            elevation={1}
-                            sx={{
-                                px: 8,
-                                py: 4,
-                                mb: 4,
-                                backgroundColor: 'background.paper',
-                                borderColor: 'divider',
-                                borderLeft: `4px solid ${borderColor}`
-                            }}
-                        >
-                            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 4 }}>
-                                <Typography variant="subtitle1" fontWeight={700} sx={{ color: borderColor }}>
-                                    {sugg.title}
-                                </Typography>
-                            </Box>
-
-                            <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'pre-wrap' }}>
-                                {sugg.description}
-                            </Typography>
-
-                            {sugg.node && (
-                                <Box>
-                                    <Chip
-                                        size="small"
-                                        label={sugg.node}
-                                        sx={{ fontFamily: monospaceFontFamily, fontSize: '0.75em' }}
-                                        variant="outlined"
-                                    />
-                                </Box>
-                            )}
-
-                            {sugg.recommendation && (
-                                sugg.recommendation.map((rec, idx) => (
-                                    <Box key={idx} sx={{ mt: 4 }}>
-                                        <Typography variant="caption" fontWeight={600} display="block" sx={{ color: borderColor }}>
-                                            {rec.caption}:
-                                        </Typography>
-                                        <SyntaxHighlighter
-                                            language="sql"
-                                            style={atomOneDark}
-                                            customStyle={{
-                                                borderRadius: '4px',
-                                                marginTop: 0,
-                                                marginBottom: 0,
-                                                fontSize: fontSize,
-                                                fontFamily: monospaceFontFamily,
-                                            }}
-                                        >
-                                            {rec.sql}
-                                        </SyntaxHighlighter>
-                                    </Box>
-                                ))
-                            )}
-                        </Paper>
-                    );
-                })}
-            </Box>
-        </Box>
+                    sugg.recommendation && (
+                        sugg.recommendation.map((rec): RichNode => (
+                            {
+                                type: "row",
+                                padding: 0,
+                                items: [
+                                    {
+                                        type: "column",
+                                        padding: 0,
+                                        items: [
+                                            {
+                                                type: "text",
+                                                text: rec.caption,
+                                                variant: "caption",
+                                                decoration: ["bold"],
+                                                severity: sugg.type
+                                            },
+                                            {
+                                                type: "code",
+                                                code: rec.sql,
+                                            }
+                                        ]
+                                    }
+                                ]
+                            })
+                        )
+                    )
+                ]
+            })
+            ),
+        }} />
     );
 };
 

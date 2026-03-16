@@ -43,6 +43,14 @@ const RichChip: React.FC<RichChipProps> = ({ node, defaults }) => {
                         fontFamily: "inherit",
                         lineHeight: "inherit",
                         height: "auto",
+                        display: "flex",
+                        alignItems: "center",
+                        "& .MuiChip-label": {
+                            display: "flex",
+                            alignItems: "center",
+                            paddingTop: "4px",
+                            paddingBottom: "4px",
+                        },
                     }}
                     variant={node.variant}
                     color={node.severity}

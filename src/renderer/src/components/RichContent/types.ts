@@ -88,7 +88,7 @@ export type RichTextVariant =
      * Użycie: krótkie fragmenty kodu osadzone w zdaniu (np. nazwa parametru, komenda).
      * Styl bazowy: 0.92em, lineHeight 1.40, fontWeight 400, component code.
      */
-    | "code-inline"
+    | "code"
     /**
      * Tryb renderowania Markdown.
      * Użycie: gdy tekst ma być parsowany jako Markdown; nie ma bezpośredniego wpisu w RichTextVariantStyles.
@@ -205,7 +205,7 @@ export type RichNode =
      * Prosty tekst lub liczba, renderowane jako RichText z domyślnym wariantem "body".
      */
     | string | number
-    | null;
+    | null | undefined;
 
 /**
  * Metadane dla węzłów Rich Content, umożliwiające dodatkową kontrolę nad renderowaniem i interakcją.

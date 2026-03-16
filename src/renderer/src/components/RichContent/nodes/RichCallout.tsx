@@ -9,9 +9,10 @@ import Tooltip from "@renderer/components/Tooltip";
 interface RichCalloutProps {
     node: Optional<IRichCallout, "type">;
     defaults?: IRichContainerDefaults;
+    children?: React.ReactNode;
 }
 
-const RichCallout: React.FC<RichCalloutProps> = ({ node, defaults }) => {
+const RichCallout: React.FC<RichCalloutProps> = ({ node, defaults, children }) => {
     if (node.excluded) {
         return null;
     }
@@ -27,6 +28,7 @@ const RichCallout: React.FC<RichCalloutProps> = ({ node, defaults }) => {
             sx={{ p: 0, gap: 0 }}
         >
             <RichRenderer node={node.value} defaults={defaults} />
+            {children}
         </CalloutBox>
     );
 

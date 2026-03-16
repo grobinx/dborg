@@ -27,7 +27,7 @@ export const RICH_TEXT_VARIANT_STYLES: RichTextVariantStyles = {
     title: { fontSize: "1.42em", lineHeight: 1.25, fontWeight: 600, component: "h3" },
     "title-lg": { fontSize: "1.60em", lineHeight: 1.20, fontWeight: 700, component: "h2" },
     hero: { fontSize: "1.80em", lineHeight: 1.15, fontWeight: 700, component: "h1" },
-    "code-inline": { fontSize: "0.92em", lineHeight: 1.40, fontWeight: 400, component: "code" },
+    "code": { fontSize: "0.92em", lineHeight: 1.40, fontWeight: 400, component: "code" },
 };
 
 const DEFAULT_VARIANT_STYLE = RICH_TEXT_VARIANT_STYLES.body;
@@ -44,6 +44,7 @@ const StyledRichTextRoot = styled(Box, {
     textTransform: ownerStyle.textTransform,
     fontFamily: "inherit",
     margin: 0,
+    whiteSpace: "pre-wrap",
 }));
 
 const RichTextRoot: React.FC<{
@@ -142,7 +143,7 @@ const RichText: React.FC<RichTextProps> = ({ node, defaults }) => {
             variant={node.variant ?? "body"}
             sx={{
                 color: getSeverityColor(node.severity, theme),
-                fontFamily: node.decoration?.includes("monospace") || node.variant === "code-inline" ? defaults?.fontFamilyMonospace ?? theme.typography.monospaceFontFamily : undefined,
+                fontFamily: node.decoration?.includes("monospace") || node.variant === "code" ? defaults?.fontFamilyMonospace ?? theme.typography.monospaceFontFamily : undefined,
                 fontWeight: node.decoration?.includes("bold") ? "bold" : undefined,
                 fontStyle: node.decoration?.includes("italic") ? "italic" : undefined,
                 textDecoration: [
@@ -150,9 +151,6 @@ const RichText: React.FC<RichTextProps> = ({ node, defaults }) => {
                     node.decoration?.includes("strikethrough") ? "line-through" : undefined,
                     node.decoration?.includes("uppercase") ? "uppercase" : undefined,
                 ].filter(Boolean).join(" "),
-                backgroundColor: node.variant === "code-inline" ? (theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)') : undefined,
-                padding: node.variant === "code-inline" ? '0.1rem 0.3rem' : undefined,
-                borderRadius: node.variant === "code-inline" ? defaults?.radius : undefined,
             }}
             textVariantStyles={defaults?.textVariantStyles}
         >

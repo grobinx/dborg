@@ -160,7 +160,7 @@ const RichRenderer: React.FC<{
      */
     textSeverity?: RichSeverity;
 }> = ({ node, defaults, textVariant, textSeverity }) => {
-    if (node === null) {
+    if (node === null || node === undefined) {
         return null;
     }
 
