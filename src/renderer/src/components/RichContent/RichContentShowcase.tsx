@@ -71,9 +71,13 @@ const RichContentShowcase: React.FC = () => {
 
             <Paper
                 sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    flex: 1,
+                    minHeight: 0,
                     p: compactMode ? 1.5 : 3,
-                    overflowY: "auto",
                     overscrollBehavior: "contain",
+                    height: "100%",
                 }}
             >
                 <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems="center" sx={{ mb: 2 }}>
@@ -83,14 +87,15 @@ const RichContentShowcase: React.FC = () => {
 
                 <Divider sx={{ mb: 2 }} />
 
-                <RichContainer
-                    key={currentKey}
-                    node={{
-                        items: currentExample,
-                        padding: compactMode ? "2px 4px" : undefined,
-                        gap: compactMode ? 2 : undefined,
-                    }}
-                />
+                <Stack sx={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
+                    <RichContainer
+                        key={currentKey}
+                        node={{
+                            items: currentExample,
+                            height: "auto",
+                        }}
+                    />
+                </Stack>
 
                 {showJson && (
                     <Box
@@ -118,3 +123,4 @@ const RichContentShowcase: React.FC = () => {
 };
 
 export default RichContentShowcase;
+

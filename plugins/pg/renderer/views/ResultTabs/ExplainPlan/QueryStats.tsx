@@ -6,6 +6,7 @@ import LoadingOverlay from '@renderer/components/useful/LoadingOverlay';
 import { ExplainPlanError } from './ExplainPlanError';
 import { resolveDataTypeFromValue, valueToString } from '../../../../../../src/api/db';
 import Decimal from 'decimal.js';
+import { RichContainer, RichSection, RichStat } from '@renderer/components/RichContent';
 
 interface QueryStats {
     // Timing
@@ -405,7 +406,7 @@ const StatSection: React.FC<StatSectionProps> = ({ title, children }) => {
     );
 };
 
-export const QueryStats: React.FC<{ 
+export const QueryStats: React.FC<{
     plan: ExplainResultKind | null;
     options?: {
         executionTimeWarningMs: number;
@@ -471,434 +472,115 @@ export const QueryStats: React.FC<{
     }
 
     return (
-        <Box sx={{ px: 8, py: 4, height: '100%', overflow: 'auto' }}>
-            {/* Timing Section */}
-            <StatSection title={t("query-stats:timing", "Timing")}>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:planning-time", "Planning Time")}
-                        value={valueToString(stats.planningTime, "duration")}
-                    />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:execution-time", "Execution Time")}
-                        value={valueToString(stats.executionTime, "duration")}
-                        variant={stats.executionTime > opts.executionTimeWarningMs ? 'warning' : 'default'}
-                    />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:total-node-time", "Total Node Time")}
-                        value={valueToString(stats.totalTime, "duration")}
-                    />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:total-nodes", "Total Nodes")}
-                        value={valueToString(stats.totalNodes, resolveDataTypeFromValue(stats.totalNodes))}
-                    />
-                </Grid>
-            </StatSection>
+        <RichContainer node={{ items: [] }}>
+            <RichSection node={{ title: t("query-stats:timing", "Timing"), items: [], collapsible: true, direction: "horizontal" }}>
+                <RichStat node={{ label: t("query-stats:planning-time", "Planning Time"), value: valueToString(stats.planningTime, "duration"), size: 2 }} />
+                <RichStat node={{ label: t("query-stats:execution-time", "Execution Time"), value: valueToString(stats.executionTime, "duration"), severity: stats.executionTime > opts.executionTimeWarningMs ? 'warning' : undefined, size: 2 }} />
+                <RichStat node={{ label: t("query-stats:total-node-time", "Total Node Time"), value: valueToString(stats.totalTime, "duration"), size: 2 }} />
+                <RichStat node={{ label: t("query-stats:total-nodes", "Total Nodes"), value: valueToString(stats.totalNodes, resolveDataTypeFromValue(stats.totalNodes)), size: 2 }} />
+            </RichSection>
 
             {/* Cost Section */}
-            <StatSection title={t("query-stats:cost", "Cost & Estimation")}>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:total-cost", "Total Cost")}
-                        value={valueToString(new Decimal(stats.totalCost).toFixed(2), resolveDataTypeFromValue(stats.totalCost))}
-                        unit="units"
-                    />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:startup-cost", "Startup Cost")}
-                        value={valueToString(new Decimal(stats.totalStartupCost).toFixed(2), resolveDataTypeFromValue(stats.totalStartupCost))}
-                        unit="units"
-                    />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:row-estimate-error", "Row Estimate Error")}
-                        value={stats.rowEstimateError !== null ? `${valueToString(new Decimal(stats.rowEstimateError).toFixed(2), resolveDataTypeFromValue(stats.rowEstimateError))}x` : 'N/A'}
-                        variant={
-                            stats.rowEstimateError === null ? 'default'
-                                : stats.rowEstimateError > opts.rowEstimateErrorErrorThreshold ? 'error'
-                                : stats.rowEstimateError > opts.rowEstimateErrorWarningThreshold ? 'warning'
-                                : 'success'
-                        }
-                    />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:cost-estimate-error", "Cost Estimate Error")}
-                        value={stats.costEstimateError !== null ? `${valueToString(new Decimal(stats.costEstimateError).toFixed(2), resolveDataTypeFromValue(stats.costEstimateError))}x` : 'N/A'}
-                        variant={
-                            stats.costEstimateError === null ? 'default'
-                                : stats.costEstimateError > opts.costEstimateErrorWarningThreshold ? 'warning'
-                                : 'success'
-                        }
-                    />
-                </Grid>
-            </StatSection>
+            <RichSection node={{ title: t("query-stats:cost", "Cost & Estimation"), items: [], collapsible: true, direction: "horizontal" }}>
+                <RichStat node={{ label: t("query-stats:total-cost", "Total Cost"), value: valueToString(new Decimal(stats.totalCost).toFixed(2), resolveDataTypeFromValue(stats.totalCost)), size: 2 }} />
+                <RichStat node={{ label: t("query-stats:startup-cost", "Startup Cost"), value: valueToString(new Decimal(stats.totalStartupCost).toFixed(2), resolveDataTypeFromValue(stats.totalStartupCost)), size: 2 }} />
+                <RichStat node={{ label: t("query-stats:row-estimate-error", "Row Estimate Error"), value: stats.rowEstimateError !== null ? `${valueToString(new Decimal(stats.rowEstimateError).toFixed(2), resolveDataTypeFromValue(stats.rowEstimateError))}x` : 'N/A', severity: stats.rowEstimateError === null ? 'default' : stats.rowEstimateError > opts.rowEstimateErrorErrorThreshold ? 'error' : stats.rowEstimateError > opts.rowEstimateErrorWarningThreshold ? 'warning' : 'success', size: 2 }} />
+                <RichStat node={{ label: t("query-stats:cost-estimate-error", "Cost Estimate Error"), value: stats.costEstimateError !== null ? `${valueToString(new Decimal(stats.costEstimateError).toFixed(2), resolveDataTypeFromValue(stats.costEstimateError))}x` : 'N/A', severity: stats.costEstimateError === null ? 'default' : stats.costEstimateError > opts.costEstimateErrorWarningThreshold ? 'warning' : 'success', size: 2 }} />
+            </RichSection>
 
-            {/* Scan Operations */}
-            <StatSection title={t("query-stats:scans", "Scan Operations")}>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:seq-scans", "Sequential Scans")}
-                        value={valueToString(stats.seqScans, resolveDataTypeFromValue(stats.seqScans))}
-                        variant={stats.seqScans > opts.seqScanWarningCount ? 'warning' : 'default'}
-                    />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:index-scans", "Index Scans")}
-                        value={valueToString(stats.indexScans, resolveDataTypeFromValue(stats.indexScans))}
-                    />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:index-only-scans", "Index Only Scans")}
-                        value={valueToString(stats.indexOnlyScans, resolveDataTypeFromValue(stats.indexOnlyScans))}
-                        variant={stats.indexOnlyScans > 0 ? 'success' : 'default'}
-                    />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:bitmap-scans", "Bitmap Scans")}
-                        value={valueToString(stats.bitmapScans, resolveDataTypeFromValue(stats.bitmapScans))}
-                    />
-                </Grid>
-            </StatSection>
+            <RichSection node={{ title: t("query-stats:scans", "Scan Operations"), items: [], collapsible: true, direction: "horizontal" }}>
+                <RichStat node={{ label: t("query-stats:seq-scans", "Sequential Scans"), value: valueToString(stats.seqScans, resolveDataTypeFromValue(stats.seqScans)), severity: stats.seqScans > opts.seqScanWarningCount ? 'warning' : undefined, size: 2 }} />
+                <RichStat node={{ label: t("query-stats:index-scans", "Index Scans"), value: valueToString(stats.indexScans, resolveDataTypeFromValue(stats.indexScans)), size: 2 }} />
+                <RichStat node={{ label: t("query-stats:index-only-scans", "Index Only Scans"), value: valueToString(stats.indexOnlyScans, resolveDataTypeFromValue(stats.indexOnlyScans)), severity: stats.indexOnlyScans > 0 ? 'success' : undefined, size: 2 }} />
+                <RichStat node={{ label: t("query-stats:bitmap-scans", "Bitmap Scans"), value: valueToString(stats.bitmapScans, resolveDataTypeFromValue(stats.bitmapScans)), size: 2 }} />
+            </RichSection>
 
-            {/* Join Operations */}
-            <StatSection title={t("query-stats:joins-ops", "Join Operations")}>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:total-joins", "Total Joins")}
-                        value={valueToString(stats.joins, resolveDataTypeFromValue(stats.joins))}
-                    />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:nested-loops", "Nested Loops")}
-                        value={valueToString(stats.nestedLoops, resolveDataTypeFromValue(stats.nestedLoops))}
-                        variant={stats.nestedLoops > opts.nestedLoopWarningCount ? 'warning' : 'default'}
-                    />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:hash-joins", "Hash Joins")}
-                        value={valueToString(stats.hashJoins, resolveDataTypeFromValue(stats.hashJoins))}
-                    />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:merge-joins", "Merge Joins")}
-                        value={valueToString(stats.mergeJoins, resolveDataTypeFromValue(stats.mergeJoins))}
-                    />
-                </Grid>
-            </StatSection>
+            <RichSection node={{ title: t("query-stats:joins-ops", "Join Operations"), items: [], collapsible: true, direction: "horizontal" }}>
+                <RichStat node={{ label: t("query-stats:total-joins", "Total Joins"), value: valueToString(stats.joins, resolveDataTypeFromValue(stats.joins)), size: 2 }} />
+                <RichStat node={{ label: t("query-stats:nested-loops", "Nested Loops"), value: valueToString(stats.nestedLoops, resolveDataTypeFromValue(stats.nestedLoops)), severity: stats.nestedLoops > opts.nestedLoopWarningCount ? 'warning' : undefined, size: 2 }} />
+                <RichStat node={{ label: t("query-stats:hash-joins", "Hash Joins"), value: valueToString(stats.hashJoins, resolveDataTypeFromValue(stats.hashJoins)), size: 2 }} />
+                <RichStat node={{ label: t("query-stats:merge-joins", "Merge Joins"), value: valueToString(stats.mergeJoins, resolveDataTypeFromValue(stats.mergeJoins)), size: 2 }} />
+            </RichSection>
 
-            {/* Other Operations */}
-            <StatSection title={t("query-stats:other-ops", "Other Operations")}>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:sorts", "Sorts")}
-                        value={valueToString(stats.sorts, resolveDataTypeFromValue(stats.sorts))}
-                        variant={stats.sorts > opts.sortWarningCount ? 'warning' : 'default'}
-                    />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:aggregates", "Aggregates")}
-                        value={valueToString(stats.aggregates, resolveDataTypeFromValue(stats.aggregates))}
-                    />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:materializes", "Materializes")}
-                        value={valueToString(stats.materializes, resolveDataTypeFromValue(stats.materializes))}
-                    />
-                </Grid>
-            </StatSection>
+            <RichSection node={{ title: t("query-stats:other-ops", "Other Operations"), items: [], collapsible: true, direction: "horizontal" }}>
+                <RichStat node={{ label: t("query-stats:sorts", "Sorts"), value: valueToString(stats.sorts, resolveDataTypeFromValue(stats.sorts)), severity: stats.sorts > opts.sortWarningCount ? 'warning' : undefined, size: 2 }} />
+                <RichStat node={{ label: t("query-stats:aggregates", "Aggregates"), value: valueToString(stats.aggregates, resolveDataTypeFromValue(stats.aggregates)), size: 2 }} />
+                <RichStat node={{ label: t("query-stats:materializes", "Materializes"), value: valueToString(stats.materializes, resolveDataTypeFromValue(stats.materializes)), size: 2 }} />
+            </RichSection>
 
-            {/* Row Processing */}
-            <StatSection title={t("query-stats:rows", "Row Processing")}>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:total-rows", "Total Rows Processed")}
-                        value={valueToString(stats.totalRows, resolveDataTypeFromValue(stats.totalRows))}
-                    />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:max-rows-per-node", "Max Rows per Node")}
-                        value={valueToString(stats.maxRowsPerNode, resolveDataTypeFromValue(stats.maxRowsPerNode))}
-                    />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:rows-filtered", "Rows Filtered")}
-                        value={valueToString(stats.totalRowsFiltered, resolveDataTypeFromValue(stats.totalRowsFiltered))}
-                        variant={stats.totalRowsFiltered > stats.totalRows * opts.rowsFilteredWarningRatio ? 'warning' : 'default'}
-                    />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:most-expensive", "Most Expensive Node")}
-                        value={stats.mostExpensiveNode?.type ?? 'N/A'}
-                    />
-                </Grid>
-            </StatSection>
+            <RichSection node={{ title: t("query-stats:rows", "Row Processing"), items: [], collapsible: true, direction: "horizontal" }}>
+                <RichStat node={{ label: t("query-stats:total-rows", "Total Rows Processed"), value: valueToString(stats.totalRows, resolveDataTypeFromValue(stats.totalRows)), size: 2 }} />
+                <RichStat node={{ label: t("query-stats:max-rows-per-node", "Max Rows per Node"), value: valueToString(stats.maxRowsPerNode, resolveDataTypeFromValue(stats.maxRowsPerNode)), size: 2 }} />
+                <RichStat node={{ label: t("query-stats:rows-filtered", "Rows Filtered"), value: valueToString(stats.totalRowsFiltered, resolveDataTypeFromValue(stats.totalRowsFiltered)), severity: stats.totalRowsFiltered > stats.totalRows * opts.rowsFilteredWarningRatio ? 'warning' : undefined, size: 2 }} />
+                <RichStat node={{ label: t("query-stats:most-expensive", "Most Expensive Node"), value: stats.mostExpensiveNode?.type ?? 'N/A', size: 2 }} />
+            </RichSection>
 
-            {/* Parallel Execution */}
             {stats.parallelStats.gatherNodes > 0 && (
-                <StatSection title={t("query-stats:parallel", "Parallel Execution")}>
-                    <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                        <StatCard
-                            label={t("query-stats:gather-nodes", "Gather Nodes")}
-                            value={valueToString(stats.parallelStats.gatherNodes, resolveDataTypeFromValue(stats.parallelStats.gatherNodes))}
-                        />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                        <StatCard
-                            label={t("query-stats:workers-planned", "Workers Planned")}
-                            value={valueToString(stats.parallelStats.workersPlanned, resolveDataTypeFromValue(stats.parallelStats.workersPlanned))}
-                        />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                        <StatCard
-                            label={t("query-stats:workers-launched", "Workers Launched")}
-                            value={valueToString(stats.parallelStats.workersLaunched, resolveDataTypeFromValue(stats.parallelStats.workersLaunched))}
-                        />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                        <StatCard
-                            label={t("query-stats:parallel-efficiency", "Parallel Efficiency")}
-                            value={stats.parallelStats.efficiency !== null ?
-                                `${valueToString(stats.parallelStats.efficiency.toFixed(1), resolveDataTypeFromValue(stats.parallelStats.efficiency))}%` : 'N/A'}
-                            variant={
-                                stats.parallelStats.efficiency === null ? 'default'
-                                    : stats.parallelStats.efficiency >= opts.parallelEfficiencyWarningThreshold ? 'success'
-                                    : 'warning'
-                            }
-                        />
-                    </Grid>
-                </StatSection>
+                <RichSection node={{ title: t("query-stats:parallel", "Parallel Execution"), items: [], collapsible: true, direction: "horizontal" }}>
+                    <RichStat node={{ label: t("query-stats:gather-nodes", "Gather Nodes"), value: valueToString(stats.parallelStats.gatherNodes, resolveDataTypeFromValue(stats.parallelStats.gatherNodes)), size: 2 }} />
+                    <RichStat node={{ label: t("query-stats:workers-planned", "Workers Planned"), value: valueToString(stats.parallelStats.workersPlanned, resolveDataTypeFromValue(stats.parallelStats.workersPlanned)), size: 2 }} />
+                    <RichStat node={{ label: t("query-stats:workers-launched", "Workers Launched"), value: valueToString(stats.parallelStats.workersLaunched, resolveDataTypeFromValue(stats.parallelStats.workersLaunched)), size: 2 }} />
+                    <RichStat node={{ label: t("query-stats:parallel-efficiency", "Parallel Efficiency"), value: stats.parallelStats.efficiency !== null ? `${valueToString(stats.parallelStats.efficiency.toFixed(1), resolveDataTypeFromValue(stats.parallelStats.efficiency))}%` : 'N/A', severity: stats.parallelStats.efficiency === null ? 'default' : stats.parallelStats.efficiency >= opts.parallelEfficiencyWarningThreshold ? 'success' : 'warning', size: 2 }} />
+                </RichSection>
             )}
 
-            {/* Buffer I/O */}
-            <StatSection title={t("query-stats:buffer-io", "Buffer I/O")}>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:cache-hit-ratio", "Cache Hit Ratio")}
-                        value={stats.bufferStats.cacheHitRatio !== null ?
-                            valueToString(stats.bufferStats.cacheHitRatio, 'percentage') : 'N/A'}
-                        variant={stats.bufferStats.cacheHitRatio !== null && stats.bufferStats.cacheHitRatio > opts.cacheHitRatioWarningThreshold ? 'success' : 'warning'}
-                    />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:shared-hit", "Shared Hit")}
-                        value={valueToString(stats.bufferStats.sharedHitBlocks, resolveDataTypeFromValue(stats.bufferStats.sharedHitBlocks))}
-                        variant="success"
-                    />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:shared-read", "Shared Read")}
-                        value={valueToString(stats.bufferStats.sharedReadBlocks, resolveDataTypeFromValue(stats.bufferStats.sharedReadBlocks))}
-                        variant={stats.bufferStats.sharedReadBlocks > opts.sharedReadBlocksWarningThreshold ? 'warning' : 'default'}
-                    />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:shared-dirtied", "Shared Dirtied")}
-                        value={valueToString(stats.bufferStats.sharedDirtiedBlocks, resolveDataTypeFromValue(stats.bufferStats.sharedDirtiedBlocks))}
-                    />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:shared-written", "Shared Written")}
-                        value={valueToString(stats.bufferStats.sharedWrittenBlocks, resolveDataTypeFromValue(stats.bufferStats.sharedWrittenBlocks))}
-                    />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                    <StatCard
-                        label={t("query-stats:total-blocks", "Total Blocks")}
-                        value={valueToString(stats.bufferStats.totalBlocks, resolveDataTypeFromValue(stats.bufferStats.totalBlocks))}
-                    />
-                </Grid>
-            </StatSection>
+            <RichSection node={{ title: t("query-stats:buffer-io", "Buffer I/O"), items: [], collapsible: true, direction: "horizontal" }}>
+                <RichStat node={{ label: t("query-stats:cache-hit-ratio", "Cache Hit Ratio"), value: stats.bufferStats.cacheHitRatio !== null ? valueToString(stats.bufferStats.cacheHitRatio, 'percentage') : 'N/A', severity: stats.bufferStats.cacheHitRatio !== null && stats.bufferStats.cacheHitRatio > opts.cacheHitRatioWarningThreshold ? 'success' : 'warning', size: 2 }} />
+                <RichStat node={{ label: t("query-stats:shared-hit", "Shared Hit Blocks"), value: valueToString(stats.bufferStats.sharedHitBlocks, resolveDataTypeFromValue(stats.bufferStats.sharedHitBlocks)), size: 2 }} />
+                <RichStat node={{ label: t("query-stats:shared-read", "Shared Read Blocks"), value: valueToString(stats.bufferStats.sharedReadBlocks, resolveDataTypeFromValue(stats.bufferStats.sharedReadBlocks)), severity: stats.bufferStats.sharedReadBlocks > opts.sharedReadBlocksWarningThreshold ? 'warning' : undefined, size: 2 }} />
+                <RichStat node={{ label: t("query-stats:shared-dirtied", "Shared Dirtied Blocks"), value: valueToString(stats.bufferStats.sharedDirtiedBlocks, resolveDataTypeFromValue(stats.bufferStats.sharedDirtiedBlocks)), size: 2 }} />
+                <RichStat node={{ label: t("query-stats:shared-written", "Shared Written Blocks"), value: valueToString(stats.bufferStats.sharedWrittenBlocks, resolveDataTypeFromValue(stats.bufferStats.sharedWrittenBlocks)), size: 2 }} />
+                <RichStat node={{ label: t("query-stats:total-blocks", "Total Blocks"), value: valueToString(stats.bufferStats.totalBlocks, resolveDataTypeFromValue(stats.bufferStats.totalBlocks)), size: 2 }} />
+            </RichSection>
 
             {(stats.bufferStats.localHitBlocks > 0 || stats.bufferStats.localReadBlocks > 0) && (
-                <StatSection title={t("query-stats:local-buffers", "Local Buffers")}>
-                    <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                        <StatCard
-                            label={t("query-stats:local-hit", "Local Hit")}
-                            value={valueToString(stats.bufferStats.localHitBlocks, resolveDataTypeFromValue(stats.bufferStats.localHitBlocks))}
-                        />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                        <StatCard
-                            label={t("query-stats:local-read", "Local Read")}
-                            value={valueToString(stats.bufferStats.localReadBlocks, resolveDataTypeFromValue(stats.bufferStats.localReadBlocks))}
-                        />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                        <StatCard
-                            label={t("query-stats:local-dirtied", "Local Dirtied")}
-                            value={valueToString(stats.bufferStats.localDirtiedBlocks, resolveDataTypeFromValue(stats.bufferStats.localDirtiedBlocks))}
-                        />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                        <StatCard
-                            label={t("query-stats:local-written", "Local Written")}
-                            value={valueToString(stats.bufferStats.localWrittenBlocks, resolveDataTypeFromValue(stats.bufferStats.localWrittenBlocks))}
-                        />
-                    </Grid>
-                </StatSection>
+                <RichSection node={{ title: t("query-stats:local-buffers", "Local Buffers"), items: [], collapsible: true, direction: "horizontal" }}>
+                    <RichStat node={{ label: t("query-stats:local-hit", "Local Hit Blocks"), value: valueToString(stats.bufferStats.localHitBlocks, resolveDataTypeFromValue(stats.bufferStats.localHitBlocks)), size: 2 }} />
+                    <RichStat node={{ label: t("query-stats:local-read", "Local Read Blocks"), value: valueToString(stats.bufferStats.localReadBlocks, resolveDataTypeFromValue(stats.bufferStats.localReadBlocks)), size: 2 }} />
+                    <RichStat node={{ label: t("query-stats:local-dirtied", "Local Dirtied Blocks"), value: valueToString(stats.bufferStats.localDirtiedBlocks, resolveDataTypeFromValue(stats.bufferStats.localDirtiedBlocks)), size: 2 }} />
+                    <RichStat node={{ label: t("query-stats:local-written", "Local Written Blocks"), value: valueToString(stats.bufferStats.localWrittenBlocks, resolveDataTypeFromValue(stats.bufferStats.localWrittenBlocks)), size: 2 }} />
+                </RichSection>
             )}
 
             {(stats.bufferStats.tempReadBlocks > 0 || stats.bufferStats.tempWrittenBlocks > 0) && (
-                <>
-                    <StatSection title={t("query-stats:temp-buffers", "Temp Buffers")}>
-                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                            <StatCard
-                                label={t("query-stats:temp-read", "Temp Read")}
-                                value={valueToString(stats.bufferStats.tempReadBlocks, resolveDataTypeFromValue(stats.bufferStats.tempReadBlocks))}
-                                variant={stats.bufferStats.tempReadBlocks > opts.tempReadBlocksWarningThreshold ? 'warning' : 'default'}
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                            <StatCard
-                                label={t("query-stats:temp-written", "Temp Written")}
-                                value={valueToString(stats.bufferStats.tempWrittenBlocks, resolveDataTypeFromValue(stats.bufferStats.tempWrittenBlocks))}
-                                variant={stats.bufferStats.tempWrittenBlocks > opts.tempWrittenBlocksWarningThreshold ? 'warning' : 'default'}
-                            />
-                        </Grid>
-                    </StatSection>
-                </>
+                <RichSection node={{ title: t("query-stats:temp-buffers", "Temp Buffers"), items: [], collapsible: true, direction: "horizontal" }}>
+                    <RichStat node={{ label: t("query-stats:temp-read", "Temp Read Blocks"), value: valueToString(stats.bufferStats.tempReadBlocks, resolveDataTypeFromValue(stats.bufferStats.tempReadBlocks)), severity: stats.bufferStats.tempReadBlocks > opts.tempReadBlocksWarningThreshold ? 'warning' : undefined, size: 2 }} />
+                    <RichStat node={{ label: t("query-stats:temp-written", "Temp Written Blocks"), value: valueToString(stats.bufferStats.tempWrittenBlocks, resolveDataTypeFromValue(stats.bufferStats.tempWrittenBlocks)), severity: stats.bufferStats.tempWrittenBlocks > opts.tempWrittenBlocksWarningThreshold ? 'warning' : undefined, size: 2 }} />
+                </RichSection>
             )}
 
-            {/* WAL Stats */}
             {stats.walStats && (
-                <>
-                    <StatSection title={t("query-stats:wal", "Write-Ahead Log (WAL)")}>
-                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                            <StatCard
-                                label={t("query-stats:wal-records", "WAL Records")}
-                                value={valueToString(stats.walStats.records, resolveDataTypeFromValue(stats.walStats.records))}
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                            <StatCard
-                                label={t("query-stats:wal-fpi", "Full Page Images")}
-                                value={valueToString(stats.walStats.fpi, resolveDataTypeFromValue(stats.walStats.fpi))}
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                            <StatCard
-                                label={t("query-stats:wal-bytes", "WAL Bytes")}
-                                value={valueToString(stats.walStats.bytes, resolveDataTypeFromValue(stats.walStats.bytes))}
-                            />
-                        </Grid>
-                    </StatSection>
-                </>
+                <RichSection node={{ title: t("query-stats:wal", "Write-Ahead Log (WAL)"), items: [], collapsible: true, direction: "horizontal" }}>
+                    <RichStat node={{ label: t("query-stats:wal-records", "WAL Records"), value: valueToString(stats.walStats.records, resolveDataTypeFromValue(stats.walStats.records)), size: 2 }} />
+                    <RichStat node={{ label: t("query-stats:wal-fpi", "Full Page Images"), value: valueToString(stats.walStats.fpi, resolveDataTypeFromValue(stats.walStats.fpi)), size: 2 }} />
+                    <RichStat node={{ label: t("query-stats:wal-bytes", "WAL Bytes"), value: valueToString(stats.walStats.bytes, resolveDataTypeFromValue(stats.walStats.bytes)), size: 2 }} />
+                </RichSection>
             )}
 
-            {/* Memory Stats */}
             {(stats.memoryStats.sortSpaceUsed > 0 || stats.memoryStats.hashBatchesUsed > 0 || stats.memoryStats.peakMemoryUsage > 0) && (
-                <>
-                    <StatSection title={t("query-stats:memory", "Memory Usage")}>
-                        {stats.memoryStats.sortSpaceUsed > 0 && (
-                            <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                                <StatCard
-                                    label={t("query-stats:sort-space", "Sort Space Used")}
-                                    value={valueToString(stats.memoryStats.sortSpaceUsed, resolveDataTypeFromValue(stats.memoryStats.sortSpaceUsed))}
-                                />
-                            </Grid>
-                        )}
-                        {stats.memoryStats.hashBatchesUsed > 0 && (
-                            <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                                <StatCard
-                                    label={t("query-stats:hash-batches", "Hash Batches")}
-                                    value={valueToString(stats.memoryStats.hashBatchesUsed, resolveDataTypeFromValue(stats.memoryStats.hashBatchesUsed))}
-                                    variant={stats.memoryStats.hashBatchesUsed > opts.hashBatchesWarningThreshold ? 'warning' : 'default'}
-                                />
-                            </Grid>
-                        )}
-                        {stats.memoryStats.peakMemoryUsage > 0 && (
-                            <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                                <StatCard
-                                    label={t("query-stats:peak-memory", "Peak Memory")}
-                                    value={valueToString(stats.memoryStats.peakMemoryUsage, resolveDataTypeFromValue(stats.memoryStats.peakMemoryUsage))}
-                                />
-                            </Grid>
-                        )}
-                    </StatSection>
-                </>
+                <RichSection node={{ title: t("query-stats:memory", "Memory Usage"), items: [], collapsible: true, direction: "horizontal" }}>
+                    <RichStat node={{ label: t("query-stats:sort-space", "Sort Space Used"), value: valueToString(stats.memoryStats.sortSpaceUsed, resolveDataTypeFromValue(stats.memoryStats.sortSpaceUsed)), size: 2 }} />
+                    <RichStat node={{ label: t("query-stats:hash-batches", "Hash Batches Used"), value: valueToString(stats.memoryStats.hashBatchesUsed, resolveDataTypeFromValue(stats.memoryStats.hashBatchesUsed)), severity: stats.memoryStats.hashBatchesUsed > opts.hashBatchesWarningThreshold ? 'warning' : undefined, size: 2 }} />
+                    <RichStat node={{ label: t("query-stats:peak-memory", "Peak Memory Usage"), value: valueToString(stats.memoryStats.peakMemoryUsage, resolveDataTypeFromValue(stats.memoryStats.peakMemoryUsage)), size: 2 }} />
+                </RichSection>
             )}
 
-            {/* JIT Stats */}
             {stats.jitStats && (
-                <>
-                    <StatSection title={t("query-stats:jit", "JIT Compilation")}>
-                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                            <StatCard
-                                label={t("query-stats:jit-functions", "Functions")}
-                                value={valueToString(stats.jitStats.functions, resolveDataTypeFromValue(stats.jitStats.functions))}
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                            <StatCard
-                                label={t("query-stats:jit-generation", "Generation Time")}
-                                value={valueToString(stats.jitStats.generationTime, "duration")}
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                            <StatCard
-                                label={t("query-stats:jit-inlining", "Inlining Time")}
-                                value={valueToString(stats.jitStats.inliningTime, "duration")}
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                            <StatCard
-                                label={t("query-stats:jit-optimization", "Optimization Time")}
-                                value={valueToString(stats.jitStats.optimizationTime, "duration")}
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                            <StatCard
-                                label={t("query-stats:jit-emission", "Emission Time")}
-                                value={valueToString(stats.jitStats.emissionTime, "duration")}
-                            />
-                        </Grid>
-                    </StatSection>
-                </>
+                <RichSection node={{ title: t("query-stats:jit", "JIT Compilation"), items: [], collapsible: true, direction: "horizontal" }}>
+                    <RichStat node={{ label: t("query-stats:jit-functions", "Functions"), value: valueToString(stats.jitStats.functions, resolveDataTypeFromValue(stats.jitStats.functions)), size: 2 }} />
+                    <RichStat node={{ label: t("query-stats:jit-generation", "Generation Time"), value: valueToString(stats.jitStats.generationTime, "duration"), size: 2 }} />
+                    <RichStat node={{ label: t("query-stats:jit-inlining", "Inlining Time"), value: valueToString(stats.jitStats.inliningTime, "duration"), size: 2 }} />
+                    <RichStat node={{ label: t("query-stats:jit-optimization", "Optimization Time"), value: valueToString(stats.jitStats.optimizationTime, "duration"), size: 2 }} />
+                    <RichStat node={{ label: t("query-stats:jit-emission", "Emission Time"), value: valueToString(stats.jitStats.emissionTime, "duration"), size: 2 }} />
+                </RichSection>
             )}
 
-            {/* Trigger Stats */}
             {stats.triggerStats.count > 0 && (
-                <>
-                    <StatSection title={t("query-stats:triggers", "Triggers")}>
-                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                            <StatCard
-                                label={t("query-stats:trigger-count", "Trigger Count")}
-                                value={valueToString(stats.triggerStats.count, resolveDataTypeFromValue(stats.triggerStats.count))}
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                            <StatCard
-                                label={t("query-stats:trigger-time", "Total Trigger Time")}
-                                value={valueToString(stats.triggerStats.totalTime, "duration")}
-                            />
-                        </Grid>
-                    </StatSection>
-                </>
+                <RichSection node={{ title: t("query-stats:triggers", "Triggers"), items: [], collapsible: true, direction: "horizontal" }}>
+                    <RichStat node={{ label: t("query-stats:trigger-count", "Trigger Count"), value: valueToString(stats.triggerStats.count, resolveDataTypeFromValue(stats.triggerStats.count)), size: 2 }} />
+                    <RichStat node={{ label: t("query-stats:trigger-time", "Total Trigger Time"), value: valueToString(stats.triggerStats.totalTime, "duration"), size: 2 }} />
+                </RichSection>
             )}
-        </Box>
+        </RichContainer>
     );
 };

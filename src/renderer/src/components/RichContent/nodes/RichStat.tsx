@@ -5,9 +5,10 @@ import RichRenderer, { getSeverityColor, RichRow } from "..";
 import RichIcon from "./RichIcon";
 import clsx from "@renderer/utils/clsx";
 import SeverityBox from "../utils/SeverityBox";
+import { Optional } from "@renderer/types/universal";
 
 interface RichStatProps {
-    node: IRichStat;
+    node: Optional<IRichStat, "type">;
     defaults?: IRichContainerDefaults;
 }
 
@@ -60,7 +61,7 @@ const RichStat: React.FC<RichStatProps> = ({ node, defaults }) => {
                     {node.trend && (
                         <RichIcon node={{ icon: getTrendIcon(node.trend), severity }} defaults={defaults} />
                     )}
-                    <RichRenderer node={node.value} defaults={defaults} textVariant="title" textSeverity={severity} />
+                    <RichRenderer node={node.value} defaults={defaults} textVariant="title" textSeverity={node.severity ?? "info"} />
                 </Box>
                 {node.icon && (
                     <RichIcon node={{ icon: node.icon, severity, size: "large" }} defaults={defaults} />

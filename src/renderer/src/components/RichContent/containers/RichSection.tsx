@@ -68,7 +68,7 @@ const RichSection: React.FC<RichSectionProps> = ({ node, defaults, children }) =
                 <Box sx={{
                     padding: defaults?.padding ?? 8,
                     display: "flex",
-                    flexDirection: "column",
+                    flexDirection: node.direction === "horizontal" ? "row" : "column",
                     gap: node.gap ?? defaults?.gap ?? 4
                 }}
                 >

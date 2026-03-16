@@ -2,7 +2,7 @@ import React from "react";
 import { Alert, useTheme } from "@mui/material";
 import { IRichAlert, IRichContainerDefaults, RichNode, RichSeverity } from "../types";
 import { resolveIcon } from "@renderer/themes/icons";
-import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
+import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
 import clsx from "@renderer/utils/clsx";
 import { Optional } from "@renderer/types/universal";
 
@@ -50,6 +50,7 @@ const RichAlert: React.FC<RichAlertProps> = ({ node, defaults }) => {
                         fontFamily: "inherit",
                         fontWeight: "inherit",
                         gap: defaults?.gap ?? 4,
+                        boxShadow: `0 2px 4px ${getSeverityColor(node.severity, theme)}55`,
                     }
                 },
                 message: {

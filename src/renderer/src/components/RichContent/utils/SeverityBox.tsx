@@ -10,7 +10,7 @@ interface SeverityBoxProps extends BoxProps {
 const SeverityBox: React.FC<SeverityBoxProps> = ({ severity, children, sx, ...other }) => {
     const theme = useTheme();
     const severityColor = getSeverityColor(severity, theme);
-    const isHighlighted = severity !== "default";
+    const isHighlighted = (severity ?? "default") !== "default";
 
     return (
         <Box
@@ -24,6 +24,7 @@ const SeverityBox: React.FC<SeverityBoxProps> = ({ severity, children, sx, ...ot
                         : `${severityColor}12`
                     : undefined,
                 ...sx,
+                boxShadow: isHighlighted ? `0 1px 4px ${severityColor}33` : undefined,
             }}
             {...other}
         >

@@ -7,9 +7,10 @@ import clsx from "@renderer/utils/clsx";
 
 interface RichContainerProps {
     node: IRichContainer;
+    children?: React.ReactNode;
 }
 
-const RichContainer: React.FC<RichContainerProps> = ({ node }) => {
+const RichContainer: React.FC<RichContainerProps> = ({ node, children }) => {
     const [fontSize] = useSetting("ui", "fontSize");
     const [fontFamily] = useSetting("ui", "fontFamily");
     const [fontFamilyMonospace] = useSetting("ui", "fontFamilyMonospace");
@@ -37,27 +38,40 @@ const RichContainer: React.FC<RichContainerProps> = ({ node }) => {
             id={node.id}
             hidden={node.hidden}
             key={node.key ?? node.id}
-            className={clsx("RichContainer-container", node.className)}
+            className={clsx("RichContainer-root", node.className)}
             style={node.style}
             sx={{
-                width: node.width ?? "100%",
-                height: node.height,
-                overflow: node.overflow,
                 display: "flex",
                 flexDirection: "column",
+                width: node.width ?? "100%",
+                height: node.height ?? "100%",
+                overflow: node.overflow ?? "auto",
+                flex: 1,
                 p: defaults.padding,
-                gap: defaults.gap,
                 fontFamily: defaults.fontFamily,
                 fontSize: defaults.fontSize,
                 fontWeight: defaults.fontWeight,
+                minHeight: 0,
+                minWidth: 0,
             }}
         >
-            {items === null ?
-                <RichIcon node={{ icon: "Loading" }} defaults={defaults} />
-                : items.map((item, index) => (
-                    <RichRenderer key={index} node={item} defaults={defaults} />
-                ))
-            }
+            <Box
+                sx={{
+                    width: "100%",
+                    minWidth: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: defaults.gap,
+                }}
+            >
+                {items === null ?
+                    <RichIcon node={{ icon: "Loading" }} defaults={defaults} />
+                    : items.map((item, index) => (
+                        <RichRenderer key={index} node={item} defaults={defaults} />
+                    ))
+                }
+                {children}
+            </Box>
         </Box>
     );
 };

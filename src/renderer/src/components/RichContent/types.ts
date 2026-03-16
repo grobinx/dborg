@@ -579,6 +579,11 @@ export interface IRichSection extends IRichNode {
      * @default true
      */
     expanded?: boolean;
+    /**
+     * Kierunek układania elementów w grupie
+     * @default "horizontal"
+     */
+    direction?: "vertical" | "horizontal";
 }
 
 export interface IRichGroup extends IRichNode {
