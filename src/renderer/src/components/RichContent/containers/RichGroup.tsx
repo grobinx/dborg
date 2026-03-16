@@ -28,6 +28,8 @@ const RichGroup: React.FC<RichGroupnProps> = ({ node, defaults, children }) => {
             className={clsx("RichContainer-group", node.className)}
             style={node.style}
             sx={{
+                display: "flex",
+                flexDirection: node.direction === "horizontal" ? "row" : "column",
                 overflow: "hidden",
             }}
         >

@@ -136,7 +136,8 @@ const RichText: React.FC<RichTextProps> = ({ node, defaults }) => {
                 fontStyle: node.decoration?.includes("italic") ? "italic" : undefined,
                 textDecoration: [
                     node.decoration?.includes("underline") ? "underline" : undefined,
-                    node.decoration?.includes("strikethrough") ? "line-through" : undefined
+                    node.decoration?.includes("strikethrough") ? "line-through" : undefined,
+                    node.decoration?.includes("uppercase") ? "uppercase" : undefined,
                 ].filter(Boolean).join(" "),
                 backgroundColor: node.variant === "code-inline" ? (theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)') : undefined,
                 padding: node.variant === "code-inline" ? '0.1rem 0.3rem' : undefined,

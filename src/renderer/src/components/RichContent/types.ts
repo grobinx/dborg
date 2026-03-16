@@ -420,7 +420,7 @@ export interface IRichChip extends IRichNode {
     badge?: IRichBadge;
 }
 
-export type RichTextDecoration = "bold" | "italic" | "underline" | "strikethrough" | "monospace";
+export type RichTextDecoration = "bold" | "italic" | "underline" | "strikethrough" | "monospace" | "uppercase";
 
 /**
  * Prosty tekst z opcjonalnym formatowaniem.
@@ -587,6 +587,11 @@ export interface IRichGroup extends IRichNode {
      * Lista elementów wewnątrz grupy
      */
     items: RichValue<RichNode[]>;
+    /**
+     * Kierunek układania elementów w grupie
+     * @default "vertical"
+     */
+    direction?: "vertical" | "horizontal";
 }
 
 export interface IRichRowBase extends IRichNode {
