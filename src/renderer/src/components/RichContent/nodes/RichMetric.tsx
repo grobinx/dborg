@@ -5,7 +5,7 @@ import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromF
 import RichIcon from "./RichIcon";
 import clsx from "@renderer/utils/clsx";
 import { Optional } from "@renderer/types/universal";
-import SeverityBox from "../utils/SeverityBox";
+import CalloutBox from "../utils/CalloutBox";
 import Tooltip from "@renderer/components/Tooltip";
 
 interface RichMetricProps {
@@ -64,7 +64,7 @@ const RichMetric: React.FC<RichMetricProps> = ({ node, defaults }) => {
     }
 
     const result = (
-        <SeverityBox
+        <CalloutBox
             id={node.id}
             hidden={node.hidden}
             key={node.key ?? node.id}
@@ -112,7 +112,7 @@ const RichMetric: React.FC<RichMetricProps> = ({ node, defaults }) => {
             </RichRow>
 
             <RichRenderer node={node.label} defaults={defaults} textVariant="label" />
-        </SeverityBox>
+        </CalloutBox>
     );
 
     if (node.tooltip) {

@@ -18,3 +18,4 @@ export { default as RichTimeline } from "./RichTimeline";
 export { default as RichMetric } from "./RichMetric";
 export { default as RichTime } from "./RichTime";
 export { default as RichSparkline } from "./RichSparkline";
+export { default as RichCallout } from "./RichCallout";

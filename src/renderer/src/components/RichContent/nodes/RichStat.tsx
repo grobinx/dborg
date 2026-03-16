@@ -4,7 +4,7 @@ import { IRichStat, IRichContainerDefaults, RichColSize } from "../types";
 import RichRenderer, { getSeverityColor, RichRow } from "..";
 import RichIcon from "./RichIcon";
 import clsx from "@renderer/utils/clsx";
-import SeverityBox from "../utils/SeverityBox";
+import CalloutBox from "../utils/CalloutBox";
 import { Optional } from "@renderer/types/universal";
 import Tooltip from "@renderer/components/Tooltip";
 
@@ -43,7 +43,7 @@ const RichStat: React.FC<RichStatProps> = ({ node, defaults }) => {
     const severity = node.severity ?? "default";
 
     const result = (
-        <SeverityBox
+        <CalloutBox
             id={node.id}
             hidden={node.hidden}
             key={node.key ?? node.id}
@@ -75,7 +75,7 @@ const RichStat: React.FC<RichStatProps> = ({ node, defaults }) => {
 
             {/* Etykieta */}
             <RichRenderer node={node.label} defaults={defaults} textVariant="label" />
-        </SeverityBox>
+        </CalloutBox>
     );
 
     if (node.tooltip) {

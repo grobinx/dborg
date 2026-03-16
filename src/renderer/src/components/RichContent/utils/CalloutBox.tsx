@@ -2,12 +2,12 @@ import { Box, BoxProps, SxProps, useTheme } from "@mui/material";
 import { RichSeverity } from "../types";
 import { getSeverityColor } from "..";
 
-interface SeverityBoxProps extends BoxProps {
+interface CalloutBoxProps extends BoxProps {
     severity?: RichSeverity;
     children?: React.ReactNode;
 }
 
-const SeverityBox: React.FC<SeverityBoxProps> = ({ severity, children, sx, ...other }) => {
+const CalloutBox: React.FC<CalloutBoxProps> = ({ severity, children, sx, ...other }) => {
     const theme = useTheme();
     const severityColor = getSeverityColor(severity, theme);
     const isHighlighted = severity !== "default";
@@ -33,4 +33,4 @@ const SeverityBox: React.FC<SeverityBoxProps> = ({ severity, children, sx, ...ot
     );
 }
 
-export default SeverityBox;
+export default CalloutBox;

@@ -4,7 +4,7 @@ import { IRichContainerDefaults, IRichList, IRichListItem, RichNode } from "../t
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
-import SeverityBox from "../utils/SeverityBox";
+import CalloutBox from "../utils/CalloutBox";
 import Tooltip from "@renderer/components/Tooltip";
 
 interface RichListItemProps {
@@ -26,7 +26,7 @@ const RichListItem: React.FC<RichListItemProps> = ({ node, defaults, children })
     }
 
     const result = (
-        <SeverityBox
+        <CalloutBox
             component={"li"}
             id={node.id}
             hidden={node.hidden}
@@ -53,7 +53,7 @@ const RichListItem: React.FC<RichListItemProps> = ({ node, defaults, children })
                 : <RichRenderer node={content} defaults={defaults} textVariant="body" />
             }
             {children}
-        </SeverityBox>
+        </CalloutBox>
     );
 
     if (node.tooltip) {
