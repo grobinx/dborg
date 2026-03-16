@@ -39,6 +39,9 @@ export type {
     IRichSkeleton,
     IRichMetric,
     IRichTime,
+    IRichBullet,
+    IRichRefresh,
+    IRichSparkline,
 } from "./types";
 export { RichDivider } from "./types";
 
@@ -63,6 +66,7 @@ import RichMetric from "./nodes/RichMetric";
 import RichTime from "./nodes/RichTime";
 import RichBullet from "./nodes/RichBullet";
 import RichRefresh from "./nodes/RichRefresh";
+import RichSparkline from "./nodes/RichSparkline";
 
 // Containers (import second)
 import RichRow from "./containers/RichRow";
@@ -96,6 +100,7 @@ export { default as RichMetric } from "./nodes/RichMetric";
 export { default as RichTime } from "./nodes/RichTime";
 export { default as RichBullet } from "./nodes/RichBullet";
 export { default as RichRefresh } from "./nodes/RichRefresh";
+export { default as RichSparkline } from "./nodes/RichSparkline";
 
 // Export containers
 export { default as RichRow } from "./containers/RichRow";
@@ -161,7 +166,7 @@ const RichRenderer: React.FC<{
     } else if (typeof node === "string" || typeof node === "number") {
         return <RichText node={{ text: String(node), variant: textVariant, severity: textSeverity }} defaults={defaults} />;
     }
-    
+
     switch (node.type) {
         case "text":
             return <RichText node={node} defaults={defaults} />;
@@ -215,6 +220,8 @@ const RichRenderer: React.FC<{
             return <RichBullet node={node} defaults={defaults} />;
         case "refresh":
             return <RichRefresh node={node} defaults={defaults} />;
+        case "sparkline":
+            return <RichSparkline node={node} defaults={defaults} />;
         default:
             return <Box>Unknown node type: {(node as any).type}</Box>;
     }

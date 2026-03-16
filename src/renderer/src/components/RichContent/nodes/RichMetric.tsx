@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Skeleton, useTheme } from "@mui/material";
 import { IRichContainerDefaults, IRichMetric, RichColSize } from "../types";
-import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromFunction, RichRow } from "..";
+import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromFunction, RichRow, RichSparkline } from "..";
 import RichIcon from "./RichIcon";
 import clsx from "@renderer/utils/clsx";
 import { Optional } from "@renderer/types/universal";
@@ -103,24 +103,7 @@ const RichMetric: React.FC<RichMetricProps> = ({ node, defaults }) => {
                         />
                     </Box>
                 ) : hasSparkline && (
-                    <Box sx={{ flex: 1, minWidth: 0, height: CHART_H, display: "flex", alignItems: "center" }}>
-                        <svg
-                            width="100%"
-                            height={CHART_H}
-                            viewBox={`0 0 ${CHART_W} ${CHART_H}`}
-                            preserveAspectRatio="none"
-                            style={{ display: "block" }}
-                        >
-                            <polyline
-                                fill="none"
-                                stroke={severity === "default" ? theme.palette.text.secondary : severityColor}
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                points={points}
-                            />
-                        </svg>
-                    </Box>
+                    <RichSparkline node={{ values, severity, height: CHART_H }} defaults={defaults} />
                 )}
             </RichRow>
 

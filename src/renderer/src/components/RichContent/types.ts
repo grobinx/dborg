@@ -160,7 +160,8 @@ export type RichNodeType =
     | "metric"
     | "time"
     | "bullet"
-    | "refresh";
+    | "refresh"
+    | "sparkline";
 
 /**
  * Union type wszystkich możliwych węzłów Rich Content.
@@ -193,6 +194,7 @@ export type RichNode =
     | IRichMetric
     | IRichBullet
     | IRichRefresh
+    | IRichSparkline
     /**
      * Tablica węzłów jest traktowana jak wiersz (RichRow) z elementami ułożonymi poziomo.
      */
@@ -1231,7 +1233,7 @@ export interface IRichLogEntry {
     /**
      * Treść wiadomości logu, która może być prostym tekstem lub złożonym węzłem RichNode (np. z podświetleniem składni, linkami, chipami itp.)
      */
-    message: RichNode; 
+    message: RichNode;
 }
 
 /**
@@ -1266,9 +1268,63 @@ export interface IRichRefresh extends IRichNode {
     /**
      * Interwał odświeżania danych w milisekundach - jeśli podano, komponent będzie automatycznie odświeżał dane co określony czas, wywołując ponownie funkcję value i aktualizując zawartość.
      */
-    interval: number; 
+    interval: number;
     /**
      * Zawartość do renderowania, która będzie aktualizowana po każdym odświeżeniu. Może być dowolnym węzłem RichNode, co pozwala na dynamiczne aktualizowanie różnych typów treści (np. tekst, wykresy, tabele) w regularnych odstępach czasu.
      */
     refresh: RichNode;
 }
+
+// types.ts
+
+export type RichSparklineCurve = "linear" | "smooth";
+export type RichSparklineFill = "none" | "gradient";
+
+export interface IRichSparkline extends IRichNode {
+    type: "sparkline";
+    /**
+     * Tablica wartości numerycznych do wygenerowania wykresu liniowego. Każda wartość reprezentuje punkt na wykresie, a ich kolejność determinuje kształt linii. Wartości mogą być dynamiczne (funkcja zwracająca Promise), co pozwala na asynchroniczne ładowanie danych do wykresu.
+     */
+    values: RichValue<number[]>;
+    /**
+     * Szerokość wykresu (np. "100%", "auto", 300) - domyślnie "100%", co oznacza, że wykres zajmie całą dostępną szerokość kontenera. Można ustawić konkretną wartość w pikselach lub procentach, aby dostosować rozmiar wykresu do potrzeb projektu.
+     */
+    width?: number | string;      // default: "100%"
+    /**
+     * Wysokość wykresu (np. "100%", "auto", 300) - domyślnie 28 pikseli, co jest standardową wysokością dla mini-wykresów typu sparkline. Można dostosować tę wartość, aby zwiększyć lub zmniejszyć wysokość wykresu w zależności od ilości danych i dostępnej przestrzeni w interfejsie użytkownika.
+     */
+    height?: number | string;     // default: 28
+    /**
+     * Grubość linii wykresu w pikselach - domyślnie 2, co zapewnia dobrą widoczność linii bez nadmiernego obciążenia wizualnego. Można zwiększyć tę wartość, aby uzyskać bardziej wyrazisty wykres, lub zmniejszyć ją dla delikatniejszego efektu, w zależności od stylu projektu i ilości danych prezentowanych na wykresie.
+     */
+    strokeWidth?: number;         // default: 2
+    /**
+     * Typ krzywej łączącej punkty na wykresie - domyślnie "linear", co oznacza, że punkty będą łączone prostymi liniami. Opcja "smooth" pozwala na wygładzenie linii, tworząc bardziej zaokrąglony i estetyczny wygląd wykresu, co może być szczególnie przydatne przy prezentacji danych z dużymi wahaniami lub gdy chcemy uzyskać bardziej organiczny efekt wizualny.
+     */
+    curve?: RichSparklineCurve;   // default: "linear"
+    /**
+     * Typ wypełnienia pod linią wykresu - domyślnie "none", co oznacza brak wypełnienia. Opcja "gradient" pozwala na dodanie gradientowego wypełnienia pod linią, co może zwiększyć atrakcyjność wizualną wykresu i pomóc w lepszym zrozumieniu zakresu wartości, zwłaszcza gdy wykres prezentuje duże różnice między punktami danych.
+     */
+    fill?: RichSparklineFill;     // default: "none"
+    /**
+     * Poziom ważności wpływający na kolor linii i wypełnienia wykresu - domyślnie "default", co oznacza standardowy kolor. Można ustawić różne poziomy ważności (np. "success", "warning", "error"), aby wizualnie wyróżnić wykres w zależności od kontekstu danych, co może pomóc użytkownikom szybko zidentyfikować kluczowe informacje lub potencjalne problemy przedstawione na wykresie.
+     */
+    severity?: RichSeverity;
+    /**
+     * Zakres wartości do wyświetlenia na wykresie - domyślnie automatycznie dopasowywany do zakresu danych. Można ręcznie ustawić minimalną i maksymalną wartość, aby zachować spójność skali między różnymi wykresami lub skupić się na określonym zakresie danych, co może być szczególnie przydatne przy porównywaniu różnych zestawów danych lub gdy chcemy podkreślić określone trendy w danych.
+     */
+    min?: number;                 // opcjonalny clamp zakresu
+    /**
+     * Zakres wartości do wyświetlenia na wykresie - domyślnie automatycznie dopasowywany do zakresu danych. Można ręcznie ustawić minimalną i maksymalną wartość, aby zachować spójność skali między różnymi wykresami lub skupić się na określonym zakresie danych, co może być szczególnie przydatne przy porównywaniu różnych zestawów danych lub gdy chcemy podkreślić określone trendy w danych.
+     */
+    max?: number;                 // opcjonalny clamp zakresu
+    /**
+     * Czy pokazać kropki na punktach danych - domyślnie false, co oznacza, że punkty danych będą reprezentowane tylko przez linię. Ustawienie tej opcji na true spowoduje wyświetlenie kropek na każdym punkcie danych, co może pomóc w lepszym zidentyfikowaniu poszczególnych wartości na wykresie, zwłaszcza gdy dane są gęste lub gdy chcemy podkreślić konkretne punkty na wykresie.
+     */
+    showDots?: boolean;           // default: false
+    /**
+     * Czy animować wykres podczas aktualizacji danych - domyślnie false, co oznacza, że wykres będzie aktualizowany natychmiast bez animacji. Ustawienie tej opcji na true spowoduje płynne przejście między starymi a nowymi wartościami, co może poprawić doświadczenie użytkownika i uczynić zmiany danych bardziej zauważalnymi, zwłaszcza gdy wykres jest często aktualizowany lub gdy chcemy podkreślić dynamiczny charakter prezentowanych danych.
+     */
+    animated?: boolean;           // default: false
+}
+

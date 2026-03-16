@@ -373,7 +373,7 @@ export const richContentExamples: RichExampleMap = {
                         unit: " req/s",
                         size: 2,
                         tooltip: "This is a metric node with refreshing random sparkline data",
-                        sparkline: async () => Array.from({ length: 10 }, () => Math.floor(Math.random() * 20) + 1),
+                        sparkline: async () => Array.from({ length: 15 }, () => Math.floor(Math.random() * 20) + 1),
                     }
                 },
                 {
