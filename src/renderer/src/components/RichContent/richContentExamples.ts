@@ -202,11 +202,12 @@ export const richContentExamples: RichExampleMap = {
         },
         {
             type: "alert",
-            severity: "warning",
+            severity: "success",
             title: "Warning alert",
             showIcon: true,
             message: {
                 type: "group",
+                gap: 4,
                 items: [
                     { type: "text", text: "Wykryto kosztowną operację." },
                     { type: "chip", text: "Seq Scan", severity: "warning" },

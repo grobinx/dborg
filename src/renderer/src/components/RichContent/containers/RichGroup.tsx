@@ -31,6 +31,7 @@ const RichGroup: React.FC<RichGroupnProps> = ({ node, defaults, children }) => {
                 display: "flex",
                 flexDirection: node.direction === "horizontal" ? "row" : "column",
                 overflow: "hidden",
+                gap: node.gap,
             }}
         >
             {items === null ?

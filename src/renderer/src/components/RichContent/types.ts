@@ -592,6 +592,11 @@ export interface IRichGroup extends IRichNode {
      * @default "vertical"
      */
     direction?: "vertical" | "horizontal";
+    /**
+     * Odstęp między elementami w grupie
+     * @default undefined (nie dodaje dodatkowego gapu, można ustawić w defaults)
+     */
+    gap?: RichGap;
 }
 
 export interface IRichRowBase extends IRichNode {
