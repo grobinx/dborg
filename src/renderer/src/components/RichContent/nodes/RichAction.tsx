@@ -1,6 +1,6 @@
 import React from "react";
 import { Box } from "@mui/material";
-import { IRichAction, IRichContainerDefaults } from "../types";
+import { IRichAction, IRichEnvironment } from "../types";
 import RichBadge from "./RichBadge";
 import { Button } from "@renderer/components/buttons/Button";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
@@ -8,10 +8,10 @@ import clsx from "@renderer/utils/clsx";
 
 interface RichActionProps {
     node: IRichAction;
-    defaults?: IRichContainerDefaults;
+    environment?: IRichEnvironment;
 }
 
-const RichAction: React.FC<RichActionProps> = ({ node, defaults }) => {
+const RichAction: React.FC<RichActionProps> = ({ node, environment }) => {
 
     if (node.excluded) {
         return null;
@@ -39,7 +39,7 @@ const RichAction: React.FC<RichActionProps> = ({ node, defaults }) => {
                         right: "-8px",
                     }}
                 >
-                    <RichBadge node={node.badge} defaults={defaults} />
+                    <RichBadge node={node.badge} environment={environment} />
                 </Box>
             )}
         </Box>

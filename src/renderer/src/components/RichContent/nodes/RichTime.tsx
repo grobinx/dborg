@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, useTheme } from "@mui/material";
-import { IRichContainerDefaults, IRichTime } from "../types";
+import { IRichContainerTheme, IRichEnvironment, IRichTime } from "../types";
 import clsx from "@renderer/utils/clsx";
 import { Optional } from "@renderer/types/universal";
 import Tooltip from "@renderer/components/Tooltip";
@@ -8,7 +8,7 @@ import RichRenderer from "..";
 
 interface RichTimeProps {
     node: Optional<IRichTime, "type">;
-    defaults?: IRichContainerDefaults;
+    environment?: IRichEnvironment;
 }
 
 type RelativeUnit = Intl.RelativeTimeFormatUnit;
@@ -91,7 +91,7 @@ const formatFull = (date: Date): string =>
         timeStyle: "medium",
     }).format(date);
 
-const RichTime: React.FC<RichTimeProps> = ({ node, defaults }) => {
+const RichTime: React.FC<RichTimeProps> = ({ node, environment }) => {
     const theme = useTheme();
     const date = React.useMemo(() => toDate(node.value), [node.value]);
 
@@ -127,7 +127,7 @@ const RichTime: React.FC<RichTimeProps> = ({ node, defaults }) => {
             sx={{
                 display: "inline",
                 color: theme.palette.text.secondary,
-                fontFamily: defaults?.fontFamilyMonospace ?? theme.typography.fontFamily,
+                fontFamily: environment?.theme?.fontFamilyMonospace ?? theme.typography.fontFamily,
                 fontSize: "0.89em",
                 lineHeight: 1.35,
             }}
@@ -138,7 +138,7 @@ const RichTime: React.FC<RichTimeProps> = ({ node, defaults }) => {
 
     if (node.tooltip) {
         return (
-            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+            <Tooltip title={<RichRenderer node={node.tooltip} environment={environment} />}>
                 {result}
             </Tooltip>
         );

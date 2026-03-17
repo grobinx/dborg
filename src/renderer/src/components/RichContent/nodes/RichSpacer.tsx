@@ -1,6 +1,6 @@
 import React from "react";
 import { Box } from "@mui/material";
-import { IRichContainerDefaults, IRichSpacer } from "../types";
+import { IRichContainerTheme, IRichEnvironment, IRichSpacer } from "../types";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 import Tooltip from "@renderer/components/Tooltip";
@@ -8,10 +8,10 @@ import RichRenderer from "..";
 
 interface RichSpacerProps {
     node: Optional<IRichSpacer, "type">;
-    defaults?: IRichContainerDefaults;
+    environment?: IRichEnvironment;
 }
 
-const RichSpacer: React.FC<RichSpacerProps> = ({ node, defaults }) => {
+const RichSpacer: React.FC<RichSpacerProps> = ({ node, environment }) => {
     const getSize = (size?: number | string | "auto") => {
         if ((size ?? "auto") === "auto") {
             return 1; // flex: 1
@@ -42,7 +42,7 @@ const RichSpacer: React.FC<RichSpacerProps> = ({ node, defaults }) => {
 
     if (node.tooltip) {
         return (
-            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+            <Tooltip title={<RichRenderer node={node.tooltip} environment={environment} />}>
                 {result}
             </Tooltip>
         );

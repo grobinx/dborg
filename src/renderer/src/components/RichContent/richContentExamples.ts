@@ -639,7 +639,7 @@ export const richContentExamples: RichExampleMap = {
                             return { type: "code", code: "SELECT * FROM orders WHERE status = 'OPEN'" };
                         },
                     },
-                    duration: { type: "text", text: "622 ms", variant: "body-strong", severity: "warning" },
+                    duration: { type: "text", text: "622 ms", variant: "body", severity: "warning", decoration: ["bold"] },
                     rows: { type: "text", text: 5320, variant: "body" },
                     status: { type: "chip", text: "SLOW", severity: "warning", variant: "outlined" },
                 },
@@ -665,7 +665,7 @@ export const richContentExamples: RichExampleMap = {
                         custom: [{ type: "icon", icon: "Loading" }, "Loading..."],
                         value: async () => {
                             await sleep(Math.random() * 5 + 1);
-                            return { type: "text", text: "timeout", variant: "body-strong", severity: "error" };
+                            return { type: "text", text: "timeout", variant: "body", severity: "error", decoration: ["bold"] };
                         }
                     },
                     rows: { type: "text", text: "-", variant: "body" },
@@ -699,7 +699,7 @@ export const richContentExamples: RichExampleMap = {
                             };
                         },
                     },
-                    duration: { type: "text", text: "2.3 s", variant: "body-strong", severity: "warning" },
+                    duration: { type: "text", text: "2.3 s", variant: "body", severity: "warning", decoration: ["bold"] },
                     rows: { type: "text", text: 18600, variant: "body" },
                     status: { type: "chip", text: "HEAVY", severity: "warning", variant: "outlined" },
                 },
@@ -715,7 +715,7 @@ export const richContentExamples: RichExampleMap = {
                             };
                         },
                     },
-                    duration: { type: "text", text: "4.8 s", variant: "body-strong", severity: "warning" },
+                    duration: { type: "text", text: "4.8 s", variant: "body", severity: "warning", decoration: ["bold"] },
                     rows: { type: "text", text: "-", variant: "body" },
                     status: { type: "chip", text: "MAINT", severity: "info", variant: "outlined" },
                 },
@@ -794,7 +794,7 @@ export const richContentExamples: RichExampleMap = {
                     database: "dborg_prod",
                     client: "10.10.7.11",
                     state: { type: "chip", text: "idle in tx", severity: "warning", variant: "outlined" },
-                    txAge: { type: "text", text: "00:04:51", variant: "body-strong", severity: "warning" },
+                    txAge: { type: "text", text: "00:04:51", variant: "body", severity: "warning", decoration: ["bold"] },
                     wait: { type: "chip", text: "YES", severity: "warning", variant: "outlined" },
                 },
                 {
@@ -812,7 +812,7 @@ export const richContentExamples: RichExampleMap = {
                     database: "dborg_prod",
                     client: "10.10.9.90",
                     state: { type: "chip", text: "blocked", severity: "error" },
-                    txAge: { type: "text", text: "00:12:09", variant: "body-strong", severity: "error" },
+                    txAge: { type: "text", text: "00:12:09", variant: "body", severity: "error", decoration: ["bold"] },
                     wait: { type: "chip", text: "YES", severity: "error" },
                 },
                 {

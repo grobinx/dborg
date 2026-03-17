@@ -1,16 +1,16 @@
 import React from "react";
 import { LinearProgress, Box, useTheme } from "@mui/material";
-import { IRichContainerDefaults, IRichProgress, RichSeverity } from "../types";
+import { IRichEnvironment, IRichProgress, RichSeverity } from "../types";
 import clsx from "@renderer/utils/clsx";
 import RichRenderer, { RichText } from "..";
 import Tooltip from "@renderer/components/Tooltip";
 
 interface RichProgressProps {
     node: IRichProgress;
-    defaults?: IRichContainerDefaults;
+    environment?: IRichEnvironment;
 }
 
-const RichProgress: React.FC<RichProgressProps> = ({ node, defaults }) => {
+const RichProgress: React.FC<RichProgressProps> = ({ node, environment }) => {
     const theme = useTheme();
 
     const getColorFromSeverity = (severity?: RichSeverity) => {
@@ -42,8 +42,8 @@ const RichProgress: React.FC<RichProgressProps> = ({ node, defaults }) => {
         >
             {(node.label || node.showPercent) && (
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    {node.label && <RichRenderer node={node.label} defaults={defaults} textVariant="caption" />}
-                    {node.showPercent && <RichText node={{ text: `${Math.round(node.value)}%`, variant: "caption" }} defaults={defaults} />}
+                    {node.label && <RichRenderer node={node.label} environment={environment} textVariant="caption" />}
+                    {node.showPercent && <RichText node={{ text: `${Math.round(node.value)}%`, variant: "caption" }} environment={environment} />}
                 </Box>
             )}
             <LinearProgress
@@ -51,14 +51,14 @@ const RichProgress: React.FC<RichProgressProps> = ({ node, defaults }) => {
                 value={node.value}
                 valueBuffer={node.bufferValue}
                 color={getColorFromSeverity(node.severity)}
-                sx={{ height: "6px", borderRadius: defaults?.radius ?? 4 }}
+                sx={{ height: "6px", borderRadius: environment?.theme?.radius ?? 4 }}
             />
         </Box>
     );
 
     if (node.tooltip) {
         return (
-            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+            <Tooltip title={<RichRenderer node={node.tooltip} environment={environment} />}>
                 {result}
             </Tooltip>
         );

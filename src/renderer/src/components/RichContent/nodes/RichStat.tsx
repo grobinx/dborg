@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, useTheme } from "@mui/material";
-import { IRichStat, IRichContainerDefaults, RichColSize } from "../types";
-import RichRenderer, { getSeverityColor, RichRow } from "..";
+import { IRichStat, RichColSize, IRichEnvironment } from "../types";
+import RichRenderer, { RichRow } from "..";
 import RichIcon from "./RichIcon";
 import clsx from "@renderer/utils/clsx";
 import CalloutBox from "../utils/CalloutBox";
@@ -10,10 +10,10 @@ import Tooltip from "@renderer/components/Tooltip";
 
 interface RichStatProps {
     node: Optional<IRichStat, "type">;
-    defaults?: IRichContainerDefaults;
+    environment?: IRichEnvironment;
 }
 
-const RichStat: React.FC<RichStatProps> = ({ node, defaults }) => {
+const RichStat: React.FC<RichStatProps> = ({ node, environment }) => {
     const theme = useTheme();
 
     const getTrendIcon = (trend?: "up" | "down" | "flat") => {
@@ -33,7 +33,7 @@ const RichStat: React.FC<RichStatProps> = ({ node, defaults }) => {
         if (size === "auto" || size === "stretch" || size === undefined) {
             return "auto";
         }
-        return `calc(${(size / 12) * 100}% - ${(defaults?.gap ?? 4)}px)`;
+        return `calc(${(size / 12) * 100}% - ${(environment?.theme?.gap ?? 4)}px)`;
     };
 
     if (node.excluded) {
@@ -53,34 +53,34 @@ const RichStat: React.FC<RichStatProps> = ({ node, defaults }) => {
             sx={{
                 display: "flex",
                 flexDirection: "column",
-                gap: defaults?.gap ?? 4,
-                padding: defaults?.padding ?? 4,
+                gap: environment?.theme?.gap ?? 4,
+                padding: environment?.theme?.padding ?? 4,
                 width: node.size === "stretch" ? "100%" : getColSize(node.size),
                 flexGrow: node.size === "stretch" ? 1 : undefined,
                 minWidth: 0,
             }}
         >
             {/* Wartość + Ikona + Trend */}
-            <RichRow node={{ justify: "space-between", items: [] }} defaults={defaults}>
-                <Box sx={{ display: "flex", alignItems: "baseline", gap: defaults?.gap ?? 4 }}>
+            <RichRow node={{ justify: "space-between", items: [] }} environment={environment}>
+                <Box sx={{ display: "flex", alignItems: "baseline", gap: environment?.theme?.gap ?? 4 }}>
                     {node.trend && (
-                        <RichIcon node={{ icon: getTrendIcon(node.trend), severity }} defaults={defaults} />
+                        <RichIcon node={{ icon: getTrendIcon(node.trend), severity }} environment={environment} />
                     )}
-                    <RichRenderer node={node.value} defaults={defaults} textVariant="title" textSeverity={node.severity ?? "info"} />
+                    <RichRenderer node={node.value} environment={environment} textVariant="title" textSeverity={node.severity ?? "info"} />
                 </Box>
                 {node.icon && (
-                    <RichIcon node={{ icon: node.icon, severity, size: "large" }} defaults={defaults} />
+                    <RichIcon node={{ icon: node.icon, severity, size: "large" }} environment={environment} />
                 )}
             </RichRow>
 
             {/* Etykieta */}
-            <RichRenderer node={node.label} defaults={defaults} textVariant="label" />
+            <RichRenderer node={node.label} environment={environment} textVariant="label" />
         </CalloutBox>
     );
 
     if (node.tooltip) {
         return (
-            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+            <Tooltip title={<RichRenderer node={node.tooltip} environment={environment} />}>
                 {result}
             </Tooltip>
         );

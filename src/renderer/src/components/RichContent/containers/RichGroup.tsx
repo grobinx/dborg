@@ -1,19 +1,18 @@
 import React from "react";
-import { Box, Paper, Collapse, useTheme } from "@mui/material";
-import { IRichContainerDefaults, IRichGroup, IRichSection, RichNode } from "../types";
-import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromFunction, RichIcon, RichSpacer } from "..";
-import { ToolButton } from "@renderer/components/buttons/ToolButton";
+import { Box, useTheme } from "@mui/material";
+import { IRichEnvironment, IRichGroup, RichNode } from "../types";
+import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 import Tooltip from "@renderer/components/Tooltip";
 
-interface RichGroupnProps {
+interface RichGroupProps {
     node: Optional<IRichGroup, "type">;
-    defaults?: IRichContainerDefaults;
+    environment?: IRichEnvironment;
     children?: React.ReactNode;
 }
 
-const RichGroup: React.FC<RichGroupnProps> = ({ node, defaults, children }) => {
+const RichGroup: React.FC<RichGroupProps> = ({ node, environment, children }) => {
     const theme = useTheme();
     const [items, setItems] = React.useState<RichNode[] | null>(resolveRichValue(node.items));
 
@@ -40,9 +39,9 @@ const RichGroup: React.FC<RichGroupnProps> = ({ node, defaults, children }) => {
             }}
         >
             {items === null ?
-                <RichIcon node={{ icon: "Loading" }} defaults={defaults} />
+                <RichIcon node={{ icon: "Loading" }} environment={environment} />
                 : items.map((item, index) => (
-                    <RichRenderer key={index} node={item} defaults={defaults} />
+                    <RichRenderer key={index} node={item} environment={environment} />
                 ))
             }
             {children}
@@ -51,7 +50,7 @@ const RichGroup: React.FC<RichGroupnProps> = ({ node, defaults, children }) => {
 
     if (node.tooltip) {
         return (
-            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+            <Tooltip title={<RichRenderer node={node.tooltip} environment={environment} />}>
                 {result}
             </Tooltip>
         );

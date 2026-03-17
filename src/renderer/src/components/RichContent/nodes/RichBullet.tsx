@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, useTheme } from "@mui/material";
-import { IRichBullet, IRichContainerDefaults } from "../types";
+import { IRichBullet, IRichEnvironment } from "../types";
 import RichRenderer, { getSeverityColor } from "..";
 import clsx from "@renderer/utils/clsx";
 import { Optional } from "@renderer/types/universal";
@@ -8,10 +8,10 @@ import Tooltip from "@renderer/components/Tooltip";
 
 interface RichBulletProps {
     node: Optional<IRichBullet, "type">;
-    defaults?: IRichContainerDefaults;
+    environment?: IRichEnvironment;
 }
 
-const RichBullet: React.FC<RichBulletProps> = ({ node, defaults }) => {
+const RichBullet: React.FC<RichBulletProps> = ({ node, environment }) => {
     const theme = useTheme();
 
     const color = getSeverityColor(node.severity, theme);
@@ -59,7 +59,7 @@ const RichBullet: React.FC<RichBulletProps> = ({ node, defaults }) => {
 
     if (node.tooltip) {
         return (
-            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+            <Tooltip title={<RichRenderer node={node.tooltip} environment={environment} />}>
                 {result}
             </Tooltip>
         );

@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, useTheme } from "@mui/material";
-import { IRichContainerDefaults, IRichTimeline, IRichTimelineItem } from "../types";
+import { IRichEnvironment, IRichTimeline, IRichTimelineItem } from "../types";
 import RichRenderer, { getSeverityColor, RichIcon } from "..";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
@@ -8,7 +8,7 @@ import Tooltip from "@renderer/components/Tooltip";
 
 interface RichTimelineProps {
     node: Optional<IRichTimeline, "type">;
-    defaults?: IRichContainerDefaults;
+    environment?: IRichEnvironment;
 }
 
 const getItemColor = (item: IRichTimelineItem, theme: any) => {
@@ -16,9 +16,9 @@ const getItemColor = (item: IRichTimelineItem, theme: any) => {
     return color === "inherit" ? theme.palette.text.secondary : color;
 };
 
-const RichTimeline: React.FC<RichTimelineProps> = ({ node, defaults }) => {
+const RichTimeline: React.FC<RichTimelineProps> = ({ node, environment }) => {
     const theme = useTheme();
-    const gap = defaults?.gap ?? 4;
+    const gap = environment?.theme?.gap ?? 4;
     const lastIndex = node.items.length - 1;
 
     if (node.excluded) {
@@ -59,7 +59,7 @@ const RichTimeline: React.FC<RichTimelineProps> = ({ node, defaults }) => {
                     >
                         {/* Rząd 1: timestamp | marker | label */}
                         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", color: theme.palette.text.secondary, height: "100%" }}>
-                            {item.timestamp && <RichRenderer node={item.timestamp} defaults={defaults} textVariant="caption" />}
+                            {item.timestamp && <RichRenderer node={item.timestamp} environment={environment} textVariant="caption" />}
                         </Box>
 
                         <Box
@@ -71,7 +71,7 @@ const RichTimeline: React.FC<RichTimelineProps> = ({ node, defaults }) => {
                             }}
                         >
                             {item.icon ? (
-                                <RichIcon node={{ icon: item.icon, severity: item.severity }} defaults={defaults} />
+                                <RichIcon node={{ icon: item.icon, severity: item.severity }} environment={environment} />
                             ) : (
                                 <Box
                                     sx={{
@@ -90,7 +90,7 @@ const RichTimeline: React.FC<RichTimelineProps> = ({ node, defaults }) => {
                                 alignItems: "center",
                             }}
                         >
-                            <RichRenderer node={item.label} defaults={defaults} textVariant="label" />
+                            <RichRenderer node={item.label} environment={environment} textVariant="label" />
                         </Box>
 
                         {/* Rząd 2: pusto | pionowa kreska | caption */}
@@ -110,7 +110,7 @@ const RichTimeline: React.FC<RichTimelineProps> = ({ node, defaults }) => {
                                 </Box>
 
                                 <Box sx={{ minWidth: 0 }}>
-                                    <RichRenderer node={item.description} defaults={defaults} textVariant="description" />
+                                    <RichRenderer node={item.description} environment={environment} textVariant="description" />
                                 </Box>
                             </>
                         )}
@@ -122,7 +122,7 @@ const RichTimeline: React.FC<RichTimelineProps> = ({ node, defaults }) => {
 
     if (node.tooltip) {
         return (
-            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+            <Tooltip title={<RichRenderer node={node.tooltip} environment={environment} />}>
                 {result}
             </Tooltip>
         );

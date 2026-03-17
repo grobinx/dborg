@@ -1,8 +1,8 @@
 import React from "react";
-import { Box, Paper, useTheme } from "@mui/material";
+import { Box, useTheme } from "@mui/material";
 import { Light as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vs, vs2015 } from "react-syntax-highlighter/dist/esm/styles/hljs";
-import { IRichCode, IRichContainerDefaults } from "../types";
+import { IRichCode, IRichEnvironment } from "../types";
 import clsx from "@renderer/utils/clsx";
 import { Optional } from "@renderer/types/universal";
 import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
@@ -10,10 +10,10 @@ import Tooltip from "@renderer/components/Tooltip";
 
 interface RichCodeProps {
     node: Optional<IRichCode, "type">;
-    defaults?: IRichContainerDefaults;
+    environment?: IRichEnvironment;
 }
 
-const RichCode: React.FC<RichCodeProps> = ({ node, defaults }) => {
+const RichCode: React.FC<RichCodeProps> = ({ node, environment }) => {
     const theme = useTheme();
     const [code, setCode] = React.useState<string | null>(resolveRichValue(node.code));
 
@@ -38,9 +38,9 @@ const RichCode: React.FC<RichCodeProps> = ({ node, defaults }) => {
                 showLineNumbers={Boolean(node.lineNumbers)}
                 startingLineNumber={node.startLineNumber}
                 customStyle={{
-                    borderRadius: defaults?.radius ?? 4,
-                    padding: defaults?.padding ?? 4,
-                    fontFamily: defaults?.fontFamilyMonospace ?? "monospace",
+                    borderRadius: environment?.theme?.radius ?? 4,
+                    padding: environment?.theme?.padding ?? 4,
+                    fontFamily: environment?.theme?.fontFamilyMonospace ?? "monospace",
                     fontSize: "0.875em",
                     marginTop: 0, //defaults?.gap ?? 4,
                     marginBottom: 0, //defaults?.gap ?? 4,
@@ -53,14 +53,14 @@ const RichCode: React.FC<RichCodeProps> = ({ node, defaults }) => {
             </SyntaxHighlighter >
         ) : (
             <Box>
-                <RichIcon node={{ icon: "Loading" }} defaults={defaults} />
+                <RichIcon node={{ icon: "Loading" }} environment={environment} />
             </Box>
         )
     );
 
     if (node.tooltip) {
         return (
-            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+            <Tooltip title={<RichRenderer node={node.tooltip} environment={environment} />}>
                 {result}
             </Tooltip>
         );

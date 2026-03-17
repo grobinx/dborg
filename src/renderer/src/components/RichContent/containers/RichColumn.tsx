@@ -1,6 +1,6 @@
 import React from "react";
-import { Box, useTheme } from "@mui/material";
-import { IRichColumn, IRichContainerDefaults, RichColSize, RichNode } from "../types";
+import { Box } from "@mui/material";
+import { IRichColumn, IRichEnvironment, RichColSize, RichNode } from "../types";
 import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
@@ -8,11 +8,11 @@ import Tooltip from "@renderer/components/Tooltip";
 
 interface RichColumnProps {
     node: Optional<IRichColumn, "type">;
-    defaults?: IRichContainerDefaults;
+    environment?: IRichEnvironment;
     children?: React.ReactNode;
 }
 
-const RichColumn: React.FC<RichColumnProps> = ({ node, defaults, children }) => {
+const RichColumn: React.FC<RichColumnProps> = ({ node, environment, children }) => {
     const [items, setItems] = React.useState<RichNode[] | null>(resolveRichValue(node.items));
 
     React.useEffect(() => {
@@ -23,7 +23,7 @@ const RichColumn: React.FC<RichColumnProps> = ({ node, defaults, children }) => 
         if (size === "auto" || size === "stretch" || size === undefined) {
             return "auto";
         }
-        return `calc(${(size / 12) * 100}% - ${(node.gap ?? defaults?.gap ?? 4)}px)`;
+        return `calc(${(size / 12) * 100}% - ${(node.gap ?? environment?.theme?.gap ?? 4)}px)`;
     };
 
     if (node.excluded) {
@@ -40,17 +40,17 @@ const RichColumn: React.FC<RichColumnProps> = ({ node, defaults, children }) => 
             sx={{
                 display: "flex",
                 flexDirection: "column",
-                gap: node.gap ?? defaults?.gap ?? 4,
-                padding: node.padding ?? defaults?.padding ?? 4,
+                gap: node.gap ?? environment?.theme?.gap ?? 4,
+                padding: node.padding ?? environment?.theme?.padding ?? 4,
                 width: node.size === "stretch" ? "100%" : getColSize(node.size),
                 flexGrow: node.size === "stretch" ? 1 : undefined,
                 minWidth: 0,
             }}
         >
             {items === null ?
-                <RichIcon node={{ icon: "Loading" }} defaults={defaults} />
+                <RichIcon node={{ icon: "Loading" }} environment={environment} />
                 : items.map((item, index) => (
-                    <RichRenderer key={index} node={item} defaults={defaults} />
+                    <RichRenderer key={index} node={item} environment={environment} />
                 ))
             }
             {children}
@@ -59,7 +59,7 @@ const RichColumn: React.FC<RichColumnProps> = ({ node, defaults, children }) => 
 
     if (node.tooltip) {
         return (
-            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+            <Tooltip title={<RichRenderer node={node.tooltip} environment={environment} />}>
                 {result}
             </Tooltip>
         );

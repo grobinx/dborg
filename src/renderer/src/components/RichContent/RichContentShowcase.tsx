@@ -93,6 +93,8 @@ const RichContentShowcase: React.FC = () => {
                         node={{
                             items: currentExample,
                             height: "auto",
+                            padding: compactMode ? "2px 4px" : undefined,
+                            gap: compactMode ? 2 : 4,
                         }}
                     />
                 </Stack>

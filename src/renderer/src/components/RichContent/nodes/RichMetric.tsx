@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Skeleton, useTheme } from "@mui/material";
-import { IRichContainerDefaults, IRichMetric, RichColSize } from "../types";
+import { IRichEnvironment, IRichMetric, RichColSize } from "../types";
 import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromFunction, RichRow, RichSparkline } from "..";
 import RichIcon from "./RichIcon";
 import clsx from "@renderer/utils/clsx";
@@ -10,14 +10,14 @@ import Tooltip from "@renderer/components/Tooltip";
 
 interface RichMetricProps {
     node: Optional<IRichMetric, "type">;
-    defaults?: IRichContainerDefaults;
+    environment?: IRichEnvironment;
 }
 
 const CHART_W = 120;
 const CHART_H = 28;
 const CHART_PAD = 2;
 
-const RichMetric: React.FC<RichMetricProps> = ({ node, defaults }) => {
+const RichMetric: React.FC<RichMetricProps> = ({ node, environment }) => {
     const theme = useTheme();
     const [sparkline, setSparkline] = React.useState<number[] | null>(resolveRichValue(node.sparkline));
 
@@ -29,7 +29,7 @@ const RichMetric: React.FC<RichMetricProps> = ({ node, defaults }) => {
         if (size === "auto" || size === "stretch" || size === undefined) {
             return "auto";
         }
-        return `calc(${(size / 12) * 100}% - ${(defaults?.gap ?? 4)}px)`;
+        return `calc(${(size / 12) * 100}% - ${(environment?.theme?.gap ?? 4)}px)`;
     };
 
     const severity = node.severity ?? "default";
@@ -74,26 +74,26 @@ const RichMetric: React.FC<RichMetricProps> = ({ node, defaults }) => {
             sx={{
                 display: "flex",
                 flexDirection: "column",
-                gap: defaults?.gap ?? 4,
-                padding: defaults?.padding ?? 4,
+                gap: environment?.theme?.gap ?? 4,
+                padding: environment?.theme?.padding ?? 4,
                 width: node.size === "stretch" ? "100%" : getColSize(node.size),
                 flexGrow: node.size === "stretch" ? 1 : undefined,
                 minWidth: 0,
             }}
         >
-            <RichRow node={{ items: [], align: "center" }} defaults={defaults}>
+            <RichRow node={{ items: [], align: "center" }} environment={environment}>
                 <Box sx={{ flexShrink: 0, minWidth: 0 }}>
-                    <RichRow node={{ justify: "space-between", items: [] }} defaults={defaults}>
+                    <RichRow node={{ justify: "space-between", items: [] }} environment={environment}>
                         {latestValue !== null && (
                             <RichRenderer
                                 node={`${latestValue}${node.unit ?? ""}`}
-                                defaults={defaults}
+                                environment={environment}
                                 textVariant="title"
                                 textSeverity={severity}
                             />
                         )}
                         {node.icon && (
-                            <RichIcon node={{ icon: node.icon, severity, size: "large" }} defaults={defaults} />
+                            <RichIcon node={{ icon: node.icon, severity, size: "large" }} environment={environment} />
                         )}
                     </RichRow>
                 </Box>
@@ -107,17 +107,17 @@ const RichMetric: React.FC<RichMetricProps> = ({ node, defaults }) => {
                         />
                     </Box>
                 ) : hasSparkline && (
-                    <RichSparkline node={{ values, severity, height: CHART_H }} defaults={defaults} />
+                    <RichSparkline node={{ values, severity, height: CHART_H }} environment={environment} />
                 )}
             </RichRow>
 
-            <RichRenderer node={node.label} defaults={defaults} textVariant="label" />
+            <RichRenderer node={node.label} environment={environment} textVariant="label" />
         </CalloutBox>
     );
 
     if (node.tooltip) {
         return (
-            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+            <Tooltip title={<RichRenderer node={node.tooltip} environment={environment} />}>
                 {result}
             </Tooltip>
         );

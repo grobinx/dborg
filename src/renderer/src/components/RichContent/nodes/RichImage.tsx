@@ -1,16 +1,16 @@
 import React, { CSSProperties } from "react";
 import { Box, useTheme } from "@mui/material";
-import { IRichContainerDefaults, IRichImage } from "../types";
+import { IRichEnvironment, IRichImage } from "../types";
 import clsx from "@renderer/utils/clsx";
 import Tooltip from "@renderer/components/Tooltip";
 import RichRenderer from "..";
 
 interface RichImageProps {
     node: IRichImage;
-    defaults?: IRichContainerDefaults;
+    environment?: IRichEnvironment;
 }
 
-const RichImage: React.FC<RichImageProps> = ({ node, defaults }) => {
+const RichImage: React.FC<RichImageProps> = ({ node, environment }) => {
     const theme = useTheme();
 
     const getObjectFit = (fit?: IRichImage["fit"]): CSSProperties["objectFit"] => {
@@ -52,7 +52,7 @@ const RichImage: React.FC<RichImageProps> = ({ node, defaults }) => {
                 sx={{
                     width: node.width ?? "auto",
                     height: node.height ?? "auto",
-                    borderRadius: defaults?.radius ?? 4,
+                    borderRadius: environment?.theme?.radius ?? 4,
                     border: "1px solid " + theme.palette.divider,
                     overflow: "hidden",
                     maxWidth: "100%",
@@ -73,7 +73,7 @@ const RichImage: React.FC<RichImageProps> = ({ node, defaults }) => {
             aria-label={node.alt || "Image"}
             sx={{
                 display: "inline-block",
-                borderRadius: defaults?.radius ?? 4,
+                borderRadius: environment?.theme?.radius ?? 4,
                 border: `1px solid ${theme.palette.divider}`,
                 overflow: "hidden",
                 maxWidth: "100%",
@@ -96,7 +96,7 @@ const RichImage: React.FC<RichImageProps> = ({ node, defaults }) => {
 
     if (node.tooltip) {
         return (
-            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+            <Tooltip title={<RichRenderer node={node.tooltip} environment={environment} />}>
                 {result}
             </Tooltip>
         );

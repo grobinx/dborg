@@ -1,14 +1,14 @@
 import React from "react";
-import { IRichContainerDefaults, IRichRefresh } from "../types";
+import { IRichContainerTheme, IRichEnvironment, IRichRefresh } from "../types";
 import RichRenderer from "..";
 import { Optional } from "@renderer/types/universal";
 
 interface RichRefreshProps {
     node: Optional<IRichRefresh, "type">;
-    defaults?: IRichContainerDefaults;
+    environment?: IRichEnvironment;
 }
 
-const RichRefresh: React.FC<RichRefreshProps> = ({ node, defaults }) => {
+const RichRefresh: React.FC<RichRefreshProps> = ({ node, environment }) => {
     const [refreshKey, setRefreshKey] = React.useState<bigint>(0n);
 
     React.useEffect(() => {
@@ -19,7 +19,7 @@ const RichRefresh: React.FC<RichRefreshProps> = ({ node, defaults }) => {
         return () => clearInterval(id);
     }, [node.interval]);
 
-    return <RichRenderer key={refreshKey} node={node.refresh} defaults={defaults} />;
+    return <RichRenderer key={refreshKey} node={node.refresh} environment={environment} />;
 };
 
 export default RichRefresh;

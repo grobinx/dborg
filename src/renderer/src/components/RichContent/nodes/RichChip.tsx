@@ -1,6 +1,6 @@
 import React from "react";
 import { Chip, Box, useTheme } from "@mui/material";
-import { IRichChip, IRichContainerDefaults, RichNode } from "../types";
+import { IRichChip, IRichEnvironment, RichNode } from "../types";
 import RichBadge from "./RichBadge";
 import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
 import { Optional } from "@renderer/types/universal";
@@ -9,10 +9,10 @@ import Tooltip from "@renderer/components/Tooltip";
 
 interface RichChipProps {
     node: Optional<IRichChip, "type">;
-    defaults?: IRichContainerDefaults;
+    environment?: IRichEnvironment;
 }
 
-const RichChip: React.FC<RichChipProps> = ({ node, defaults }) => {
+const RichChip: React.FC<RichChipProps> = ({ node, environment }) => {
     const theme = useTheme();
     const [text, setText] = React.useState<RichNode | null>(resolveRichValue(node.text));
 
@@ -35,10 +35,10 @@ const RichChip: React.FC<RichChipProps> = ({ node, defaults }) => {
         >
             {text ? (
                 <Chip
-                    label={<RichRenderer node={text} defaults={defaults} textVariant="label" />}
+                    label={<RichRenderer node={text} environment={environment} textVariant="label" />}
                     size="small"
                     sx={{
-                        paddingRight: node.badge ? (defaults?.padding ?? 8) : undefined,
+                        paddingRight: node.badge ? (environment?.theme?.padding ?? 8) : undefined,
                         fontSize: "inherit",
                         fontFamily: "inherit",
                         lineHeight: "inherit",
@@ -48,8 +48,7 @@ const RichChip: React.FC<RichChipProps> = ({ node, defaults }) => {
                         "& .MuiChip-label": {
                             display: "flex",
                             alignItems: "center",
-                            paddingTop: "4px",
-                            paddingBottom: "4px",
+                            padding: environment?.theme ? `${environment.theme.padding} !important` : undefined,
                         },
                     }}
                     variant={node.variant}
@@ -57,7 +56,7 @@ const RichChip: React.FC<RichChipProps> = ({ node, defaults }) => {
                 />
             ) : (
                 <Box sx={{ height: "1.5em" }}>
-                    <RichIcon node={{ icon: "Loading" }} defaults={defaults} />
+                    <RichIcon node={{ icon: "Loading" }} environment={environment} />
                 </Box>
             )}
             {node.badge && (
@@ -68,7 +67,7 @@ const RichChip: React.FC<RichChipProps> = ({ node, defaults }) => {
                         right: "-8px",
                     }}
                 >
-                    <RichBadge node={node.badge} defaults={defaults} />
+                    <RichBadge node={node.badge} environment={environment} />
                 </Box>
             )}
         </Box>
@@ -76,7 +75,7 @@ const RichChip: React.FC<RichChipProps> = ({ node, defaults }) => {
 
     if (node.tooltip) {
         return (
-            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+            <Tooltip title={<RichRenderer node={node.tooltip} environment={environment} />}>
                 {result}
             </Tooltip>
         );

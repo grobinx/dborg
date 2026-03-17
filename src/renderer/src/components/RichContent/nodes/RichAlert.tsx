@@ -1,6 +1,6 @@
 import React from "react";
 import { Alert, useTheme } from "@mui/material";
-import { IRichAlert, IRichContainerDefaults, RichNode, RichSeverity } from "../types";
+import { IRichAlert, IRichEnvironment, RichNode, RichSeverity } from "../types";
 import { resolveIcon } from "@renderer/themes/icons";
 import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
 import clsx from "@renderer/utils/clsx";
@@ -9,10 +9,10 @@ import Tooltip from "@renderer/components/Tooltip";
 
 interface RichAlertProps {
     node: Optional<IRichAlert, "type">;
-    defaults?: IRichContainerDefaults;
+    environment?: IRichEnvironment;
 }
 
-const RichAlert: React.FC<RichAlertProps> = ({ node, defaults }) => {
+const RichAlert: React.FC<RichAlertProps> = ({ node, environment }) => {
     const theme = useTheme();
     const [message, setMessage] = React.useState<RichNode | null>(resolveRichValue(node.message));
 
@@ -49,22 +49,22 @@ const RichAlert: React.FC<RichAlertProps> = ({ node, defaults }) => {
             slotProps={{
                 root: {
                     style: {
-                        borderRadius: defaults?.radius ?? 4,
-                        padding: defaults?.padding ?? 4,
+                        borderRadius: environment?.theme?.radius ?? 4,
+                        padding: environment?.theme?.padding ?? 4,
                         fontSize: "inherit",
                         fontFamily: "inherit",
                         fontWeight: "inherit",
-                        gap: defaults?.gap ?? 4,
+                        gap: environment?.theme?.gap ?? 4,
                         boxShadow: `0 2px 4px ${getSeverityColor(node.severity, theme)}55`,
                     }
                 },
                 message: {
                     style: {
-                        padding: defaults?.padding ?? 4,
+                        padding: environment?.theme?.padding ?? 4,
                         fontSize: "inherit",
                         fontFamily: "inherit",
                         fontWeight: "inherit",
-                        gap: defaults?.gap ?? 4,
+                        gap: environment?.theme?.gap ?? 4,
                     }
                 },
                 icon: {
@@ -74,17 +74,17 @@ const RichAlert: React.FC<RichAlertProps> = ({ node, defaults }) => {
                 }
             }}
         >
-            {node.title && <RichRenderer node={node.title} defaults={defaults} textVariant="title" />}
+            {node.title && <RichRenderer node={node.title} environment={environment} textVariant="title" />}
             {message === null ?
-                <RichIcon node={{ icon: "Loading" }} defaults={defaults} />
-                : <RichRenderer node={message} defaults={defaults} />
+                <RichIcon node={{ icon: "Loading" }} environment={environment} />
+                : <RichRenderer node={message} environment={environment} />
             }
         </Alert>
     );
 
     if (node.tooltip) {
         return (
-            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+            <Tooltip title={<RichRenderer node={node.tooltip} environment={environment} />}>
                 {result}
             </Tooltip>
         );

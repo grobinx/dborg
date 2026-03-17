@@ -1,5 +1,5 @@
 import React from "react";
-import { IRichContainerDefaults, IRichKbd } from "../types";
+import { IRichContainerTheme, IRichEnvironment, IRichKbd } from "../types";
 import { Shortcut } from "@renderer/components/Shortcut";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
@@ -8,10 +8,10 @@ import RichRenderer from "..";
 
 interface RichKbdProps {
     node: Optional<IRichKbd, "type">;
-    defaults?: IRichContainerDefaults;
+    environment?: IRichEnvironment;
 }
 
-const RichKbd: React.FC<RichKbdProps> = ({ node, defaults }) => {
+const RichKbd: React.FC<RichKbdProps> = ({ node, environment }) => {
 
     if (node.excluded) {
         return null;
@@ -30,7 +30,7 @@ const RichKbd: React.FC<RichKbdProps> = ({ node, defaults }) => {
 
     if (node.tooltip) {
         return (
-            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+            <Tooltip title={<RichRenderer node={node.tooltip} environment={environment} />}>
                 {result}
             </Tooltip>
         );

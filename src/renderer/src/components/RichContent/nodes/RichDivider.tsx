@@ -1,16 +1,16 @@
 import React from "react";
 import { Divider } from "@mui/material";
-import { IRichContainerDefaults, IRichDivider } from "../types";
+import { IRichDivider, IRichEnvironment } from "../types";
 import clsx from "@renderer/utils/clsx";
 import Tooltip from "@renderer/components/Tooltip";
 import RichRenderer from "..";
 
 interface RichDividerProps {
     node: IRichDivider;
-    defaults?: IRichContainerDefaults;
+    environment?: IRichEnvironment;
 }
 
-const RichDivider: React.FC<RichDividerProps> = ({ node, defaults }) => {
+const RichDivider: React.FC<RichDividerProps> = ({ node, environment }) => {
 
     if (node.excluded) {
         return null;
@@ -29,7 +29,7 @@ const RichDivider: React.FC<RichDividerProps> = ({ node, defaults }) => {
 
     if (node.tooltip) {
         return (
-            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+            <Tooltip title={<RichRenderer node={node.tooltip} environment={environment} />}>
                 {result}
             </Tooltip>
         );

@@ -1,6 +1,6 @@
 import React from "react";
-import { List, ListItem, useTheme } from "@mui/material";
-import { IRichContainerDefaults, IRichList, IRichListItem, RichNode } from "../types";
+import { List, useTheme } from "@mui/material";
+import { IRichEnvironment, IRichList, IRichListItem, RichNode } from "../types";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
@@ -9,11 +9,11 @@ import Tooltip from "@renderer/components/Tooltip";
 
 interface RichListItemProps {
     node: IRichListItem;
-    defaults?: IRichContainerDefaults;
+    environment?: IRichEnvironment;
     children?: React.ReactNode;
 }
 
-const RichListItem: React.FC<RichListItemProps> = ({ node, defaults, children }) => {
+const RichListItem: React.FC<RichListItemProps> = ({ node, environment, children }) => {
     const theme = useTheme();
     const [content, setContent] = React.useState<RichNode | null>(resolveRichValue(node.content));
 
@@ -49,8 +49,8 @@ const RichListItem: React.FC<RichListItemProps> = ({ node, defaults, children })
             }}
         >
             {content === null ?
-                <RichIcon node={{ icon: "Loading" }} defaults={defaults} />
-                : <RichRenderer node={content} defaults={defaults} textVariant="body" />
+                <RichIcon node={{ icon: "Loading" }} environment={environment} />
+                : <RichRenderer node={content} environment={environment} textVariant="body" />
             }
             {children}
         </CalloutBox>
@@ -58,7 +58,7 @@ const RichListItem: React.FC<RichListItemProps> = ({ node, defaults, children })
 
     if (node.tooltip) {
         return (
-            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+            <Tooltip title={<RichRenderer node={node.tooltip} environment={environment} />}>
                 {result}
             </Tooltip>
         );
@@ -69,11 +69,11 @@ const RichListItem: React.FC<RichListItemProps> = ({ node, defaults, children })
 
 interface RichListProps {
     node: Optional<IRichList, "type">;
-    defaults?: IRichContainerDefaults;
+    environment?: IRichEnvironment;
     children?: React.ReactNode;
 }
 
-const RichList: React.FC<RichListProps> = ({ node, defaults, children }) => {
+const RichList: React.FC<RichListProps> = ({ node, environment, children }) => {
     const [items, setItems] = React.useState<IRichListItem[] | null>(resolveRichValue(node.items));
 
     React.useEffect(() => {
@@ -100,18 +100,18 @@ const RichList: React.FC<RichListProps> = ({ node, defaults, children }) => {
             style={node.style}
             sx={{
                 listStyleType: getListStyleType(node.listType),
-                padding: defaults?.padding ?? 8,
+                padding: environment?.theme?.padding ?? 8,
                 paddingLeft: node.listType && node.listType !== "none" ? "24px" : "0px",
                 margin: 0,
                 "& > li.indicator + li.indicator": {
-                    marginTop: defaults?.gap ?? 4,
+                    marginTop: environment?.theme?.gap ?? 4,
                 },
             }}
         >
             {items === null ?
-                <RichIcon node={{ icon: "Loading" }} defaults={defaults} />
+                <RichIcon node={{ icon: "Loading" }} environment={environment} />
                 : items.map((item, index) => (
-                    <RichListItem key={index} node={item} defaults={defaults} />
+                    <RichListItem key={index} node={item} environment={environment} />
                 ))
             }
             {children}

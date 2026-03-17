@@ -1,13 +1,13 @@
 import React from "react";
 import { Box, useTheme } from "@mui/material";
-import { IRichContainerDefaults, IRichSparkline } from "../types";
+import { IRichContainerTheme, IRichEnvironment, IRichSparkline } from "../types";
 import RichRenderer, { resolveRichValue, resolveRichValueFromFunction } from "..";
 import { Optional } from "@renderer/types/universal";
 import Tooltip from "@renderer/components/Tooltip";
 
 interface Props {
     node: Optional<IRichSparkline, "type">;
-    defaults?: IRichContainerDefaults;
+    environment?: IRichEnvironment;
 }
 
 const getStrokeColor = (severity: IRichSparkline["severity"], theme: any) => {
@@ -32,7 +32,7 @@ const buildSmoothPath = (pts: Array<{ x: number; y: number }>) => {
     return d;
 };
 
-const RichSparkline: React.FC<Props> = ({ node, defaults }) => {
+const RichSparkline: React.FC<Props> = ({ node, environment }) => {
     const theme = useTheme();
     const [values, setValues] = React.useState<number[] | null>(resolveRichValue(node.values));
     const lineRef = React.useRef<SVGPathElement | null>(null);
@@ -131,7 +131,7 @@ const RichSparkline: React.FC<Props> = ({ node, defaults }) => {
 
     if (node.tooltip) {
         return (
-            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+            <Tooltip title={<RichRenderer node={node.tooltip} environment={environment} />}>
                 {result}
             </Tooltip>
         );

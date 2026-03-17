@@ -1,7 +1,7 @@
 import React from "react";
-import { Box, Typography, useTheme } from "@mui/material";
+import { Box, useTheme } from "@mui/material";
 import { styled, SxProps } from "@mui/material/styles";
-import { IRichContainerDefaults, IRichText, RichTextVariant, RichTextVariantStyle, RichTextVariantStyles } from "../types";
+import { IRichEnvironment, IRichText, RichTextVariant, RichTextVariantStyle, RichTextVariantStyles } from "../types";
 import RichRenderer, { getSeverityColor, RichCode } from "..";
 import Markdown, { Components } from "react-markdown";
 import Code from "@renderer/components/Code";
@@ -11,7 +11,7 @@ import Tooltip from "@renderer/components/Tooltip";
 
 interface RichTextProps {
     node: Optional<IRichText, "type">;
-    defaults?: IRichContainerDefaults;
+    environment?: IRichEnvironment;
 }
 
 export const RICH_TEXT_VARIANT_STYLES: RichTextVariantStyles = {
@@ -19,14 +19,13 @@ export const RICH_TEXT_VARIANT_STYLES: RichTextVariantStyles = {
     caption: { fontSize: "0.89em", lineHeight: 1.35, fontWeight: 400, component: "span" },
     description: { fontSize: "0.95em", lineHeight: 1.45, fontWeight: 400, component: "p" },
     body: { fontSize: "1em", lineHeight: 1.50, fontWeight: 400, component: "p" },
-    "body-strong": { fontSize: "1em", lineHeight: 1.50, fontWeight: 600, component: "p" },
     lead: { fontSize: "1.12em", lineHeight: 1.45, fontWeight: 400, component: "p" },
     label: { fontSize: "0.89em", lineHeight: 1.30, fontWeight: 600, letterSpacing: "0.01em", component: "span" },
     overline: { fontSize: "0.79em", lineHeight: 1.25, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", component: "span" },
     "title-sm": { fontSize: "1.26em", lineHeight: 1.30, fontWeight: 600, component: "h4" },
     title: { fontSize: "1.42em", lineHeight: 1.25, fontWeight: 600, component: "h3" },
-    "title-lg": { fontSize: "1.60em", lineHeight: 1.20, fontWeight: 700, component: "h2" },
-    hero: { fontSize: "1.80em", lineHeight: 1.15, fontWeight: 700, component: "h1" },
+    "title-lg": { fontSize: "1.60em", lineHeight: 1.20, fontWeight: 600, component: "h2" },
+    hero: { fontSize: "1.80em", lineHeight: 1.15, fontWeight: 600, component: "h1" },
     "code": { fontSize: "0.92em", lineHeight: 1.40, fontWeight: 400, component: "code" },
 };
 
@@ -57,7 +56,8 @@ const RichTextRoot: React.FC<{
     className?: string;
     sx?: SxProps;
     textVariantStyles?: Partial<RichTextVariantStyles>;
-}> = ({ id, hidden, style, component, variant, children, className, sx, textVariantStyles: variantStyles, ...other }) => {
+    environment?: IRichEnvironment;
+}> = ({ id, hidden, style, component, variant, children, className, sx, textVariantStyles: variantStyles, environment, ...other }) => {
     const ownerStyle = (variant ? (variantStyles?.[variant] ?? RICH_TEXT_VARIANT_STYLES[variant]) : undefined) ?? DEFAULT_VARIANT_STYLE;
 
     return (
@@ -81,31 +81,30 @@ const RichTextRoot: React.FC<{
     );
 };
 
-const RichText: React.FC<RichTextProps> = ({ node, defaults }) => {
+const RichText: React.FC<RichTextProps> = ({ node, environment }) => {
     const theme = useTheme();
 
     if (node.variant === "markdown") {
         const components: Components = React.useMemo(() => ({
-            p: (props) => <RichTextRoot variant="body" component="span" textVariantStyles={defaults?.textVariantStyles} {...props} />,
-            h1: (props) => <RichTextRoot variant="hero" component="h1" textVariantStyles={defaults?.textVariantStyles} {...props} />,
-            h2: (props) => <RichTextRoot variant="title-lg" component="h2" textVariantStyles={defaults?.textVariantStyles} {...props} />,
-            h3: (props) => <RichTextRoot variant="title" component="h3" textVariantStyles={defaults?.textVariantStyles} {...props} />,
-            h4: (props) => <RichTextRoot variant="title-sm" component="h4" textVariantStyles={defaults?.textVariantStyles} {...props} />,
-            h5: (props) => <RichTextRoot variant="lead" component="p" textVariantStyles={defaults?.textVariantStyles} {...props} />,
-            h6: (props) => <RichTextRoot variant="body-strong" component="p" textVariantStyles={defaults?.textVariantStyles} {...props} />,
+            p: (props) => <RichTextRoot variant="body" component="span" textVariantStyles={environment?.theme?.textVariantStyles} {...props} />,
+            h1: (props) => <RichTextRoot variant="hero" component="h1" textVariantStyles={environment?.theme?.textVariantStyles} {...props} />,
+            h2: (props) => <RichTextRoot variant="title-lg" component="h2" textVariantStyles={environment?.theme?.textVariantStyles} {...props} />,
+            h3: (props) => <RichTextRoot variant="title" component="h3" textVariantStyles={environment?.theme?.textVariantStyles} {...props} />,
+            h4: (props) => <RichTextRoot variant="title-sm" component="h4" textVariantStyles={environment?.theme?.textVariantStyles} {...props} />,
+            h5: (props) => <RichTextRoot variant="lead" component="p" textVariantStyles={environment?.theme?.textVariantStyles} {...props} />,
             code: ({ className, children }) => {
                 const language = className?.match(/language-(\w+)/)?.[1];
                 const isInline = !className && !String(children).includes('\n');
 
                 if (!isInline && language) {
-                    return <RichCode node={{ code: String(children).trim(), language }} defaults={defaults} />;
+                    return <RichCode node={{ code: String(children).trim(), language }} environment={environment} />;
                 } else if (!isInline) {
-                    return <RichCode node={{ code: String(children).trim() }} defaults={defaults} />;
+                    return <RichCode node={{ code: String(children).trim() }} environment={environment} />;
                 } else {
                     return <Code>{String(children).trim()}</Code>
                 }
             },
-        }), [theme, defaults])
+        }), [theme, environment, environment?.theme?.textVariantStyles]);
 
         if (node.excluded) {
             return null;
@@ -143,7 +142,7 @@ const RichText: React.FC<RichTextProps> = ({ node, defaults }) => {
             variant={node.variant ?? "body"}
             sx={{
                 color: getSeverityColor(node.severity, theme),
-                fontFamily: node.decoration?.includes("monospace") || node.variant === "code" ? defaults?.fontFamilyMonospace ?? theme.typography.monospaceFontFamily : undefined,
+                fontFamily: node.decoration?.includes("monospace") || node.variant === "code" ? environment?.theme?.fontFamilyMonospace ?? theme.typography.monospaceFontFamily : undefined,
                 fontWeight: node.decoration?.includes("bold") ? "bold" : undefined,
                 fontStyle: node.decoration?.includes("italic") ? "italic" : undefined,
                 textDecoration: [
@@ -152,7 +151,7 @@ const RichText: React.FC<RichTextProps> = ({ node, defaults }) => {
                     node.decoration?.includes("uppercase") ? "uppercase" : undefined,
                 ].filter(Boolean).join(" "),
             }}
-            textVariantStyles={defaults?.textVariantStyles}
+            textVariantStyles={environment?.theme?.textVariantStyles}
         >
             {node.text}
         </RichTextRoot>
@@ -160,7 +159,7 @@ const RichText: React.FC<RichTextProps> = ({ node, defaults }) => {
 
     if (node.tooltip) {
         return (
-            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+            <Tooltip title={<RichRenderer node={node.tooltip} environment={environment} />}>
                 {result}
             </Tooltip>
         );

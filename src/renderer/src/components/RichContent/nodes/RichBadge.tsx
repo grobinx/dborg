@@ -1,6 +1,6 @@
 import React from "react";
-import { Box, Typography, useTheme } from "@mui/material";
-import { IRichContainerDefaults, IRichBadge } from "../types";
+import { Box, useTheme } from "@mui/material";
+import { IRichBadge, IRichEnvironment } from "../types";
 import UnboundBadge from "@renderer/components/UnboundBadge";
 import { ThemeColor } from "@renderer/types/colors";
 import clsx from "@renderer/utils/clsx";
@@ -9,7 +9,7 @@ import RichRenderer from "..";
 
 interface RichBadgeProps {
     node: IRichBadge;
-    defaults?: IRichContainerDefaults;
+    environment?: IRichEnvironment;
 }
 
 const getPositionStyle = (
@@ -44,7 +44,7 @@ const getPositionStyle = (
     }
 };
 
-const RichBadge: React.FC<RichBadgeProps> = ({ node: node, defaults }) => {
+const RichBadge: React.FC<RichBadgeProps> = ({ node: node, environment }) => {
     const theme = useTheme();
 
     const getDisplayValue = () => {
@@ -80,7 +80,7 @@ const RichBadge: React.FC<RichBadgeProps> = ({ node: node, defaults }) => {
 
     if (node.tooltip) {
         return (
-            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+            <Tooltip title={<RichRenderer node={node.tooltip} environment={environment} />}>
                 {result}
             </Tooltip>
         );

@@ -1,6 +1,6 @@
 import React from "react";
 import { Box } from "@mui/material";
-import { IRichContainer, IRichContainerDefaults, RichNode } from "../types";
+import { IRichContainer, IRichContainerTheme, IRichEnvironment, RichNode } from "../types";
 import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
 import { useSetting } from "@renderer/contexts/SettingsContext";
 import clsx from "@renderer/utils/clsx";
@@ -16,7 +16,7 @@ const RichContainer: React.FC<RichContainerProps> = ({ node, children }) => {
     const [fontFamilyMonospace] = useSetting("ui", "fontFamilyMonospace");
     const [items, setItems] = React.useState<RichNode[] | null>(resolveRichValue(node.items));
 
-    const defaults = React.useMemo(() => {
+    const theme = React.useMemo(() => {
         return {
             fontSize: node.fontSize ?? fontSize,
             fontFamily: node.fontFamily ?? fontFamily,
@@ -26,8 +26,15 @@ const RichContainer: React.FC<RichContainerProps> = ({ node, children }) => {
             fontWeight: node.fontWeight ?? "normal",
             radius: node.radius ?? "3px",
             textVariantStyles: node.textVariantStyles,
-        } as IRichContainerDefaults;
+        } as IRichContainerTheme;
     }, [fontSize, fontFamily, fontFamilyMonospace, node.fontFamily, node.fontFamilyMonospace, node.fontSize, node.fontWeight, node.gap, node.padding, node.radius, node.textVariantStyles]);
+
+    const environment: IRichEnvironment = React.useMemo(() => {
+        return {
+            theme: theme,
+            widgets: node.widgets ? new Map(node.widgets.map(widget => [widget.widgetId, widget])) : undefined,
+        };
+    }, [node?.widgets, theme]);
 
     React.useEffect(() => {
         resolveRichValueFromFunction(node.items, setItems);
@@ -47,10 +54,10 @@ const RichContainer: React.FC<RichContainerProps> = ({ node, children }) => {
                 height: node.height ?? "100%",
                 overflow: node.overflow ?? "auto",
                 flex: 1,
-                p: defaults.padding,
-                fontFamily: defaults.fontFamily,
-                fontSize: defaults.fontSize,
-                fontWeight: defaults.fontWeight,
+                p: theme.padding,
+                fontFamily: theme.fontFamily,
+                fontSize: theme.fontSize,
+                fontWeight: theme.fontWeight,
                 minHeight: 0,
                 minWidth: 0,
             }}
@@ -61,13 +68,13 @@ const RichContainer: React.FC<RichContainerProps> = ({ node, children }) => {
                     minWidth: 0,
                     display: "flex",
                     flexDirection: "column",
-                    gap: defaults.gap,
+                    gap: theme.gap,
                 }}
             >
                 {items === null ?
-                    <RichIcon node={{ icon: "Loading" }} defaults={defaults} />
+                    <RichIcon node={{ icon: "Loading" }} environment={environment} />
                     : items.map((item, index) => (
-                        <RichRenderer key={index} node={item} defaults={defaults} />
+                        <RichRenderer key={index} node={item} environment={environment} />
                     ))
                 }
                 {children}

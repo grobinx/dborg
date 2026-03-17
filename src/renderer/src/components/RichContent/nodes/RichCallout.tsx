@@ -1,5 +1,5 @@
 import React from "react";
-import { IRichCallout, IRichContainerDefaults } from "../types";
+import { IRichCallout, IRichContainerTheme, IRichEnvironment } from "../types";
 import RichRenderer from "..";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
@@ -8,11 +8,11 @@ import Tooltip from "@renderer/components/Tooltip";
 
 interface RichCalloutProps {
     node: Optional<IRichCallout, "type">;
-    defaults?: IRichContainerDefaults;
+    environment?: IRichEnvironment;
     children?: React.ReactNode;
 }
 
-const RichCallout: React.FC<RichCalloutProps> = ({ node, defaults, children }) => {
+const RichCallout: React.FC<RichCalloutProps> = ({ node, environment, children }) => {
     if (node.excluded) {
         return null;
     }
@@ -27,14 +27,14 @@ const RichCallout: React.FC<RichCalloutProps> = ({ node, defaults, children }) =
             severity={node.severity}
             sx={{ p: 0, gap: 0 }}
         >
-            <RichRenderer node={node.value} defaults={defaults} />
+            <RichRenderer node={node.value} environment={environment} />
             {children}
         </CalloutBox>
     );
 
     if (node.tooltip) {
         return (
-            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+            <Tooltip title={<RichRenderer node={node.tooltip} environment={environment} />}>
                 {result}
             </Tooltip>
         );

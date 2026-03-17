@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Tooltip, useTheme } from "@mui/material";
-import { IRichContainerDefaults, IRichIcon, RichSeverity } from "../types";
+import { IRichContainerTheme, IRichEnvironment, IRichIcon, RichSeverity } from "../types";
 import { resolveIcon } from "@renderer/themes/icons";
 import RichRenderer, { getSeverityColor } from "..";
 import { Optional } from "@renderer/types/universal";
@@ -8,10 +8,10 @@ import clsx from "@renderer/utils/clsx";
 
 interface RichIconProps {
     node: Optional<IRichIcon, "type">;
-    defaults?: IRichContainerDefaults;
+    environment?: IRichEnvironment;
 }
 
-const RichIcon: React.FC<RichIconProps> = ({ node, defaults }) => {
+const RichIcon: React.FC<RichIconProps> = ({ node, environment }) => {
     const theme = useTheme();
 
     if (node.excluded) {
@@ -40,7 +40,7 @@ const RichIcon: React.FC<RichIconProps> = ({ node, defaults }) => {
 
     if (node.tooltip) {
         return (
-            <Tooltip title={<RichRenderer node={node.tooltip} defaults={defaults} />}>
+            <Tooltip title={<RichRenderer node={node.tooltip} environment={environment} />}>
                 {result}
             </Tooltip>
         );
