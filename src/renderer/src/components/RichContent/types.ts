@@ -231,7 +231,7 @@ export interface IRichMetadata {
      * @default false
      */
     hidden?: boolean;
-    
+
     /**
      * Jeśli true, element oraz wszystkie jego dzieci zostaną całkowicie 
      * pominięte podczas procesu generowania i renderowania.
@@ -1171,6 +1171,23 @@ export interface IRichTree extends IRichNode {
      * Elementy drzewa - lista węzłów, które będą renderowane jako gałęzie i liście drzewa. Każdy element może mieć swoje dzieci, tworząc zagnieżdżoną strukturę.
      */
     items: RichValue<IRichTreeItem[]>;
+    /**
+     * Odstęp między elementami drzewa (np. "4px", "0.5rem", 8)
+     */
+    indentSize?: number | string;
+    /**
+     * Czy pokazać łączniki między elementami drzewa (np. linie łączące rodzica z dziećmi)
+     */
+    connectors?: boolean | {
+        /**
+         * Odstęp poziomy dla łączników (jeśli connectors=true), określający jak daleko od lewej krawędzi mają zaczynać się łączniki względem etykiety elementu drzewa.
+         */
+        xOffset?: number | string;
+        /**
+         * Odstęp pionowy dla łączników (jeśli connectors=true), określający jak daleko od górnej krawędzi mają zaczynać się łączniki względem etykiety elementu drzewa.
+         */
+        yOffset?: number | string;
+    };
 }
 
 /**
@@ -1554,4 +1571,3 @@ export interface IRichWidgetRenderer {
      */
     render: (props: Record<string, any>, metadata: IRichMetadata) => React.ReactNode;
 }
-    

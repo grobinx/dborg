@@ -10,6 +10,7 @@ import CalloutBox from "../utils/CalloutBox";
 
 interface RichTreeItemProps {
     node: IRichTreeItem;
+    tree: Optional<IRichTree, "type">;
     level: number;
     environment?: IRichEnvironment;
 }
@@ -18,7 +19,7 @@ const TREE_INDENT = 24;
 const CONNECTOR_X = 8;
 const CONNECTOR_Y = 16;
 
-const RichTreeItemComponent: React.FC<RichTreeItemProps> = ({ node, level, environment }) => {
+const RichTreeItemComponent: React.FC<RichTreeItemProps> = ({ node, level, environment, tree }) => {
     const theme = useTheme();
     const [expanded, setExpanded] = React.useState(node.expanded ?? true);
     const isCollapsible = node.collapsible !== false;
@@ -63,7 +64,7 @@ const RichTreeItemComponent: React.FC<RichTreeItemProps> = ({ node, level, envir
                 display: "flex",
                 alignItems: "flex-start",
                 gap: environment?.theme?.gap ?? 4,
-                padding: node.padding ?? 4,
+                padding: environment?.theme?.padding ?? node.padding ?? 4,
                 cursor: hasChildren && isCollapsible ? "pointer" : "default",
                 userSelect: "none",
                 "&:hover": {
@@ -104,19 +105,27 @@ const RichTreeItemComponent: React.FC<RichTreeItemProps> = ({ node, level, envir
         itemContent
     );
 
+    const xOffset = typeof tree.connectors === "object" && tree.connectors.xOffset !== undefined
+        ? tree.connectors.xOffset
+        : CONNECTOR_X * 1.5;
+    const yOffset = typeof tree.connectors === "object" && tree.connectors.yOffset !== undefined
+        ? tree.connectors.yOffset
+        : CONNECTOR_Y;
+
     return (
         <Box
+            className={clsx("RichNode-tree-item-wrapper", hasChildren && isCollapsible && "collapsible", node.indicator && (node.severity ?? "default") !== "default" && "indicator")}
             key={node.key ?? node.id}
             sx={{
                 position: "relative",
                 mb: 0,
-                pl: level > 0 ? `${TREE_INDENT}px` : 0,
+                pl: level > 0 ? `${tree.indentSize ?? TREE_INDENT}px` : 0,
                 "&::before":
-                    level > 0
+                    level > 0 && (tree.connectors ?? true) !== false
                         ? {
                             content: '""',
                             position: "absolute",
-                            left: `${CONNECTOR_X}px`,
+                            left: `${xOffset}px`,
                             top: 0,
                             bottom: 0,
                             width: "1px",
@@ -124,13 +133,13 @@ const RichTreeItemComponent: React.FC<RichTreeItemProps> = ({ node, level, envir
                         }
                         : undefined,
                 "&::after":
-                    level > 0
+                    level > 0 && (tree.connectors ?? true) !== false
                         ? {
                             content: '""',
                             position: "absolute",
-                            left: `${CONNECTOR_X}px`,
-                            top: `${CONNECTOR_Y}px`,
-                            width: `${TREE_INDENT - CONNECTOR_X - 4}px`,
+                            left: `${xOffset}px`,
+                            top: `${yOffset}px`,
+                            width: `calc(${(tree.indentSize ?? `${TREE_INDENT}px`)} - ${xOffset}px - 4px)`,
                             height: "1px",
                             bgcolor: "divider",
                         }
@@ -152,6 +161,7 @@ const RichTreeItemComponent: React.FC<RichTreeItemProps> = ({ node, level, envir
                             <RichTreeItemComponent
                                 key={child.key ?? child.id ?? idx}
                                 node={child}
+                                tree={tree}
                                 level={level + 1}
                                 environment={environment}
                             />
@@ -199,6 +209,7 @@ const RichTree: React.FC<RichTreeProps> = ({ node, environment }) => {
                     <RichTreeItemComponent
                         key={item.key ?? item.id ?? idx}
                         node={item}
+                        tree={node}
                         level={0}
                         environment={environment}
                     />

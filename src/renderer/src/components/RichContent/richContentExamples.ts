@@ -1026,6 +1026,16 @@ export const richContentExamples: RichExampleMap = {
                         },
                     ],
                 },
+                {
+                    content: {
+                        type: "row",
+                        items: [
+                            { type: "icon", icon: "Info", severity: "info" },
+                            { type: "text", text: "Empty Cluster" },
+                            { type: "chip", text: "offline", severity: "error", variant: "outlined" },
+                        ],
+                    },
+                },
             ],
         },
     ],

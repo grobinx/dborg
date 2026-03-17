@@ -40,7 +40,7 @@ const RichListItem: React.FC<RichListItemProps> = ({ node, environment, children
             severity={node.indicator ? (node.severity ?? "default") : undefined}
             sx={{
                 display: "list-item",
-                padding: node.padding ?? "0px 4px",
+                padding: environment?.theme?.padding ?? node.padding ?? "0px 4px",
                 color: node.indicator && (node.severity ?? "default") !== "default" ? undefined : getSeverityColor(node.severity, theme),
                 listStyleType: (node.severity ?? "default") !== "default" ? undefined : "inherit",
                 "::marker": {
