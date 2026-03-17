@@ -1257,7 +1257,7 @@ export interface IRichLogEntry {
     /**
      * Sygnatura czasowa wpisu logu (np. "2024-01-01 12:00:00" lub "5 minut temu")
      */
-    timestamp?: string;
+    timestamp?: RichNode;
     /**
      * Poziom ważności wpisu logu, który może wpływać na kolor i ikonę (np. "debug", "info", "warn", "error", "trace")
      */
@@ -1265,7 +1265,7 @@ export interface IRichLogEntry {
     /**
      * Źródło lub kategoria wpisu logu (np. nazwa modułu, komponentu lub systemu, który wygenerował log)
      */
-    source?: string;
+    source?: RichNode;
     /**
      * Treść wiadomości logu, która może być prostym tekstem lub złożonym węzłem RichNode (np. z podświetleniem składni, linkami, chipami itp.)
      */
