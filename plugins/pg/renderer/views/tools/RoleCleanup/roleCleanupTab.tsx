@@ -251,23 +251,23 @@ const roleCleanupTab = (session: IDatabaseSession): IPinnableTabSlot => {
                                                 key: "choice", label: t("action", "Action"), width: 150, dataType: "object",
                                                 formatter: (value: CleanupChoice | undefined, _row) => {
                                                     if (value?.action === "drop_restrict") {
-                                                        return <Stack direction="row" gap={4}>
+                                                        return <Stack direction="row" gap={4} alignItems={"center"}>
                                                             <slotContext.theme.icons.DropRestrict />
                                                             {t("drop", "Drop")}
                                                         </Stack>;
                                                     }
                                                     else if (value?.action === "drop_cascade") {
-                                                        return <Stack direction="row" gap={4}>
+                                                        return <Stack direction="row" gap={4} alignItems={"center"}>
                                                             <slotContext.theme.icons.DropCascade />
                                                             {t("drop-cascade", "Drop Cascade")}
                                                         </Stack>;
                                                     } else if (value?.action === "reassign") {
-                                                        return <Stack direction="row" gap={4}>
+                                                        return <Stack direction="row" gap={4} alignItems={"center"}>
                                                             <slotContext.theme.icons.ReassignUser color="secondary" />
                                                             {t("reassign-to", "Reassign to {{owner}}", { owner: value.newOwner ?? targetOwner })}
                                                         </Stack>;
                                                     } else if (value?.action === "move") {
-                                                        return <Stack direction="row" gap={4}>
+                                                        return <Stack direction="row" gap={4} alignItems={"center"}>
                                                             <slotContext.theme.icons.MoveObject color="success" />
                                                             {t("move-to", "Move to {{schema}} / {{owner}}", {
                                                                 schema: value.newSchema,
@@ -292,7 +292,7 @@ const roleCleanupTab = (session: IDatabaseSession): IPinnableTabSlot => {
                                         actions: [
                                             {
                                                 id: "role-cleanup-owned-drop-restrict-action",
-                                                label: t("drop-object", "Drop Object"),
+                                                label: t("add-action-drop-object", "Add action: Drop Object"),
                                                 icon: <slotContext.theme.icons.DropRestrict />,
                                                 keySequence: ["Ctrl+D"],
                                                 contextMenuGroupId: "cleanup-actions",
@@ -317,7 +317,7 @@ const roleCleanupTab = (session: IDatabaseSession): IPinnableTabSlot => {
                                             },
                                             {
                                                 id: "role-cleanup-owned-drop-cascade-action",
-                                                label: t("drop-object-cascade", "Drop Object Cascade"),
+                                                label: t("add-action-drop-object-cascade", "Add action: Drop Object Cascade"),
                                                 icon: <slotContext.theme.icons.DropCascade />,
                                                 keySequence: ["Ctrl+Shift+D"],
                                                 contextMenuGroupId: "cleanup-actions",
@@ -342,7 +342,7 @@ const roleCleanupTab = (session: IDatabaseSession): IPinnableTabSlot => {
                                             },
                                             {
                                                 id: "role-cleanup-owned-reassign-action",
-                                                label: t("reassign-owner", "Reassign Owner"),
+                                                label: t("add-action-reassign-owner", "Add action: Reassign Owner"),
                                                 icon: <slotContext.theme.icons.ReassignUser color="secondary" />,
                                                 keySequence: ["Ctrl+R"],
                                                 contextMenuGroupId: "cleanup-actions",
@@ -389,7 +389,7 @@ const roleCleanupTab = (session: IDatabaseSession): IPinnableTabSlot => {
                                             },
                                             {
                                                 id: "role-cleanup-owned-move-action",
-                                                label: t("move-object", "Move Object"),
+                                                label: t("add-action-move-object", "Add action: Move Object"),
                                                 icon: <slotContext.theme.icons.MoveObject color="success" />,
                                                 keySequence: ["Ctrl+M"],
                                                 contextMenuGroupId: "cleanup-actions",
@@ -459,7 +459,7 @@ const roleCleanupTab = (session: IDatabaseSession): IPinnableTabSlot => {
                                             id: cid("owned-progress"),
                                             type: "progress",
                                             display: () => analyzingObject,
-                                            value: () => analyzingProgress,
+                                            value: () => analyzingProgress ?? undefined,
                                         },
                                     } as IGridSlot,
                                     second: {
@@ -857,7 +857,7 @@ const roleCleanupTab = (session: IDatabaseSession): IPinnableTabSlot => {
                 {
                     id: cid("dialog-reassign-owner"),
                     type: "dialog",
-                    title: t("reassing-owner", "Reassign Owner"),
+                    title: t("add-action-reassign-owner", "Add action: Reassign Owner"),
                     items: () => [
                         {
                             key: "new-owner",
@@ -875,7 +875,7 @@ const roleCleanupTab = (session: IDatabaseSession): IPinnableTabSlot => {
                 {
                     id: cid("dialog-move-object"),
                     type: "dialog",
-                    title: t("move-object", "Move Object"),
+                    title: t("add-action-move-object", "Add action: Move Object"),
                     items: () => [
                         {
                             key: "new-schema",

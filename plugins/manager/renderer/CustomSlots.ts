@@ -86,7 +86,7 @@ export type ToolKind<T = any> =
     ;
 
 export interface ISelectOption {
-    value: string,
+    value: string | null,
     label: string,
     description?: string,
 }
@@ -1001,11 +1001,11 @@ export interface IProgressBarSlot extends ICustomSlot {
     /**
      * Wartość postępu (0-100).
      */
-    value?: ResolvableValue<SlotRuntimeContext, number>;
+    value?: ResolvableValue<SlotRuntimeContext, number | undefined>;
     /**
      * Wartość bufora postępu (0-100) (opcjonalnie).
      */
-    bufferValue?: ResolvableValue<SlotRuntimeContext, number>;
+    bufferValue?: ResolvableValue<SlotRuntimeContext, number | undefined>;
     /**
      * Tekst wyświetlany na pasku postępu (opcjonalnie).
      */
