@@ -44,6 +44,7 @@ export type {
     IRichSparkline,
     IRichCallout,
     IRichTree,
+    IRichWidget,
 } from "./types";
 export { RichDivider } from "./types";
 
@@ -70,6 +71,7 @@ import RichBullet from "./nodes/RichBullet";
 import RichRefresh from "./nodes/RichRefresh";
 import RichSparkline from "./nodes/RichSparkline";
 import RichCallout from "./nodes/RichCallout";
+import RichWidget from "./nodes/RichWidget";
 
 // Containers (import second)
 import RichRow from "./containers/RichRow";
@@ -106,6 +108,7 @@ export { default as RichBullet } from "./nodes/RichBullet";
 export { default as RichRefresh } from "./nodes/RichRefresh";
 export { default as RichSparkline } from "./nodes/RichSparkline";
 export { default as RichCallout } from "./nodes/RichCallout";
+export { default as RichWidget } from "./nodes/RichWidget";
 
 // Export containers
 export { default as RichRow } from "./containers/RichRow";
@@ -232,6 +235,8 @@ const RichRenderer: React.FC<{
             return <RichCallout node={node} environment={environment} />;
         case "tree":
             return <RichTree node={node} environment={environment} />;
+        case "widget":
+            return <RichWidget node={node} environment={environment} />;
         default:
             return <Box>Unknown node type: {(node as any).type}</Box>;
     }

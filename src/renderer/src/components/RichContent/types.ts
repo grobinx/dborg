@@ -157,7 +157,8 @@ export type RichNodeType =
     | "refresh"
     | "sparkline"
     | "callout"
-    | "tree";
+    | "tree"
+    | "widget";
 
 /**
  * Union type wszystkich możliwych węzłów Rich Content.
@@ -193,6 +194,7 @@ export type RichNode =
     | IRichSparkline
     | IRichCallout
     | IRichTree
+    | IRichWidget
     /**
      * Tablica węzłów jest traktowana jak wiersz (RichRow) z elementami ułożonymi poziomo.
      */

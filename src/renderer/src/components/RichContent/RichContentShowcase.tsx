@@ -95,6 +95,16 @@ const RichContentShowcase: React.FC = () => {
                             height: "auto",
                             padding: compactMode ? "2px 4px" : undefined,
                             gap: compactMode ? 2 : 4,
+                            widgets: [
+                                {
+                                    widgetId: "test-widget",
+                                    render: (props) => <Box sx={{ padding: 4, backgroundColor: theme.palette.action.hover }}>Test Widget - props: {JSON.stringify(props)}</Box>,
+                                },
+                                {
+                                    widgetId: "error-widget",
+                                    render: () => { throw new Error("This is a test error from the widget renderer"); },
+                                }
+                            ],
                         }}
                     />
                 </Stack>

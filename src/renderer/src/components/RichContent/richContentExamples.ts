@@ -146,7 +146,7 @@ export const richContentExamples: RichExampleMap = {
         },
     ],
 
-    "Bloki kodu": [
+    "Bloki kodu, Widgety": [
         {
             type: "code",
             language: "sql",
@@ -177,6 +177,25 @@ export const richContentExamples: RichExampleMap = {
                 2
             ),
         },
+        {
+            type: "widget",
+            widgetId: "test-widget",
+            props: { exampleProp: "Example value" },
+        },
+        {
+            type: "widget",
+            widgetId: "unknown-widget",
+            fallback: {
+                type: "alert",
+                severity: "error",
+                title: "Unknown widget",
+                message: "The \"unknown-widget\" widget could not be found.",
+            }
+        },
+        {
+            type: "widget",
+            widgetId: "error-widget",
+        }
     ],
 
     "Progress i alerty": [
