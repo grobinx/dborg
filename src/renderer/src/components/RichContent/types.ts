@@ -249,8 +249,6 @@ export interface IRichMetadata {
      * Generyczny tooltip dla dowolnego węzła
      */
     tooltip?: RichNode;
-
-
 }
 
 /**
@@ -338,6 +336,10 @@ export interface IRichContainer extends IRichContainerDefaults, IRichMetadata {
      * @default "auto"
      */
     overflow?: "visible" | "hidden" | "scroll" | "auto";
+    /**
+     * Portale pozwalające na renderowanie treści zdefiniowanej przez programistę
+     */
+    portals?: IRichPortalRenderer[];
 }
 
 /**
@@ -1502,4 +1504,37 @@ export interface IRichMime extends IRichNode {
      * Akcja wykonywana jeśli interaction === "action" 
      */
     action?: IRichAction;
+}
+
+/**
+ * Portal - specjalny węzeł, który pozwala wyrenderować treść zdefiniowaną przez portalId, zarejestrowany w mechaniźmie Rich Content.
+ * Render Portalu musi być zarejestrowany globalnie lub przekazany do RichContainer.
+ */
+export interface IRichPortal extends IRichNode {
+    type: "portal";
+    /** 
+     * Unikalny identyfikator portalu, który renderer będzie rozpoznawał i renderował w odpowiednim miejscu interfejsu użytkownika. Ten identyfikator pozwala na dynamiczne wstawianie treści do różnych części aplikacji, umożliwiając elastyczne i kontekstowe renderowanie w zależności od potrzeb projektu.
+     */
+    portalId: string;
+    /**
+     * Parametry konfiguracyjne dla portalu, które mogą być używane przez renderer do dostosowania sposobu renderowania treści w portalu. Mogą zawierać informacje o pozycjonowaniu, animacjach, warstwie z-index, czy innych właściwościach specyficznych dla danego portalu, co pozwala na elastyczne i kontekstowe renderowanie treści w różnych częściach interfejsu użytkownika.
+     */
+    props?: Record<string, any>;
+    /** 
+     * Co pokazać, jeśli portalId nie zostanie rozpoznany przez aplikację.
+     */
+    fallback?: RichNode;
+}
+
+export interface IRichPortalRenderer {
+    /**
+     * Unikalny identyfikator portalu, który renderer będzie rozpoznawał i renderował w odpowiednim miejscu interfejsu użytkownika. Ten identyfikator pozwala na dynamiczne wstawianie treści do różnych części aplikacji, umożliwiając elastyczne i kontekstowe renderowanie w zależności od potrzeb projektu.
+     */
+    portalId: string;
+    /**
+     * Funkcja renderująca zawartość portalu na podstawie przekazanych właściwości.
+     * @param props Właściwości konfiguracyjne dla portalu, które mogą być używane do dostosowania sposobu renderowania treści.
+     * @returns Węzeł React do wyrenderowania w portalu.
+     */
+    render: (props: Record<string, any>, metadata: IRichMetadata) => React.ReactNode;
 }
