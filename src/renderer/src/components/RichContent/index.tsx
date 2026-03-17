@@ -43,6 +43,7 @@ export type {
     IRichRefresh,
     IRichSparkline,
     IRichCallout,
+    IRichTree,
 } from "./types";
 export { RichDivider } from "./types";
 
@@ -77,7 +78,7 @@ import RichSection from "./containers/RichSection";
 import RichList from "./containers/RichList";
 import RichTable from "./containers/RichTable";
 import RichGroup from "./containers/RichGroup";
-import { defaults } from "node_modules/@types/pg";
+import RichTree from "./containers/RichTree";
 
 // Export not typed components
 export { default as RichBadge } from "./nodes/RichBadge";
@@ -114,6 +115,7 @@ export { default as RichList } from "./containers/RichList";
 export { default as RichContainer } from "./containers/RichContainer";
 export { default as RichTable } from "./containers/RichTable";
 export { default as RichGroup } from "./containers/RichGroup";
+export { default as RichTree } from "./containers/RichTree";
 
 export const getSeverityColor = (severity: RichSeverity | undefined, theme: Theme, contrastText: boolean = false): string => {
     switch (severity) {
@@ -228,6 +230,8 @@ const RichRenderer: React.FC<{
             return <RichSparkline node={node} environment={environment} />;
         case "callout":
             return <RichCallout node={node} environment={environment} />;
+        case "tree":
+            return <RichTree node={node} environment={environment} />;
         default:
             return <Box>Unknown node type: {(node as any).type}</Box>;
     }

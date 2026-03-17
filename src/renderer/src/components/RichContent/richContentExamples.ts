@@ -1,5 +1,5 @@
 import { sleep } from "@renderer/utils/sleep";
-import { IRichText, RichNode, RichSeverity, RichTextVariant } from "./types";
+import { IRichText, IRichTreeItem, RichNode, RichSeverity, RichTextVariant } from "./types";
 import { RICH_TEXT_VARIANT_STYLES } from "./nodes/RichText";
 
 type RichExampleMap = Record<string, RichNode[]>;
@@ -823,6 +823,208 @@ export const richContentExamples: RichExampleMap = {
                     state: { type: "chip", text: "idle", severity: "default", variant: "outlined" },
                     txAge: "00:00:00",
                     wait: { type: "chip", text: "NO", severity: "success", variant: "outlined" },
+                },
+            ],
+        },
+    ],
+    "Drzewko": [
+        {
+            type: "tree",
+            items: [
+                {
+                    content: {
+                        type: "row",
+                        items: [
+                            { type: "icon", icon: "DatabaseTables", severity: "info" },
+                            { type: "text", text: "PostgreSQL Cluster" },
+                            { type: "chip", text: "online", severity: "success", variant: "outlined" },
+                        ],
+                    },
+                    expanded: true,
+                    items: [
+                        {
+                            indicator: true,
+                            severity: "info",
+                            content: {
+                                type: "row",
+                                items: [
+                                    { type: "icon", icon: "Folder", severity: "info" },
+                                    { type: "text", text: "dborg_prod" },
+                                ],
+                            },
+                            expanded: true,
+                            items: [
+                                {
+                                    indicator: true,
+                                    severity: "warning",
+                                    content: {
+                                        type: "column",
+                                        padding: 0,
+                                        items: [
+                                            {
+                                                type: "row",
+                                                padding: 0,
+                                                items: [
+                                                    { type: "icon", icon: "Warning", severity: "warning" },
+                                                    { type: "text", text: "Replication lag: 120s", variant: "lead", severity: "warning" },
+                                                    { type: "chip", text: "LAGGING", severity: "warning" },
+                                                ],
+                                            },
+                                            [
+                                                { type: "icon", icon: "Folder", severity: "default" },
+                                                { type: "text", text: "public" },
+                                            ]
+                                        ],
+                                    },
+                                    expanded: true,
+                                    items: async () => {
+                                        await sleep(Math.random() * 5 + 1);
+                                        return [
+                                            {
+                                                content: {
+                                                    type: "row",
+                                                    align: "center",
+                                                    items: [
+                                                        { type: "icon", icon: "Users", severity: "default" },
+                                                        { type: "text", text: "public.users" },
+                                                        { type: "text", text: "(1.2M rows)", variant: "caption", severity: "info" },
+                                                    ],
+                                                },
+                                            },
+                                            {
+                                                content: {
+                                                    type: "row",
+                                                    items: [
+                                                        { type: "icon", icon: "Sort", severity: "warning" },
+                                                        { type: "text", text: "public.orders" },
+                                                        { type: "chip", text: "seq scan", severity: "warning", variant: "outlined" },
+                                                    ],
+                                                },
+                                            },
+                                            {
+                                                content: {
+                                                    type: "row",
+                                                    items: [
+                                                        { type: "icon", icon: "Strict", severity: "success" },
+                                                        { type: "text", text: "public.products" },
+                                                        { type: "chip", text: "indexed", severity: "success", variant: "outlined" },
+                                                    ],
+                                                },
+                                            },
+                                        ] as IRichTreeItem[]
+                                    },
+                                },
+                                {
+                                    indicator: true,
+                                    severity: "success",
+                                    content: {
+                                        type: "row",
+                                        items: [
+                                            { type: "icon", icon: "Folder", severity: "default" },
+                                            { type: "text", text: "analytics" },
+                                        ],
+                                    },
+                                    expanded: false,
+                                    items: [
+                                        {
+                                            content: {
+                                                type: "row",
+                                                items: [
+                                                    { type: "icon", icon: "Table", severity: "default" },
+                                                    { type: "text", text: "analytics.daily_sales" },
+                                                ],
+                                            },
+                                        },
+                                        {
+                                            content: {
+                                                type: "row",
+                                                items: [
+                                                    { type: "icon", icon: "Table", severity: "default" },
+                                                    { type: "text", text: "analytics.customer_ltv" },
+                                                ],
+                                            },
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            content: {
+                                type: "row",
+                                items: [
+                                    { type: "icon", icon: "Folder", severity: "default" },
+                                    { type: "text", text: "dborg_replica" },
+                                    { type: "chip", text: "read-only", severity: "info", variant: "outlined" },
+                                ],
+                            },
+                            expanded: false,
+                            items: [
+                                {
+                                    content: {
+                                        type: "row",
+                                        items: [
+                                            { type: "icon", icon: "Folder", severity: "default" },
+                                            { type: "text", text: "public" },
+                                        ],
+                                    },
+                                    items: [
+                                        {
+                                            content: {
+                                                type: "row",
+                                                items: [
+                                                    { type: "icon", icon: "Table", severity: "default" },
+                                                    { type: "text", text: "public.audit_log" },
+                                                ],
+                                            },
+                                        },
+                                        {
+                                            content: {
+                                                type: "row",
+                                                items: [
+                                                    { type: "icon", icon: "Table", severity: "default" },
+                                                    { type: "text", text: "public.session_events" },
+                                                ],
+                                            },
+                                        },
+                                    ],
+                                },
+                            ],
+                        },
+                        {
+                            content: {
+                                type: "row",
+                                items: [
+                                    { type: "icon", icon: "Folder", severity: "warning" },
+                                    { type: "text", text: "dborg_staging" },
+                                    { type: "chip", text: "degraded", severity: "warning", variant: "outlined" },
+                                ],
+                            },
+                            expanded: true,
+                            items: [
+                                {
+                                    indicator: true,
+                                    severity: "error",
+                                    content: {
+                                        type: "row",
+                                        items: [
+                                            { type: "icon", icon: "Table", severity: "warning" },
+                                            { type: "text", text: "public.import_queue" },
+                                            { type: "chip", text: "lock wait", severity: "error" },
+                                        ],
+                                    },
+                                },
+                                {
+                                    content: {
+                                        type: "row",
+                                        items: [
+                                            { type: "icon", icon: "Table", severity: "default" },
+                                            { type: "text", text: "public.temp_snapshots" },
+                                        ],
+                                    },
+                                },
+                            ],
+                        },
+                    ],
                 },
             ],
         },

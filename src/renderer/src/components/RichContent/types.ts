@@ -156,7 +156,8 @@ export type RichNodeType =
     | "bullet"
     | "refresh"
     | "sparkline"
-    | "callout";
+    | "callout"
+    | "tree";
 
 /**
  * Union type wszystkich możliwych węzłów Rich Content.
@@ -191,6 +192,7 @@ export type RichNode =
     | IRichRefresh
     | IRichSparkline
     | IRichCallout
+    | IRichTree
     /**
      * Tablica węzłów jest traktowana jak wiersz (RichRow) z elementami ułożonymi poziomo.
      */
@@ -1111,18 +1113,6 @@ export interface IRichDescriptionItem {
     icon?: ThemeIconName;
 }
 
-export interface IRichCallout extends IRichNode {
-    type: "callout";
-    /** 
-     * Poziom ważności wpływający na kolor tła i obramowania
-     */
-    severity: RichSeverity;
-    /** 
-     * Elementy wewnątrz boxa
-     */
-    value: RichNode;
-}
-
 /**
  * Description - lista par label-value z opcjonalnym układem i szerokością kolumny labela.
  */
@@ -1139,17 +1129,37 @@ export interface IRichDescription extends IRichNode {
 }
 
 /**
+ * Callout - wyróżniony box z tłem i obramowaniem, używany do podkreślenia ważnej informacji lub ostrzeżenia.
+ */
+export interface IRichCallout extends IRichNode {
+    type: "callout";
+    /** 
+     * Poziom ważności wpływający na kolor tła i obramowania
+     */
+    severity: RichSeverity;
+    /** 
+     * Elementy wewnątrz boxa
+     */
+    value: RichNode;
+}
+
+/**
  * Element drzewa - węzeł z etykietą i opcjonalnymi dziećmi, renderowany jako rozbudowany komponent drzewa.
  */
 export interface IRichTreeItem extends IRichListItem {
     /**
      * Dzieci elementu drzewa - jeśli podano, element będzie renderowany jako rozbudowany węzeł drzewa z możliwością rozwijania/zwijania.
      */
-    children?: IRichTreeItem[];
+    items?: RichValue<IRichTreeItem[]>;
     /**
      * Czy element drzewa jest domyślnie rozwinięty (jeśli ma dzieci)
      */
     expanded?: boolean;
+    /**
+     * Czy element drzewa jest zwijalny (jeśli ma dzieci) - jeśli false, element będzie zawsze rozwinięty i nie będzie można go zwinąć
+     * @default true
+     */
+    collapsible?: boolean;
 }
 
 /**
@@ -1160,7 +1170,7 @@ export interface IRichTree extends IRichNode {
     /**
      * Elementy drzewa - lista węzłów, które będą renderowane jako gałęzie i liście drzewa. Każdy element może mieć swoje dzieci, tworząc zagnieżdżoną strukturę.
      */
-    items: IRichTreeItem[];
+    items: RichValue<IRichTreeItem[]>;
 }
 
 /**

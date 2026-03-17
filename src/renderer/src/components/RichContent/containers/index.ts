@@ -5,3 +5,4 @@ export { default as RichList } from "./RichList";
 export { default as RichContainer } from "./RichContainer";
 export { default as RichTable } from "./RichTable";
 export { default as RichGroup } from "./RichGroup";
+export { default as RichTree } from "./RichTree";
