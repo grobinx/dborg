@@ -370,9 +370,8 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         const target = containers.find(c => c.type === type) || null;
         if (target && target !== selectedContainer) {
             setSelectedContainer(target);
-            updateViewsForContainer(target, selectedSession);
         }
-    }, [containers, selectedContainer, selectedSession, updateViewsForContainer]);
+    }, [containers, selectedContainer]);
 
     const handleSwitchView = React.useCallback((viewId: string) => {
         if (!views) return;
@@ -424,8 +423,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         if (selectedContainer?.type !== "connections") return;
         const session = sessions?.find(s => s.info.uniqueId === msg.itemID) || null;
         setSelectedSession(session);
-        updateViewsForContainer(selectedContainer, session);
-    }, [sessions, selectedContainer, updateViewsForContainer]);
+    }, [sessions, selectedContainer]);
 
     const handleProfileConnectSuccess = React.useCallback((connection: api.ConnectionInfo) => {
         setSessions(prev => {
@@ -443,11 +441,10 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             }
             const updated = [...(prev || []), newSession];
             setSelectedSession(newSession);
-            updateViewsForContainer(selectedContainer, newSession);
             sessionsRef.current = updated;
             return updated;
         });
-    }, [selectedContainer, updateViewsForContainer, initMetadata]);
+    }, [initMetadata, addToast, t]);
 
     const handleSchemaDisconnectSuccess = React.useCallback((connectionId: string) => {
         setSessions(prev => {
@@ -488,7 +485,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             updateViewsForContainer(selectedContainer, selectedSession);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [iAmDeveloper]);
+    }, [t, theme.icons, iAmDeveloper]);
 
     // Inicjalizacja sesji po starcie kontekstu
     useEffect(() => {
@@ -560,18 +557,18 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     // RENDER
     // ========================================================================
 
+    const appContextValue = React.useMemo(() => ({
+        containers,
+        selectedContainer,
+        views,
+        selectedView,
+        sessions,
+        selectedSession,
+        getSessionState,
+    }), [containers, selectedContainer, views, selectedView, sessions, selectedSession, getSessionState]);
+
     return (
-        <ApplicationContext.Provider
-            value={{
-                containers,
-                selectedContainer,
-                views,
-                selectedView,
-                sessions,
-                selectedSession,
-                getSessionState,
-            }}
-        >
+        <ApplicationContext.Provider value={appContextValue}        >
             {children}
         </ApplicationContext.Provider>
     );
