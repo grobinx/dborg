@@ -22,7 +22,7 @@ const RichCounter: React.FC<RichCounterProps> = ({ node, environment }) => {
     const prefix = node.prefix ?? "";
     const suffix = node.suffix ?? "";
 
-    const [target, setTarget] = React.useState<number | null>(resolveRichValue((node as any)._lastValue ?? node.value));
+    const [target, setTarget] = React.useState<number | null>(resolveRichValue(node.data?._lastValue ?? node.value));
     const [display, setDisplay] = React.useState<number>(target ?? 0);
     const rafRef = React.useRef<number | null>(null);
     const startRef = React.useRef<number | null>(null);
@@ -31,7 +31,8 @@ const RichCounter: React.FC<RichCounterProps> = ({ node, environment }) => {
     // support async value functions (if someone passed RichValue)
     React.useEffect(() => {
         resolveRichValueFromFunction<number>(node.value, setTarget).then(value => {
-            (node as any)._lastValue = value;
+            if (!node.data) node.data = {};
+            node.data._lastValue = value;
         });
     }, [node.value]);
 

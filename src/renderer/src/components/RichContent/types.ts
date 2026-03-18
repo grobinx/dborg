@@ -249,6 +249,11 @@ export interface IRichMetadata {
      * Generyczny tooltip dla dowolnego węzła
      */
     tooltip?: RichNode;
+
+    /**
+     * Struktura do przechowywania dodatkowych danych związanych z węzłem, które mogą być używane przez niestandardowe renderery lub logikę biznesową. Pozwala na rozszerzenie funkcjonalności węzła bez konieczności modyfikowania jego podstawowego interfejsu, co jest szczególnie przydatne dla widgetów lub elementów wymagających specyficznych danych kontekstowych.
+     */
+    data?: Record<string, any>;
 }
 
 /**

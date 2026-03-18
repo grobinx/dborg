@@ -420,7 +420,7 @@ export const richContentExamples: RichExampleMap = {
                             severity: "info",
                             suffix: " calls",
                             variant: "title",
-                            duration: 2000,
+                            duration: 500,
                             value: async () => Math.floor(Math.random() * 1000),
                         }
                     },
