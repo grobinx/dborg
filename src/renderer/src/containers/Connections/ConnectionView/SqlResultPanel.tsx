@@ -129,8 +129,8 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
     const { t } = useTranslation();
     const plugins = usePluginManager();
     const { subscribe, queueMessage } = useMessages();
-    const [columns, setColumns] = React.useState<ColumnDefinition[] | null>(null);
-    const [rows, setRows] = React.useState<object[] | null>(null);
+    const [columns, setColumns] = React.useState<ColumnDefinition[]>([]);
+    const [rows, setRows] = React.useState<object[]>([]);
     const [query, setQuery] = React.useState<string | null>(null);
     const [oryginalQuery, setOryginalQuery] = React.useState<string | null>(null);
     const lastQuery = useRef<string | null>(null);
@@ -490,8 +490,8 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                         }}
                     >
                         <DataGrid
-                            columns={columns ?? []}
-                            data={rows ?? []}
+                            columns={columns}
+                            data={rows}
                             mode="data"
                             columnsResizable={true}
                             loading={

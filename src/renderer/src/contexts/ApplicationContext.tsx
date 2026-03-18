@@ -1,4 +1,4 @@
-import { Box, Typography, useTheme } from '@mui/material';
+import { useTheme } from '@mui/material';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { uuidv7 } from 'uuidv7';
@@ -159,7 +159,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     // HELPER FUNCTIONS
     // ========================================================================
 
-    const initialContainers = React.useCallback((): SpecificContainer[] => {
+    const initialContainers = React.useMemo((): SpecificContainer[] => {
         return [
             {
                 id: uuidv7(),
@@ -474,7 +474,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     // Inicjalizacja kontenerów przy zmianie ustawień dewelopera
     useEffect(() => {
-        const next = initialContainers();
+        const next = initialContainers;
         setContainers(next);
         if (iAmDeveloperRef.current !== iAmDeveloper) {
             iAmDeveloperRef.current = iAmDeveloper;
@@ -568,7 +568,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }), [containers, selectedContainer, views, selectedView, sessions, selectedSession, getSessionState]);
 
     return (
-        <ApplicationContext.Provider value={appContextValue}        >
+        <ApplicationContext.Provider value={appContextValue}>
             {children}
         </ApplicationContext.Provider>
     );

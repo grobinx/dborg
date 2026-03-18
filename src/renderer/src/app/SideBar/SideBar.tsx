@@ -119,6 +119,8 @@ const SideBar: React.FC<SideBarOwnProps> = (props) => {
         setContextMenu(null);
     };
 
+    console.count("SideBar render");
+
     return (
         <SideBarRoot
             {...others}

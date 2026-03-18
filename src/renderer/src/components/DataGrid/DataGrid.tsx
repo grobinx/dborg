@@ -751,7 +751,6 @@ export const DataGrid = <T extends object>({
     }, [fontSize, cellPaddingY]);
 
     useEffect(() => {
-        console.debug("DataGrid mounted");
         setSelectedRows([]);
         setSelectedColumns([]);
     }, [data]);
@@ -1020,6 +1019,9 @@ export const DataGrid = <T extends object>({
     const { startColumn, endColumn } = calculateVisibleColumns(scrollLeft, containerWidth, columnsState.current);
     const overscanFrom = Math.max(startRow - overscanRowCount, 0);
     const overscanTo = Math.min(endRow + overscanRowCount, displayData.length);
+    const visibleStateRef = useRef({ startRow, endRow, startColumn, endColumn, totalHeight });
+
+    visibleStateRef.current = { startRow, endRow, startColumn, endColumn, totalHeight };
 
     useEffect(() => {
         console.debug("DataGrid row click");
@@ -1056,7 +1058,7 @@ export const DataGrid = <T extends object>({
         }
     }, [hasChanges, uniqueField]);
 
-    const dataGridActionContext: DataGridActionContext<T> = {
+    const dataGridActionContext: DataGridActionContext<T> = React.useMemo(() => ({
         focus: () => {
             if (containerRef.current) {
                 containerRef.current.focus();
@@ -1085,9 +1087,9 @@ export const DataGrid = <T extends object>({
         },
         getColumnWidth: () => columnsState.current[selectedCellRef.current?.column ?? 0]?.width || null,
         setColumnWidth: (newWidth) => selectedCellRef.current ? columnsState.updateColumn(selectedCellRef.current.column, { width: newWidth }) : null,
-        getVisibleRows: () => ({ start: startRow, end: endRow }),
-        getVisibleColumns: () => ({ start: startColumn, end: endColumn }),
-        getTotalSize: () => ({ height: totalHeight, width: columnsState.totalWidth }),
+        getVisibleRows: () => ({ start: visibleStateRef.current.startRow, end: visibleStateRef.current.endRow }),
+        getVisibleColumns: () => ({ start: visibleStateRef.current.startColumn, end: visibleStateRef.current.endColumn }),
+        getTotalSize: () => ({ height: visibleStateRef.current.totalHeight, width: columnsState.totalWidth }),
         getColumnCount: () => columnsState.current.length,
         getRowCount: (originalData?: boolean) => !!originalData ? initialData.length : displayData.length,
         getColumn: (index) => (index !== undefined ? columnsState.current[index] : selectedCellRef.current ? columnsState.current[selectedCellRef.current.column] : null),
@@ -1358,7 +1360,23 @@ export const DataGrid = <T extends object>({
         showDialog: (dialog) => {
             setDialogContent(dialog);
         }
-    }
+    }), [
+        isFocused,
+        fontSize,
+        columnsState,
+        displayData,
+        rowHeight,
+        rowNumberColumnWidth,
+        changeRowColumnWidth,
+        showRowNumberColumn,
+        filterColumns,
+        groupingColumns,
+        searchState,
+        pivot,
+        pivotMap,
+        canPivot,
+        userData
+    ]);
 
     useEffect(() => {
         if (mode === "data" && adjustWidthExecuted && actionManager.current && displayData.length > 0 && startRow >= 0) {
@@ -1617,6 +1635,11 @@ export const DataGrid = <T extends object>({
             }
         }, 10);
     }
+
+    React.useEffect(() => {
+        console.debug("DataGrid mounted");
+        return () => console.debug("DataGrid unmounted");
+    }, []);
 
     return (
         <StyledTable
