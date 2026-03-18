@@ -158,7 +158,8 @@ export type RichNodeType =
     | "sparkline"
     | "callout"
     | "tree"
-    | "widget";
+    | "widget"
+    | "counter";
 
 /**
  * Union type wszystkich możliwych węzłów Rich Content.
@@ -195,6 +196,7 @@ export type RichNode =
     | IRichCallout
     | IRichTree
     | IRichWidget
+    | IRichCounter
     /**
      * Tablica węzłów jest traktowana jak wiersz (RichRow) z elementami ułożonymi poziomo.
      */
@@ -1441,7 +1443,7 @@ export interface IRichCounter extends IRichNode {
     /**
      * Aktualna wartość licznika, która będzie animowana przy zmianie. Komponent będzie płynnie przechodził od poprzedniej do nowej wartości, co pozwala na atrakcyjne wizualnie przedstawienie zmian liczbowych. Wartość może być dynamiczna (funkcja zwracająca Promise), co umożliwia asynchroniczne aktualizowanie licznika w oparciu o dane z serwera lub inne źródła danych.
      */
-    value: number;
+    value: RichValue<number>;
     /** 
      * Czas trwania animacji w ms 
      * @default 1000 (1 sekunda)
@@ -1455,6 +1457,14 @@ export interface IRichCounter extends IRichNode {
      * Prefiks/Sufiks, np. "%", "<"
      */
     suffix?: string;
+    /**
+     * Poziom ważności wpływający na kolor licznika (np. "success" dla wartości rosnących, "error" dla malejących, "default" dla neutralnych) - domyślnie "default", co oznacza standardowy kolor. Można ustawić różne poziomy ważności, aby wizualnie wyróżnić zmiany wartości licznika w zależności od kontekstu danych, co może pomóc użytkownikom szybko zidentyfikować pozytywne lub negatywne trendy w prezentowanych danych liczbowych.
+     */
+    severity?: RichSeverity;
+    /**
+     * Wariant tekstu dla wyświetlanej wartości licznika
+     */
+    variant?: RichTextVariant;
 }
 
 /**

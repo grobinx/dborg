@@ -72,6 +72,7 @@ import RichRefresh from "./nodes/RichRefresh";
 import RichSparkline from "./nodes/RichSparkline";
 import RichCallout from "./nodes/RichCallout";
 import RichWidget from "./nodes/RichWidget";
+import RichCounter from "./nodes/RichCounter";
 
 // Containers (import second)
 import RichRow from "./containers/RichRow";
@@ -109,6 +110,7 @@ export { default as RichRefresh } from "./nodes/RichRefresh";
 export { default as RichSparkline } from "./nodes/RichSparkline";
 export { default as RichCallout } from "./nodes/RichCallout";
 export { default as RichWidget } from "./nodes/RichWidget";
+export { default as RichCounter } from "./nodes/RichCounter";
 
 // Export containers
 export { default as RichRow } from "./containers/RichRow";
@@ -147,6 +149,7 @@ export async function resolveRichValueFromFunction<V = any>(resolvable: RichValu
     if (typeof resolvable === "function") {
         const value = await (resolvable as () => Promise<V>)();
         set(value);
+        return value;
     }
 }
 
@@ -237,6 +240,8 @@ const RichRenderer: React.FC<{
             return <RichTree node={node} environment={environment} />;
         case "widget":
             return <RichWidget node={node} environment={environment} />;
+        case "counter":
+            return <RichCounter node={node} environment={environment} />;
         default:
             return <Box>Unknown node type: {(node as any).type}</Box>;
     }

@@ -407,116 +407,134 @@ export const richContentExamples: RichExampleMap = {
                         return [10, 15, 8, 20, 18, 22, 19, 25, 30, 28, 7, 12, 15, 13, 10];
                     }
                 },
-            ],
-        },
-    ],
-
-    "Akcje i Przełączniki": [
-        {
-            type: "action",
-            id: "act-basic",
-            label: "Uruchom",
-            tooltip: "Prosta akcja",
-            run: () => {
-                console.log("basic action");
-            },
-        },
-        {
-            type: "action",
-            id: "act-disabled",
-            label: "Niedostępna",
-            tooltip: "Ta akcja jest zablokowana",
-            icon: "Error",
-            disabled: true,
-            run: () => {
-                console.log("This should not run while disabled");
-            },
-            keySequence: ["Ctrl+Alt+D"],
-        },
-        {
-            type: "action",
-            id: "act-sync",
-            label: "Synchronizuj",
-            tooltip: "Uruchom synchronizację",
-            icon: "Refresh",
-            run: async () => {
-                await new Promise((r) => setTimeout(r, 350));
-                console.log("sync complete");
-            },
-            badge: { value: 4, severity: "warning", max: 99 },
-            severity: "warning",
-        },
-        {
-            type: "action",
-            id: "act-selected",
-            label: "Tryb aktywny",
-            description: "Wybrana akcja",
-            selected: () => true,
-            loading: () => false,
-            icon: "CheckBoxChecked",
-            run: () => {
-                console.log("selected action");
-            },
-        },
-        {
-            type: "action",
-            id: "act-loading",
-            label: "Ładowanie",
-            tooltip: "Trwa ładowanie...",
-            run: () => { console.log("loading action"); },
-            loading: () => true,
-        },
-        {
-            type: "action",
-            variant: "icon",
-            id: "act-icon-only",
-            label: "Tylko ikona",
-            icon: "Settings",
-            run: () => {
-                console.log("icon only action");
-            },
-        },
-        { type: "divider" },
-        {
-            type: "switch",
-            label: "Tryb diagnostyczny",
-            checked: true,
-            onChange: (checked) => {
-                console.log("diagnostic mode:", checked);
-            },
-        },
-        {
-            type: "switch",
-            label: "Wymuś walidację",
-            checked: false,
-            severity: "warning",
-            onChange: (checked) => {
-                console.log("force validation:", checked);
-            },
-        },
-        {
-            type: "switch",
-            label: "Opcja zablokowana",
-            checked: true,
-            severity: "success",
-            disabled: true,
-        },
-        {
-            type: "row",
-            gap: 8,
-            items: [
-                { type: "text", text: "Inline:" },
                 {
-                    type: "switch",
-                    checked: true,
-                    severity: "error",
-                    onChange: (checked) => {
-                        console.log("inline switch:", checked);
+                    type: "stat",
+                    severity: "info",
+                    label: "Counter in stat",
+                    size: 2,
+                    value: {
+                        type: "refresh",
+                        interval: 4000,
+                        refresh: {
+                            type: "counter",
+                            severity: "info",
+                            suffix: " calls",
+                            variant: "title",
+                            duration: 2000,
+                            value: async () => Math.floor(Math.random() * 1000),
+                        }
                     },
                 },
             ],
         },
     ],
+
+"Akcje i Przełączniki": [
+    {
+        type: "action",
+        id: "act-basic",
+        label: "Uruchom",
+        tooltip: "Prosta akcja",
+        run: () => {
+            console.log("basic action");
+        },
+    },
+    {
+        type: "action",
+        id: "act-disabled",
+        label: "Niedostępna",
+        tooltip: "Ta akcja jest zablokowana",
+        icon: "Error",
+        disabled: true,
+        run: () => {
+            console.log("This should not run while disabled");
+        },
+        keySequence: ["Ctrl+Alt+D"],
+    },
+    {
+        type: "action",
+        id: "act-sync",
+        label: "Synchronizuj",
+        tooltip: "Uruchom synchronizację",
+        icon: "Refresh",
+        run: async () => {
+            await new Promise((r) => setTimeout(r, 350));
+            console.log("sync complete");
+        },
+        badge: { value: 4, severity: "warning", max: 99 },
+        severity: "warning",
+    },
+    {
+        type: "action",
+        id: "act-selected",
+        label: "Tryb aktywny",
+        description: "Wybrana akcja",
+        selected: () => true,
+        loading: () => false,
+        icon: "CheckBoxChecked",
+        run: () => {
+            console.log("selected action");
+        },
+    },
+    {
+        type: "action",
+        id: "act-loading",
+        label: "Ładowanie",
+        tooltip: "Trwa ładowanie...",
+        run: () => { console.log("loading action"); },
+        loading: () => true,
+    },
+    {
+        type: "action",
+        variant: "icon",
+        id: "act-icon-only",
+        label: "Tylko ikona",
+        icon: "Settings",
+        run: () => {
+            console.log("icon only action");
+        },
+    },
+    { type: "divider" },
+    {
+        type: "switch",
+        label: "Tryb diagnostyczny",
+        checked: true,
+        onChange: (checked) => {
+            console.log("diagnostic mode:", checked);
+        },
+    },
+    {
+        type: "switch",
+        label: "Wymuś walidację",
+        checked: false,
+        severity: "warning",
+        onChange: (checked) => {
+            console.log("force validation:", checked);
+        },
+    },
+    {
+        type: "switch",
+        label: "Opcja zablokowana",
+        checked: true,
+        severity: "success",
+        disabled: true,
+    },
+    {
+        type: "row",
+        gap: 8,
+        items: [
+            { type: "text", text: "Inline:" },
+            {
+                type: "switch",
+                checked: true,
+                severity: "error",
+                onChange: (checked) => {
+                    console.log("inline switch:", checked);
+                },
+            },
+        ],
+    },
+],
 
     "Timeline": [
         {
@@ -582,365 +600,398 @@ export const richContentExamples: RichExampleMap = {
         },
     ],
 
-    "Tabela": [
-        {
-            type: "table",
-            title: { type: "text", text: "Top zapytań", variant: "title-sm" },
-            showHeader: true,
-            height: 200,
-            columns: [
-                {
-                    key: "query",
-                    header: { type: "text", text: "Zapytanie", variant: "label" },
-                    width: "45%",
-                    align: "start",
-                },
-                {
-                    key: "duration",
-                    header: { type: "text", text: "Czas", variant: "label" },
-                    width: 120,
-                    align: "end",
-                },
-                {
-                    key: "rows",
-                    header: { type: "text", text: "Wiersze", variant: "label" },
-                    width: 100,
-                    align: "end",
-                },
-                {
-                    key: "status",
-                    header: { type: "text", text: "Status", variant: "label" },
-                    width: 140,
-                    align: "center",
-                },
-            ],
-            rows: [
-                {
-                    query: {
-                        type: "skeleton",
-                        height: "1.8em",
-                        value: async () => {
-                            await sleep(Math.random() * 5 + 1);
-                            return { type: "code", code: "SELECT * FROM users WHERE active = true" };
+        "Tabela": [
+            {
+                type: "table",
+                title: { type: "text", text: "Top zapytań", variant: "title-sm" },
+                showHeader: true,
+                height: 200,
+                columns: [
+                    {
+                        key: "query",
+                        header: { type: "text", text: "Zapytanie", variant: "label" },
+                        width: "45%",
+                        align: "start",
+                    },
+                    {
+                        key: "duration",
+                        header: { type: "text", text: "Czas", variant: "label" },
+                        width: 120,
+                        align: "end",
+                    },
+                    {
+                        key: "rows",
+                        header: { type: "text", text: "Wiersze", variant: "label" },
+                        width: 100,
+                        align: "end",
+                    },
+                    {
+                        key: "status",
+                        header: { type: "text", text: "Status", variant: "label" },
+                        width: 140,
+                        align: "center",
+                    },
+                ],
+                rows: [
+                    {
+                        query: {
+                            type: "skeleton",
+                            height: "1.8em",
+                            value: async () => {
+                                await sleep(Math.random() * 5 + 1);
+                                return { type: "code", code: "SELECT * FROM users WHERE active = true" };
+                            },
+                        },
+                        duration: {
+                            type: "skeleton",
+                            height: "1.8em",
+                            value: async () => {
+                                await sleep(Math.random() * 5 + 1);
+                                return { type: "text", text: "82 ms", variant: "body" };
+                            },
+                        },
+                        rows: {
+                            type: "skeleton",
+                            height: "1.8em",
+                            value: async () => {
+                                await sleep(Math.random() * 5 + 1);
+                                return { type: "text", text: 120, variant: "body" };
+                            },
+                        },
+                        status: {
+                            type: "skeleton",
+                            height: "1.8em",
+                            value: async () => {
+                                await sleep(Math.random() * 5 + 1);
+                                return { type: "chip", text: "OK", severity: "success", variant: "outlined" };
+                            },
                         },
                     },
-                    duration: {
-                        type: "skeleton",
-                        height: "1.8em",
-                        value: async () => {
-                            await sleep(Math.random() * 5 + 1);
-                            return { type: "text", text: "82 ms", variant: "body" };
+                    {
+                        query: {
+                            type: "skeleton",
+                            height: "1.8em",
+                            value: async () => {
+                                await sleep(Math.random() * 5 + 1);
+                                return { type: "code", code: "SELECT * FROM orders WHERE status = 'OPEN'" };
+                            },
                         },
+                        duration: { type: "text", text: "622 ms", variant: "body", severity: "warning", decoration: ["bold"] },
+                        rows: { type: "text", text: 5320, variant: "body" },
+                        status: { type: "chip", text: "SLOW", severity: "warning", variant: "outlined" },
                     },
-                    rows: {
-                        type: "skeleton",
-                        height: "1.8em",
-                        value: async () => {
-                            await sleep(Math.random() * 5 + 1);
-                            return { type: "text", text: 120, variant: "body" };
+                    {
+                        query: {
+                            type: "skeleton",
+                            height: "1.8em",
+                            value: async () => {
+                                await sleep(Math.random() * 5 + 1);
+                                return {
+                                    type: "row",
+                                    gap: 6,
+                                    items: [
+                                        { type: "icon", icon: "Error", severity: "error" },
+                                        { type: "code", code: "UPDATE invoices SET ..." },
+                                    ],
+                                };
+                            },
                         },
-                    },
-                    status: {
-                        type: "skeleton",
-                        height: "1.8em",
-                        value: async () => {
-                            await sleep(Math.random() * 5 + 1);
-                            return { type: "chip", text: "OK", severity: "success", variant: "outlined" };
+                        duration: {
+                            type: "skeleton",
+                            variant: "custom",
+                            custom: [{ type: "icon", icon: "Loading" }, "Loading..."],
+                            value: async () => {
+                                await sleep(Math.random() * 5 + 1);
+                                return { type: "text", text: "timeout", variant: "body", severity: "error", decoration: ["bold"] };
+                            }
                         },
+                        rows: { type: "text", text: "-", variant: "body" },
+                        status: { type: "chip", text: "ERROR", severity: "error" },
                     },
-                },
-                {
-                    query: {
-                        type: "skeleton",
-                        height: "1.8em",
-                        value: async () => {
-                            await sleep(Math.random() * 5 + 1);
-                            return { type: "code", code: "SELECT * FROM orders WHERE status = 'OPEN'" };
+                    {
+                        query: {
+                            type: "skeleton",
+                            height: "1.8em",
+                            value: async () => {
+                                await sleep(Math.random() * 5 + 0.5);
+                                return {
+                                    type: "code",
+                                    code: "SELECT id, email FROM customers LIMIT 1000",
+                                };
+                            },
                         },
+                        duration: { type: "text", text: "145 ms", variant: "body" },
+                        rows: { type: "text", text: 1000, variant: "body" },
+                        status: { type: "chip", text: "OK", severity: "success", variant: "outlined" },
                     },
-                    duration: { type: "text", text: "622 ms", variant: "body", severity: "warning", decoration: ["bold"] },
-                    rows: { type: "text", text: 5320, variant: "body" },
-                    status: { type: "chip", text: "SLOW", severity: "warning", variant: "outlined" },
-                },
-                {
-                    query: {
-                        type: "skeleton",
-                        height: "1.8em",
-                        value: async () => {
-                            await sleep(Math.random() * 5 + 1);
-                            return {
-                                type: "row",
-                                gap: 6,
-                                items: [
-                                    { type: "icon", icon: "Error", severity: "error" },
-                                    { type: "code", code: "UPDATE invoices SET ..." },
-                                ],
-                            };
+                    {
+                        query: {
+                            type: "skeleton",
+                            height: "1.8em",
+                            value: async () => {
+                                await sleep(Math.random() * 5 + 1);
+                                return {
+                                    type: "code",
+                                    code: "DELETE FROM sessions WHERE expires_at < now()",
+                                };
+                            },
                         },
+                        duration: { type: "text", text: "2.3 s", variant: "body", severity: "warning", decoration: ["bold"] },
+                        rows: { type: "text", text: 18600, variant: "body" },
+                        status: { type: "chip", text: "HEAVY", severity: "warning", variant: "outlined" },
                     },
-                    duration: {
-                        type: "skeleton",
-                        variant: "custom",
-                        custom: [{ type: "icon", icon: "Loading" }, "Loading..."],
-                        value: async () => {
-                            await sleep(Math.random() * 5 + 1);
-                            return { type: "text", text: "timeout", variant: "body", severity: "error", decoration: ["bold"] };
-                        }
-                    },
-                    rows: { type: "text", text: "-", variant: "body" },
-                    status: { type: "chip", text: "ERROR", severity: "error" },
-                },
-                {
-                    query: {
-                        type: "skeleton",
-                        height: "1.8em",
-                        value: async () => {
-                            await sleep(Math.random() * 5 + 0.5);
-                            return {
-                                type: "code",
-                                code: "SELECT id, email FROM customers LIMIT 1000",
-                            };
+                    {
+                        query: {
+                            type: "skeleton",
+                            height: "1.8em",
+                            value: async () => {
+                                await sleep(Math.random() * 5 + 1);
+                                return {
+                                    type: "code",
+                                    code: "VACUUM ANALYZE public.users",
+                                };
+                            },
                         },
+                        duration: { type: "text", text: "4.8 s", variant: "body", severity: "warning", decoration: ["bold"] },
+                        rows: { type: "text", text: "-", variant: "body" },
+                        status: { type: "chip", text: "MAINT", severity: "info", variant: "outlined" },
                     },
-                    duration: { type: "text", text: "145 ms", variant: "body" },
-                    rows: { type: "text", text: 1000, variant: "body" },
-                    status: { type: "chip", text: "OK", severity: "success", variant: "outlined" },
-                },
-                {
-                    query: {
-                        type: "skeleton",
-                        height: "1.8em",
-                        value: async () => {
-                            await sleep(Math.random() * 5 + 1);
-                            return {
-                                type: "code",
-                                code: "DELETE FROM sessions WHERE expires_at < now()",
-                            };
+                    {
+                        query: {
+                            type: "code",
+                            code: "INSERT INTO audit_log(event, payload) VALUES (...)",
                         },
+                        duration: { type: "text", text: "38 ms", variant: "body" },
+                        rows: { type: "text", text: 1, variant: "body" },
+                        status: { type: "chip", text: "OK", severity: "success", variant: "outlined" },
                     },
-                    duration: { type: "text", text: "2.3 s", variant: "body", severity: "warning", decoration: ["bold"] },
-                    rows: { type: "text", text: 18600, variant: "body" },
-                    status: { type: "chip", text: "HEAVY", severity: "warning", variant: "outlined" },
-                },
-                {
-                    query: {
-                        type: "skeleton",
-                        height: "1.8em",
-                        value: async () => {
-                            await sleep(Math.random() * 5 + 1);
-                            return {
-                                type: "code",
-                                code: "VACUUM ANALYZE public.users",
-                            };
-                        },
+                ],
+            },
+            {
+                type: "table",
+                title: { type: "text", text: "Aktywne sesje PostgreSQL", variant: "title-sm" },
+                showHeader: true,
+                columns: [
+                    {
+                        key: "pid",
+                        header: "PID",
+                        width: 90,
+                        align: "end",
                     },
-                    duration: { type: "text", text: "4.8 s", variant: "body", severity: "warning", decoration: ["bold"] },
-                    rows: { type: "text", text: "-", variant: "body" },
-                    status: { type: "chip", text: "MAINT", severity: "info", variant: "outlined" },
-                },
-                {
-                    query: {
-                        type: "code",
-                        code: "INSERT INTO audit_log(event, payload) VALUES (...)",
+                    {
+                        key: "user",
+                        header: "Użytkownik",
+                        width: 150,
+                        align: "start",
                     },
-                    duration: { type: "text", text: "38 ms", variant: "body" },
-                    rows: { type: "text", text: 1, variant: "body" },
-                    status: { type: "chip", text: "OK", severity: "success", variant: "outlined" },
-                },
-            ],
-        },
-        {
-            type: "table",
-            title: { type: "text", text: "Aktywne sesje PostgreSQL", variant: "title-sm" },
-            showHeader: true,
-            columns: [
-                {
-                    key: "pid",
-                    header: "PID",
-                    width: 90,
-                    align: "end",
-                },
-                {
-                    key: "user",
-                    header: "Użytkownik",
-                    width: 150,
-                    align: "start",
-                },
-                {
-                    key: "database",
-                    header: "Baza",
-                    width: 140,
-                    align: "start",
-                },
-                {
-                    key: "client",
-                    header: "Klient",
-                    width: "22%",
-                    align: "start",
-                },
-                {
-                    key: "state",
-                    header: "Stan",
-                    width: 130,
-                    align: "center",
-                },
-                {
-                    key: "txAge",
-                    header: "Czas TX",
-                    width: 110,
-                    align: "end",
-                },
-                {
-                    key: "wait",
-                    header: "Lock wait",
-                    width: 120,
-                    align: "center",
-                },
-            ],
-            rows: [
-                {
-                    pid: 18342,
-                    user: "app_readonly",
-                    database: "dborg_prod",
-                    client: "10.10.4.23",
-                    state: { type: "chip", text: "active", severity: "success", variant: "outlined" },
-                    txAge: "00:00:03",
-                    wait: { type: "chip", text: "NO", severity: "success", variant: "outlined" },
-                },
-                {
-                    pid: 18355,
-                    user: "etl_worker",
-                    database: "dborg_prod",
-                    client: "10.10.7.11",
-                    state: { type: "chip", text: "idle in tx", severity: "warning", variant: "outlined" },
-                    txAge: { type: "text", text: "00:04:51", variant: "body", severity: "warning", decoration: ["bold"] },
-                    wait: { type: "chip", text: "YES", severity: "warning", variant: "outlined" },
-                },
-                {
-                    pid: 18401,
-                    user: "reporting",
-                    database: "dborg_replica",
-                    client: "10.11.2.5",
-                    state: { type: "chip", text: "active", severity: "info", variant: "outlined" },
-                    txAge: "00:00:44",
-                    wait: { type: "chip", text: "NO", severity: "success", variant: "outlined" },
-                },
-                {
-                    pid: 18433,
-                    user: "migration",
-                    database: "dborg_prod",
-                    client: "10.10.9.90",
-                    state: { type: "chip", text: "blocked", severity: "error" },
-                    txAge: { type: "text", text: "00:12:09", variant: "body", severity: "error", decoration: ["bold"] },
-                    wait: { type: "chip", text: "YES", severity: "error" },
-                },
-                {
-                    pid: 18457,
-                    user: "app_write",
-                    database: "dborg_prod",
-                    client: "10.10.4.44",
-                    state: { type: "chip", text: "idle", severity: "default", variant: "outlined" },
-                    txAge: "00:00:00",
-                    wait: { type: "chip", text: "NO", severity: "success", variant: "outlined" },
-                },
-            ],
-        },
-    ],
-    "Drzewko": [
-        {
-            type: "tree",
-            items: [
-                {
-                    content: {
-                        type: "row",
-                        items: [
-                            { type: "icon", icon: "DatabaseTables", severity: "info" },
-                            { type: "text", text: "PostgreSQL Cluster" },
-                            { type: "chip", text: "online", severity: "success", variant: "outlined" },
-                        ],
+                    {
+                        key: "database",
+                        header: "Baza",
+                        width: 140,
+                        align: "start",
                     },
-                    expanded: true,
+                    {
+                        key: "client",
+                        header: "Klient",
+                        width: "22%",
+                        align: "start",
+                    },
+                    {
+                        key: "state",
+                        header: "Stan",
+                        width: 130,
+                        align: "center",
+                    },
+                    {
+                        key: "txAge",
+                        header: "Czas TX",
+                        width: 110,
+                        align: "end",
+                    },
+                    {
+                        key: "wait",
+                        header: "Lock wait",
+                        width: 120,
+                        align: "center",
+                    },
+                ],
+                rows: [
+                    {
+                        pid: 18342,
+                        user: "app_readonly",
+                        database: "dborg_prod",
+                        client: "10.10.4.23",
+                        state: { type: "chip", text: "active", severity: "success", variant: "outlined" },
+                        txAge: "00:00:03",
+                        wait: { type: "chip", text: "NO", severity: "success", variant: "outlined" },
+                    },
+                    {
+                        pid: 18355,
+                        user: "etl_worker",
+                        database: "dborg_prod",
+                        client: "10.10.7.11",
+                        state: { type: "chip", text: "idle in tx", severity: "warning", variant: "outlined" },
+                        txAge: { type: "text", text: "00:04:51", variant: "body", severity: "warning", decoration: ["bold"] },
+                        wait: { type: "chip", text: "YES", severity: "warning", variant: "outlined" },
+                    },
+                    {
+                        pid: 18401,
+                        user: "reporting",
+                        database: "dborg_replica",
+                        client: "10.11.2.5",
+                        state: { type: "chip", text: "active", severity: "info", variant: "outlined" },
+                        txAge: "00:00:44",
+                        wait: { type: "chip", text: "NO", severity: "success", variant: "outlined" },
+                    },
+                    {
+                        pid: 18433,
+                        user: "migration",
+                        database: "dborg_prod",
+                        client: "10.10.9.90",
+                        state: { type: "chip", text: "blocked", severity: "error" },
+                        txAge: { type: "text", text: "00:12:09", variant: "body", severity: "error", decoration: ["bold"] },
+                        wait: { type: "chip", text: "YES", severity: "error" },
+                    },
+                    {
+                        pid: 18457,
+                        user: "app_write",
+                        database: "dborg_prod",
+                        client: "10.10.4.44",
+                        state: { type: "chip", text: "idle", severity: "default", variant: "outlined" },
+                        txAge: "00:00:00",
+                        wait: { type: "chip", text: "NO", severity: "success", variant: "outlined" },
+                    },
+                ],
+            },
+        ],
+            "Drzewko": [
+                {
+                    type: "tree",
                     items: [
                         {
-                            indicator: true,
-                            severity: "info",
                             content: {
                                 type: "row",
                                 items: [
-                                    { type: "icon", icon: "Folder", severity: "info" },
-                                    { type: "text", text: "dborg_prod" },
+                                    { type: "icon", icon: "DatabaseTables", severity: "info" },
+                                    { type: "text", text: "PostgreSQL Cluster" },
+                                    { type: "chip", text: "online", severity: "success", variant: "outlined" },
                                 ],
                             },
                             expanded: true,
                             items: [
                                 {
                                     indicator: true,
-                                    severity: "warning",
+                                    severity: "info",
                                     content: {
-                                        type: "column",
-                                        padding: 0,
+                                        type: "row",
                                         items: [
-                                            {
-                                                type: "row",
-                                                padding: 0,
-                                                items: [
-                                                    { type: "icon", icon: "Warning", severity: "warning" },
-                                                    { type: "text", text: "Replication lag: 120s", variant: "lead", severity: "warning" },
-                                                    { type: "chip", text: "LAGGING", severity: "warning" },
-                                                ],
-                                            },
-                                            [
-                                                { type: "icon", icon: "Folder", severity: "default" },
-                                                { type: "text", text: "public" },
-                                            ]
+                                            { type: "icon", icon: "Folder", severity: "info" },
+                                            { type: "text", text: "dborg_prod" },
                                         ],
                                     },
                                     expanded: true,
-                                    items: async () => {
-                                        await sleep(Math.random() * 5 + 1);
-                                        return [
-                                            {
-                                                content: {
-                                                    type: "row",
-                                                    align: "center",
-                                                    items: [
-                                                        { type: "icon", icon: "Users", severity: "default" },
-                                                        { type: "text", text: "public.users" },
-                                                        { type: "text", text: "(1.2M rows)", variant: "caption", severity: "info" },
-                                                    ],
-                                                },
+                                    items: [
+                                        {
+                                            indicator: true,
+                                            severity: "warning",
+                                            content: {
+                                                type: "column",
+                                                padding: 0,
+                                                items: [
+                                                    {
+                                                        type: "row",
+                                                        padding: 0,
+                                                        items: [
+                                                            { type: "icon", icon: "Warning", severity: "warning" },
+                                                            { type: "text", text: "Replication lag: 120s", variant: "lead", severity: "warning" },
+                                                            { type: "chip", text: "LAGGING", severity: "warning" },
+                                                        ],
+                                                    },
+                                                    [
+                                                        { type: "icon", icon: "Folder", severity: "default" },
+                                                        { type: "text", text: "public" },
+                                                    ]
+                                                ],
                                             },
-                                            {
-                                                content: {
-                                                    type: "row",
-                                                    items: [
-                                                        { type: "icon", icon: "Sort", severity: "warning" },
-                                                        { type: "text", text: "public.orders" },
-                                                        { type: "chip", text: "seq scan", severity: "warning", variant: "outlined" },
-                                                    ],
-                                                },
+                                            expanded: true,
+                                            items: async () => {
+                                                await sleep(Math.random() * 5 + 1);
+                                                return [
+                                                    {
+                                                        content: {
+                                                            type: "row",
+                                                            align: "center",
+                                                            items: [
+                                                                { type: "icon", icon: "Users", severity: "default" },
+                                                                { type: "text", text: "public.users" },
+                                                                { type: "text", text: "(1.2M rows)", variant: "caption", severity: "info" },
+                                                            ],
+                                                        },
+                                                    },
+                                                    {
+                                                        content: {
+                                                            type: "row",
+                                                            items: [
+                                                                { type: "icon", icon: "Sort", severity: "warning" },
+                                                                { type: "text", text: "public.orders" },
+                                                                { type: "chip", text: "seq scan", severity: "warning", variant: "outlined" },
+                                                            ],
+                                                        },
+                                                    },
+                                                    {
+                                                        content: {
+                                                            type: "row",
+                                                            items: [
+                                                                { type: "icon", icon: "Strict", severity: "success" },
+                                                                { type: "text", text: "public.products" },
+                                                                { type: "chip", text: "indexed", severity: "success", variant: "outlined" },
+                                                            ],
+                                                        },
+                                                    },
+                                                ] as IRichTreeItem[]
                                             },
-                                            {
-                                                content: {
-                                                    type: "row",
-                                                    items: [
-                                                        { type: "icon", icon: "Strict", severity: "success" },
-                                                        { type: "text", text: "public.products" },
-                                                        { type: "chip", text: "indexed", severity: "success", variant: "outlined" },
-                                                    ],
-                                                },
+                                        },
+                                        {
+                                            indicator: true,
+                                            severity: "success",
+                                            content: {
+                                                type: "row",
+                                                items: [
+                                                    { type: "icon", icon: "Folder", severity: "default" },
+                                                    { type: "text", text: "analytics" },
+                                                ],
                                             },
-                                        ] as IRichTreeItem[]
-                                    },
+                                            expanded: false,
+                                            items: [
+                                                {
+                                                    content: {
+                                                        type: "row",
+                                                        items: [
+                                                            { type: "icon", icon: "Table", severity: "default" },
+                                                            { type: "text", text: "analytics.daily_sales" },
+                                                        ],
+                                                    },
+                                                },
+                                                {
+                                                    content: {
+                                                        type: "row",
+                                                        items: [
+                                                            { type: "icon", icon: "Table", severity: "default" },
+                                                            { type: "text", text: "analytics.customer_ltv" },
+                                                        ],
+                                                    },
+                                                },
+                                            ],
+                                        },
+                                    ],
                                 },
                                 {
-                                    indicator: true,
-                                    severity: "success",
                                     content: {
                                         type: "row",
                                         items: [
                                             { type: "icon", icon: "Folder", severity: "default" },
-                                            { type: "text", text: "analytics" },
+                                            { type: "text", text: "dborg_replica" },
+                                            { type: "chip", text: "read-only", severity: "info", variant: "outlined" },
                                         ],
                                     },
                                     expanded: false,
@@ -949,50 +1000,53 @@ export const richContentExamples: RichExampleMap = {
                                             content: {
                                                 type: "row",
                                                 items: [
-                                                    { type: "icon", icon: "Table", severity: "default" },
-                                                    { type: "text", text: "analytics.daily_sales" },
+                                                    { type: "icon", icon: "Folder", severity: "default" },
+                                                    { type: "text", text: "public" },
                                                 ],
                                             },
-                                        },
-                                        {
-                                            content: {
-                                                type: "row",
-                                                items: [
-                                                    { type: "icon", icon: "Table", severity: "default" },
-                                                    { type: "text", text: "analytics.customer_ltv" },
-                                                ],
-                                            },
+                                            items: [
+                                                {
+                                                    content: {
+                                                        type: "row",
+                                                        items: [
+                                                            { type: "icon", icon: "Table", severity: "default" },
+                                                            { type: "text", text: "public.audit_log" },
+                                                        ],
+                                                    },
+                                                },
+                                                {
+                                                    content: {
+                                                        type: "row",
+                                                        items: [
+                                                            { type: "icon", icon: "Table", severity: "default" },
+                                                            { type: "text", text: "public.session_events" },
+                                                        ],
+                                                    },
+                                                },
+                                            ],
                                         },
                                     ],
                                 },
-                            ],
-                        },
-                        {
-                            content: {
-                                type: "row",
-                                items: [
-                                    { type: "icon", icon: "Folder", severity: "default" },
-                                    { type: "text", text: "dborg_replica" },
-                                    { type: "chip", text: "read-only", severity: "info", variant: "outlined" },
-                                ],
-                            },
-                            expanded: false,
-                            items: [
                                 {
                                     content: {
                                         type: "row",
                                         items: [
-                                            { type: "icon", icon: "Folder", severity: "default" },
-                                            { type: "text", text: "public" },
+                                            { type: "icon", icon: "Folder", severity: "warning" },
+                                            { type: "text", text: "dborg_staging" },
+                                            { type: "chip", text: "degraded", severity: "warning", variant: "outlined" },
                                         ],
                                     },
+                                    expanded: true,
                                     items: [
                                         {
+                                            indicator: true,
+                                            severity: "error",
                                             content: {
                                                 type: "row",
                                                 items: [
-                                                    { type: "icon", icon: "Table", severity: "default" },
-                                                    { type: "text", text: "public.audit_log" },
+                                                    { type: "icon", icon: "Table", severity: "warning" },
+                                                    { type: "text", text: "public.import_queue" },
+                                                    { type: "chip", text: "lock wait", severity: "error" },
                                                 ],
                                             },
                                         },
@@ -1001,7 +1055,7 @@ export const richContentExamples: RichExampleMap = {
                                                 type: "row",
                                                 items: [
                                                     { type: "icon", icon: "Table", severity: "default" },
-                                                    { type: "text", text: "public.session_events" },
+                                                    { type: "text", text: "public.temp_snapshots" },
                                                 ],
                                             },
                                         },
@@ -1013,51 +1067,15 @@ export const richContentExamples: RichExampleMap = {
                             content: {
                                 type: "row",
                                 items: [
-                                    { type: "icon", icon: "Folder", severity: "warning" },
-                                    { type: "text", text: "dborg_staging" },
-                                    { type: "chip", text: "degraded", severity: "warning", variant: "outlined" },
+                                    { type: "icon", icon: "Info", severity: "info" },
+                                    { type: "text", text: "Empty Cluster" },
+                                    { type: "chip", text: "offline", severity: "error", variant: "outlined" },
                                 ],
                             },
-                            expanded: true,
-                            items: [
-                                {
-                                    indicator: true,
-                                    severity: "error",
-                                    content: {
-                                        type: "row",
-                                        items: [
-                                            { type: "icon", icon: "Table", severity: "warning" },
-                                            { type: "text", text: "public.import_queue" },
-                                            { type: "chip", text: "lock wait", severity: "error" },
-                                        ],
-                                    },
-                                },
-                                {
-                                    content: {
-                                        type: "row",
-                                        items: [
-                                            { type: "icon", icon: "Table", severity: "default" },
-                                            { type: "text", text: "public.temp_snapshots" },
-                                        ],
-                                    },
-                                },
-                            ],
                         },
                     ],
                 },
-                {
-                    content: {
-                        type: "row",
-                        items: [
-                            { type: "icon", icon: "Info", severity: "info" },
-                            { type: "text", text: "Empty Cluster" },
-                            { type: "chip", text: "offline", severity: "error", variant: "outlined" },
-                        ],
-                    },
-                },
             ],
-        },
-    ],
 };
 
 export const allExamples: RichNode[] = Object.values(richContentExamples).flat();
