@@ -101,7 +101,11 @@ const RichCounter: React.FC<RichCounterProps> = ({ node, environment }) => {
     if (node.excluded) return null;
 
     const content = (
-        <RichText node={{ text: `${prefix}${formatNumber(Math.round(display))}${suffix}`, severity: node.severity, variant: node.variant }} environment={environment} />
+        <>
+            {prefix && <RichText node={{ text: prefix, severity: node.severity, variant: node.variant }} environment={environment} />}
+            <RichText node={{ text: formatNumber(Math.round(display)), severity: node.severity, variant: node.variant }} environment={environment} />
+            {suffix && <RichText node={{ text: suffix, severity: node.severity, variant: node.variant }} environment={environment} />}
+        </>
     );
 
     if (node.tooltip) {

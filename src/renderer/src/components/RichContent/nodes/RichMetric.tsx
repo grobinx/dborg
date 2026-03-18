@@ -13,9 +13,7 @@ interface RichMetricProps {
     environment?: IRichEnvironment;
 }
 
-const CHART_W = 120;
 const CHART_H = 28;
-const CHART_PAD = 2;
 
 const RichMetric: React.FC<RichMetricProps> = ({ node, environment }) => {
     const theme = useTheme();
@@ -38,26 +36,6 @@ const RichMetric: React.FC<RichMetricProps> = ({ node, environment }) => {
     const values = (sparkline ?? []).filter((v) => Number.isFinite(v));
     const hasSparkline = values.length >= 2;
     const latestValue = values.length > 0 ? values[values.length - 1] : null;
-
-    const points = React.useMemo(() => {
-        if (!hasSparkline) {
-            return "";
-        }
-
-        const min = Math.min(...values);
-        const max = Math.max(...values);
-        const range = max - min || 1;
-        const innerW = CHART_W - CHART_PAD * 2;
-        const innerH = CHART_H - CHART_PAD * 2;
-
-        return values
-            .map((v, i) => {
-                const x = CHART_PAD + (i / (values.length - 1)) * innerW;
-                const y = CHART_H - CHART_PAD - ((v - min) / range) * innerH;
-                return `${x},${y}`;
-            })
-            .join(" ");
-    }, [hasSparkline, values]);
 
     if (node.excluded) {
         return null;
@@ -85,12 +63,22 @@ const RichMetric: React.FC<RichMetricProps> = ({ node, environment }) => {
                 <Box sx={{ flexShrink: 0, minWidth: 0 }}>
                     <RichRow node={{ justify: "space-between", items: [] }} environment={environment}>
                         {latestValue !== null && (
-                            <RichRenderer
-                                node={`${latestValue}${node.unit ?? ""}`}
-                                environment={environment}
-                                textVariant="title"
-                                textSeverity={severity}
-                            />
+                            <>
+                                <RichRenderer
+                                    node={latestValue}
+                                    environment={environment}
+                                    textVariant="title"
+                                    textSeverity={severity}
+                                />
+                                {node.unit && (
+                                    <RichRenderer
+                                        node={node.unit}
+                                        environment={environment}
+                                        textVariant="title"
+                                        textSeverity={severity}
+                                    />
+                                )}
+                            </>
                         )}
                         {node.icon && (
                             <RichIcon node={{ icon: node.icon, severity, size: "large" }} environment={environment} />

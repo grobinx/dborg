@@ -389,7 +389,7 @@ export const richContentExamples: RichExampleMap = {
                         type: "metric",
                         severity: "success",
                         label: "Dynamic metric",
-                        unit: " req/s",
+                        unit: "req/s",
                         size: 2,
                         tooltip: "This is a metric node with refreshing random sparkline data",
                         sparkline: async () => Array.from({ length: 15 }, () => Math.floor(Math.random() * 20) + 1),
@@ -399,7 +399,7 @@ export const richContentExamples: RichExampleMap = {
                     type: "metric",
                     severity: "warning",
                     label: "Metric node",
-                    unit: " ms",
+                    unit: "ms",
                     size: 2,
                     tooltip: "This is a metric node with a sparkline chart",
                     sparkline: async () => {
@@ -418,7 +418,7 @@ export const richContentExamples: RichExampleMap = {
                         refresh: {
                             type: "counter",
                             severity: "info",
-                            suffix: " calls",
+                            suffix: "calls",
                             variant: "title",
                             duration: 500,
                             value: async () => Math.floor(Math.random() * 1000),
