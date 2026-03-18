@@ -57,15 +57,18 @@ const RichSection: React.FC<RichSectionProps> = ({ node, environment, children }
                     {node.title && <RichRenderer node={node.title} environment={environment} textVariant="title" />}
                     <RichSpacer node={{}} environment={environment} />
                     {node.collapsible && (
-                        <ToolButton
-                            size="small"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setExpanded(!expanded);
+                        <RichIcon
+                            node={{
+                                icon: "ExpandMore",
+                                style: {
+                                    display: "flex",
+                                    alignItems: "center",
+                                    transition: "transform 0.2s",
+                                    transform: !expanded ? "rotate(0deg)" : "rotate(-180deg)",
+                                },
                             }}
-                        >
-                            {expanded ? <theme.icons.ExpandLess /> : <theme.icons.ExpandMore />}
-                        </ToolButton>
+                            environment={environment}
+                        />
                     )}
                 </Box>
             )}
