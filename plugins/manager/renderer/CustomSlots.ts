@@ -717,7 +717,7 @@ export interface IGridSlot extends ICustomSlot {
     /**
      * Wiersze siatki.
      */
-    rows: ResolvableAsyncValue<SlotRuntimeContext, Record<string, any>[]>;
+    rows: ResolvableAsyncValue<SlotRuntimeContext, string | Record<string, any> | Record<string, any>[]>;
     /**
      * Zmiany w danych (np. edycje w siatce) do zapisania lub przesłania do backendu (opcjonalnie).
      */

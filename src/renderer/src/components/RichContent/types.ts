@@ -1088,21 +1088,21 @@ export interface IRichEntity extends IRichNode {
 /**
  * Quote - cytat z opcjonalnym autorem i akcentem kolorystycznym.
  */
-export interface IRichQuote extends IRichNode {
-    type: "quote";
-    /**
-     * Treść cytatu
-     */
-    content: RichNode;
-    /**
-     * Opcjonalny autor lub źródło
-     */
-    caption?: RichNode;
-    /**
-     * Akcent kolorystyczny z lewej strony
-     */
-    severity?: RichSeverity;
-}
+// export interface IRichQuote extends IRichNode {
+//     type: "quote";
+//     /**
+//      * Treść cytatu
+//      */
+//     content: RichNode;
+//     /**
+//      * Opcjonalny autor lub źródło
+//      */
+//     caption?: RichNode;
+//     /**
+//      * Akcent kolorystyczny z lewej strony
+//      */
+//     severity?: RichSeverity;
+// }
 
 /**
  * Opis definicji pary label-value, często używany w listach właściwości lub FAQ.
@@ -1125,17 +1125,17 @@ export interface IRichDescriptionItem {
 /**
  * Description - lista par label-value z opcjonalnym układem i szerokością kolumny labela.
  */
-export interface IRichDescription extends IRichNode {
-    type: "description";
-    /**
-     * Elementy listy opisowej - pary label-value, które będą renderowane w formacie "label: value".
-     */
-    items: IRichDescriptionItem[];
-    /** 
-     * Szerokość kolumny labela w trybie horizontal 
-     */
-    labelWidth?: string | number;
-}
+// export interface IRichDescription extends IRichNode {
+//     type: "description";
+//     /**
+//      * Elementy listy opisowej - pary label-value, które będą renderowane w formacie "label: value".
+//      */
+//     items: IRichDescriptionItem[];
+//     /** 
+//      * Szerokość kolumny labela w trybie horizontal 
+//      */
+//     labelWidth?: string | number;
+// }
 
 /**
  * Callout - wyróżniony box z tłem i obramowaniem, używany do podkreślenia ważnej informacji lub ostrzeżenia.
@@ -1229,21 +1229,21 @@ export interface IRichStep {
  * Wskaźnik kroku - komponent prezentujący postęp w wieloetapowym procesie, z etykietami i ikonami dla każdego kroku.
  * Może być renderowany w orientacji poziomej lub pionowej, z opcją automatycznego numerowania kroków.
  */
-export interface IRichStepper extends IRichNode {
-    type: "stepper";
-    /**
-     * Kroki procesu, które będą renderowane jako kolejne etapy w wskaźniku. Każdy krok ma swoją etykietę, status i opcjonalną ikonę, co pozwala na jasne przedstawienie postępu użytkownikowi.
-     */
-    items: IRichStep[];
-    /** 
-     * Orientacja wskaźnika kroku 
-     */
-    orientation?: "horizontal" | "vertical";
-    /** 
-     * Czy kroki mają być numerowane automatycznie 
-     */
-    numbered?: boolean;
-}
+// export interface IRichStepper extends IRichNode {
+//     type: "stepper";
+//     /**
+//      * Kroki procesu, które będą renderowane jako kolejne etapy w wskaźniku. Każdy krok ma swoją etykietę, status i opcjonalną ikonę, co pozwala na jasne przedstawienie postępu użytkownikowi.
+//      */
+//     items: IRichStep[];
+//     /** 
+//      * Orientacja wskaźnika kroku 
+//      */
+//     orientation?: "horizontal" | "vertical";
+//     /** 
+//      * Czy kroki mają być numerowane automatycznie 
+//      */
+//     numbered?: boolean;
+// }
 
 /**
  * RichMetric - specjalny typ statu, który oprócz wartości i etykiety może zawierać mini-wykres (sparkline) oraz opis trendu, idealny do prezentacji kluczowych wskaźników wydajności (KPI).
@@ -1301,17 +1301,17 @@ export interface IRichLogEntry {
 /**
  * Log - komponent do wyświetlania strumienia logów, z opcją wirtualnego scrollowania dla dużych ilości danych, podświetleniem składni i kontrolą nad formatowaniem wpisów logu.
  */
-export interface IRichLog extends IRichNode {
-    type: "log";
-    /** 
-     * Tablica wpisów logów 
-     */
-    entries: RichValue<IRichLogEntry[]>;
-    /** 
-     * Wysokość okna logów (jeśli duża ilość danych, włączy się virtual scroll) 
-     */
-    height?: number | string;
-}
+// export interface IRichLog extends IRichNode {
+//     type: "log";
+//     /** 
+//      * Tablica wpisów logów 
+//      */
+//     entries: RichValue<IRichLogEntry[]>;
+//     /** 
+//      * Wysokość okna logów (jeśli duża ilość danych, włączy się virtual scroll) 
+//      */
+//     height?: number | string;
+// }
 
 export interface IRichBullet extends IRichNode {
     type: "bullet";
@@ -1393,52 +1393,52 @@ export interface IRichSparkline extends IRichNode {
 /**
  * Label-Value - para etykieta-wartość, często używana w listach właściwości, FAQ lub wszędzie tam, gdzie chcemy przedstawić dane w formacie "klucz: wartość". Ten komponent pozwala na elastyczne formatowanie zarówno etykiety, jak i wartości, a także opcjonalne dodanie separatora i kontrolę nad układem (poziomy lub pionowy).
  */
-export interface IRichLabelValue extends IRichNode {
-    type: "label-value";
-    /**
-     * Etykieta/klucz właściwości, która może być prostym tekstem lub złożonym węzłem RichNode (np. z ikoną, badge'em itp.)
-     */
-    label: RichNode;
-    /**
-     * Wartość właściwości, która może być prostym tekstem lub złożonym węzłem RichNode (np. z ikoną, badge'em itp.)
-     */
-    value: RichNode;
-    /** 
-     * Separator między etykietą a wartością, np. ":" lub "—" 
-     */
-    separator?: string;
-    /** 
-     * Czy etykieta ma być nad wartością (vertical) czy obok (horizontal) 
-     */
-    layout?: "horizontal" | "vertical";
-}
+// export interface IRichLabelValue extends IRichNode {
+//     type: "label-value";
+//     /**
+//      * Etykieta/klucz właściwości, która może być prostym tekstem lub złożonym węzłem RichNode (np. z ikoną, badge'em itp.)
+//      */
+//     label: RichNode;
+//     /**
+//      * Wartość właściwości, która może być prostym tekstem lub złożonym węzłem RichNode (np. z ikoną, badge'em itp.)
+//      */
+//     value: RichNode;
+//     /** 
+//      * Separator między etykietą a wartością, np. ":" lub "—" 
+//      */
+//     separator?: string;
+//     /** 
+//      * Czy etykieta ma być nad wartością (vertical) czy obok (horizontal) 
+//      */
+//     layout?: "horizontal" | "vertical";
+// }
 
 /**
  * Price - komponent do wyświetlania wartości pieniężnych z odpowiednim formatowaniem, symbolem waluty i opcjonalnym kolorowaniem na podstawie znaku kwoty (dodatnia, ujemna, neutralna). Ten komponent jest idealny do prezentacji cen, kosztów, przychodów lub innych danych finansowych w sposób czytelny i estetyczny.
  */
-export interface IRichPrice extends IRichNode {
-    type: "price";
-    /**
-     * Wartość pieniężna do wyświetlenia, która może być liczbą lub tekstem sformatowanym (np. "1 234,56" lub "1.234,56"). Komponent może automatycznie formatować liczby na podstawie ustawień regionalnych i dodawać odpowiednie separatory tysięcy i dziesiętne, co ułatwia czytelność wartości finansowych.
-     */
-    value: number;
-    /**
-     * Kod waluty, który będzie wyświetlany obok wartości (np. "PLN", "USD"). Komponent może również obsługiwać symbole walutowe (np. "$", "€") i umieszczać je w odpowiedniej pozycji względem wartości, zgodnie z konwencjami danej waluty, co pozwala na jasne zidentyfikowanie rodzaju prezentowanej wartości finansowej.
-     */
-    currency: string | "auto"; // np. "PLN", "USD"
-    /** 
-     * Czy kolorować automatycznie na podstawie znaku kwoty 
-     */
-    colored?: boolean | {
-        positive?: RichSeverity; // default: "success"
-        negative?: RichSeverity; // default: "error"
-        zero?: RichSeverity;     // default: "default"
-    };
-    /** 
-     * Liczba miejsc po przecinku (default: 2) 
-     */
-    decimals?: number;
-}
+// export interface IRichPrice extends IRichNode {
+//     type: "price";
+//     /**
+//      * Wartość pieniężna do wyświetlenia, która może być liczbą lub tekstem sformatowanym (np. "1 234,56" lub "1.234,56"). Komponent może automatycznie formatować liczby na podstawie ustawień regionalnych i dodawać odpowiednie separatory tysięcy i dziesiętne, co ułatwia czytelność wartości finansowych.
+//      */
+//     value: number;
+//     /**
+//      * Kod waluty, który będzie wyświetlany obok wartości (np. "PLN", "USD"). Komponent może również obsługiwać symbole walutowe (np. "$", "€") i umieszczać je w odpowiedniej pozycji względem wartości, zgodnie z konwencjami danej waluty, co pozwala na jasne zidentyfikowanie rodzaju prezentowanej wartości finansowej.
+//      */
+//     currency: string | "auto"; // np. "PLN", "USD"
+//     /** 
+//      * Czy kolorować automatycznie na podstawie znaku kwoty 
+//      */
+//     colored?: boolean | {
+//         positive?: RichSeverity; // default: "success"
+//         negative?: RichSeverity; // default: "error"
+//         zero?: RichSeverity;     // default: "default"
+//     };
+//     /** 
+//      * Liczba miejsc po przecinku (default: 2) 
+//      */
+//     decimals?: number;
+// }
 
 /**
  * Counter - animowany licznik, który płynnie przechodzi od poprzedniej do nowej wartości, idealny do prezentacji dynamicznych danych liczbowych, takich jak liczba użytkowników online, ilość sprzedanych produktów czy inne metryki, które często się zmieniają. Ten komponent pozwala na atrakcyjne wizualnie przedstawienie zmian wartości liczbowych, co może przyciągnąć uwagę użytkowników i uczynić dane bardziej angażującymi.
@@ -1475,85 +1475,85 @@ export interface IRichCounter extends IRichNode {
 /**
  * Color - próbka koloru z opcjonalnym kodem i możliwością kopiowania, idealna do prezentacji kolorów w paletach, wynikach analizy kolorów lub wszędzie tam, gdzie chcemy pokazać wizualną reprezentację koloru wraz z jego kodem (np. hex, rgb, css var). Ten komponent pozwala na szybkie zidentyfikowanie koloru oraz łatwe skopiowanie jego kodu do schowka, co może być szczególnie przydatne dla projektantów, deweloperów i wszystkich pracujących z kolorami w interfejsie użytkownika.
  */
-export interface IRichColor extends IRichNode {
-    type: "color";
-    /**
-     * Kod koloru do wyświetlenia, który może być w formacie hex (np. "#ff0000"), rgb (np. "rgb(255, 0, 0)") lub jako zmienna CSS (np. "var(--primary-color)"). Komponent będzie renderował próbkę tego koloru, a jeśli opcja showCode jest ustawiona na true, również wyświetli kod koloru obok próbki, co pozwala na szybkie zidentyfikowanie i wykorzystanie koloru w innych częściach projektu.
-     */
-    color: string; // hex, rgb, css var
-    /** 
-     * Czy wyświetlić kod koloru obok próbki 
-     */
-    showCode?: boolean;
-    /** 
-     * Czy umożliwić skopiowanie kodu kliknięciem 
-     */
-    copyable?: boolean;
-}
+// export interface IRichColor extends IRichNode {
+//     type: "color";
+//     /**
+//      * Kod koloru do wyświetlenia, który może być w formacie hex (np. "#ff0000"), rgb (np. "rgb(255, 0, 0)") lub jako zmienna CSS (np. "var(--primary-color)"). Komponent będzie renderował próbkę tego koloru, a jeśli opcja showCode jest ustawiona na true, również wyświetli kod koloru obok próbki, co pozwala na szybkie zidentyfikowanie i wykorzystanie koloru w innych częściach projektu.
+//      */
+//     color: string; // hex, rgb, css var
+//     /** 
+//      * Czy wyświetlić kod koloru obok próbki 
+//      */
+//     showCode?: boolean;
+//     /** 
+//      * Czy umożliwić skopiowanie kodu kliknięciem 
+//      */
+//     copyable?: boolean;
+// }
 
 /**
  * Rating - komponent do wyświetlania oceny w formie ikon (np. gwiazdek), z możliwością dostosowania ikony, maksymalnej wartości i kolorowania na podstawie wartości, idealny do prezentacji ocen produktów, usług, treści lub innych elementów, które można ocenić w skali. Ten komponent pozwala na szybkie zrozumienie poziomu oceny dzięki wizualnej reprezentacji, a także umożliwia dostosowanie wyglądu ikon i kolorów w zależności od kontekstu i wartości oceny.
  */
-export interface IRichRating extends IRichNode {
-    type: "rating";
-    /** 
-     * Aktualna wartość 
-     */
-    value: number;
-    /** 
-     * Maksymalna wartość (domyślnie 5) 
-     * @default 5
-     */
-    max?: number;
-    /** 
-     * Ikona (domyślnie gwiazdka, ale może być np. "circle" lub "bolt")
-     * @default "Star"
-     */
-    icon?: React.ReactNode | ThemeIconName;
-    /** 
-     * Czy kolor ma zależeć od wartości (np. 1/5 = red, 5/5 = green) 
-     */
-    severity?: RichSeverity;
-}
+// export interface IRichRating extends IRichNode {
+//     type: "rating";
+//     /** 
+//      * Aktualna wartość 
+//      */
+//     value: number;
+//     /** 
+//      * Maksymalna wartość (domyślnie 5) 
+//      * @default 5
+//      */
+//     max?: number;
+//     /** 
+//      * Ikona (domyślnie gwiazdka, ale może być np. "circle" lub "bolt")
+//      * @default "Star"
+//      */
+//     icon?: React.ReactNode | ThemeIconName;
+//     /** 
+//      * Czy kolor ma zależeć od wartości (np. 1/5 = red, 5/5 = green) 
+//      */
+//     severity?: RichSeverity;
+// }
 
 /**
  * Mime - komponent do wyświetlania plików multimedialnych (np. PDF, wideo, audio) z opcją podania nazwy pliku, ścieżki do pliku (lokalnej lub sieciowej), typu MIME i strategii interakcji (np. otwieranie w domyślnej aplikacji, pokazywanie w folderze, pobieranie lub wykonywanie akcji). Ten komponent jest idealny do prezentacji różnorodnych treści multimedialnych w interfejsie użytkownika, umożliwiając użytkownikom łatwy dostęp do plików i interakcję z nimi zgodnie z określonymi preferencjami.
  */
-export interface IRichMime extends IRichNode {
-    type: "mime";
-    /** 
-     * Nazwa pliku do wyświetlenia (np. "raport_otr.pdf") 
-     */
-    fileName: RichNode;
-    /** 
-     * Lokalizacja pliku:
-     * - Ścieżka systemowa (np. "C:/Users/Admin/Documents/config.json")
-     * - URL sieciowy (np. "https://cdn.com/file.pdf")
-     * - URI danych (data:application/pdf;base64,...)
-     */
-    path?: string;
-    /** 
-     * Typ MIME (np. "video/mp4"). 
-     * Jeśli brak, renderer może spróbować go odgadnąć po rozszerzeniu z fileName.
-     */
-    mimeType?: string;
-    /** 
-     * Opcjonalna informacja o rozmiarze pliku do wyświetlenia 
-     */
-    sizeLabel?: string;
-    /** 
-     * Strategia interakcji:
-     * - "open": otwiera plik w domyślnej aplikacji systemowej (shell.openPath)
-     * - "show": pokazuje plik w folderze (shell.showItemInFolder)
-     * - "download": pobiera plik z sieci (jeśli path to URL)
-     * - "action": wykonuje przypisaną akcję IRichAction
-     */
-    interaction?: "open" | "show" | "download" | "action";
-    /** 
-     * Akcja wykonywana jeśli interaction === "action" 
-     */
-    action?: IRichAction;
-}
+// export interface IRichMime extends IRichNode {
+//     type: "mime";
+//     /** 
+//      * Nazwa pliku do wyświetlenia (np. "raport_otr.pdf") 
+//      */
+//     fileName: RichNode;
+//     /** 
+//      * Lokalizacja pliku:
+//      * - Ścieżka systemowa (np. "C:/Users/Admin/Documents/config.json")
+//      * - URL sieciowy (np. "https://cdn.com/file.pdf")
+//      * - URI danych (data:application/pdf;base64,...)
+//      */
+//     path?: string;
+//     /** 
+//      * Typ MIME (np. "video/mp4"). 
+//      * Jeśli brak, renderer może spróbować go odgadnąć po rozszerzeniu z fileName.
+//      */
+//     mimeType?: string;
+//     /** 
+//      * Opcjonalna informacja o rozmiarze pliku do wyświetlenia 
+//      */
+//     sizeLabel?: string;
+//     /** 
+//      * Strategia interakcji:
+//      * - "open": otwiera plik w domyślnej aplikacji systemowej (shell.openPath)
+//      * - "show": pokazuje plik w folderze (shell.showItemInFolder)
+//      * - "download": pobiera plik z sieci (jeśli path to URL)
+//      * - "action": wykonuje przypisaną akcję IRichAction
+//      */
+//     interaction?: "open" | "show" | "download" | "action";
+//     /** 
+//      * Akcja wykonywana jeśli interaction === "action" 
+//      */
+//     action?: IRichAction;
+// }
 
 /**
  * Widget - specjalny węzeł, który pozwala wyrenderować treść zdefiniowaną przez widgetId, zarejestrowany w mechaniźmie Rich Content.
