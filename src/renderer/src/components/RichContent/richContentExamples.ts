@@ -431,24 +431,28 @@ export const richContentExamples: RichExampleMap = {
                     severity: "info",
                     label: "Counter in stat",
                     size: 2,
-                    value: [
-                        {
-                            type: "refresh",
-                            interval: 4000,
-                            refresh: {
-                                type: "counter",
-                                severity: "info",
-                                variant: "title",
-                                duration: 500,
-                                value: async () => Math.floor(Math.random() * 1000),
+                    value: {
+                        type: "row",
+                        align: "end",
+                        items: [
+                            {
+                                type: "refresh",
+                                interval: 4000,
+                                refresh: {
+                                    type: "counter",
+                                    severity: "info",
+                                    variant: "title",
+                                    duration: 500,
+                                    value: async () => Math.floor(Math.random() * 1000),
+                                }
+                            },
+                            {
+                                type: "text",
+                                text: "calls",
+                                variant: "caption",
                             }
-                        },
-                        {
-                            type: "text",
-                            text: "calls",
-                            variant: "caption",
-                        }
-                    ]
+                        ]
+                    }
                 },
             ],
         },

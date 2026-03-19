@@ -636,7 +636,7 @@ export interface IRichRowBase extends IRichNode {
     /**
      * Wyrównanie elementów w wierszu
      */
-    align?: "start" | "center" | "end" | "stretch";
+    align?: "start" | "center" | "end" | "baseline" | "normal" | "stretch";
     /**
      * Justyfikacja elementów w wierszu
      */
