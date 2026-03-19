@@ -16,7 +16,7 @@ const formatNumber = (v: number) => {
     return v.toLocaleString(undefined);
 };
 
-const RichCounter: React.FC<RichCounterProps> = ({ node, environment, refreshId }) => {
+const RichCounter: React.FC<RichCounterProps> = ({ node, environment: _, refreshId }) => {
     const theme = useTheme();
     const duration = node.duration ?? 1000;
 
@@ -96,7 +96,7 @@ const RichCounter: React.FC<RichCounterProps> = ({ node, environment, refreshId 
     if (node.excluded) return null;
 
     const content = (
-        <RichText node={{ text: formatNumber(Math.round(display)), severity: node.severity, variant: node.variant }} environment={environment} />
+        <span>{formatNumber(Math.round(display))}</span>
     );
 
     if (node.tooltip) {

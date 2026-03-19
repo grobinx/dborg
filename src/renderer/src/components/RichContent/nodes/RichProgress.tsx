@@ -58,7 +58,7 @@ const RichProgress: React.FC<RichProgressProps> = ({ node, environment, refreshI
             )}
             <LinearProgress
                 variant={node.bufferValue !== undefined ? "buffer" : "determinate"}
-                value={value ?? undefined}
+                value={value ?? 0}
                 valueBuffer={bufferValue ?? undefined}
                 color={getColorFromSeverity(node.severity)}
                 sx={{ height: "6px", borderRadius: environment?.theme?.radius ?? 4 }}

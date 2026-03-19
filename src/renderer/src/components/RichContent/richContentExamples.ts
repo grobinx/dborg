@@ -98,8 +98,18 @@ export const richContentExamples: RichExampleMap = {
     "Tekst i markdown": textAndMarkdownExamples,
 
     "Linki, ikony, klawisze, odstępy": [
-        { type: "link", text: "Strona projektu", href: "https://github.com", severity: "info", variant: "body" },
-        { type: "link", href: "https://example.org/only-href", severity: "warning", variant: "caption" },
+        {
+            type: "text",
+            severity: "info",
+            variant: "body",
+            decoration: ["bold", "monospace"],
+            text: {
+                type: "link",
+                text: "Strona projektu",
+                href: "https://github.com",
+            },
+        },
+        { type: "link", href: "https://example.org/only-href" },
 
         { type: "icon", icon: "Info", severity: "info", tooltip: "Informacja" },
         { type: "icon", icon: "Warning", severity: "warning", tooltip: "Ostrzeżenie" },
@@ -440,12 +450,16 @@ export const richContentExamples: RichExampleMap = {
                                 type: "refresh",
                                 interval: 4000,
                                 refresh: {
-                                    type: "counter",
+                                    type: "text",
                                     severity: "info",
                                     variant: "title",
-                                    duration: 500,
-                                    value: async () => Math.floor(Math.random() * 1000),
-                                }
+                                    text: async () => ({
+                                        type: "counter",
+                                        duration: 500,
+                                        value: async () => Math.floor(Math.random() * 1000),
+                                    }),
+                                    animation: "heart-beat",
+                                },
                             },
                             {
                                 type: "text",

@@ -160,10 +160,7 @@ export type RichNodeType =
     | "widget"
     | "counter";
 
-/**
- * Union type wszystkich możliwych węzłów Rich Content.
- */
-export type RichNode =
+export type RichNodeObject = 
     | IRichText
     | IRichLink
     | IRichChip
@@ -195,6 +192,13 @@ export type RichNode =
     | IRichTree
     | IRichWidget
     | IRichCounter
+    ;
+
+/**
+ * Union type wszystkich możliwych węzłów Rich Content.
+ */
+export type RichNode =
+    | RichNodeObject
     /**
      * Tablica węzłów jest traktowana jak wiersz (RichRow) z elementami ułożonymi poziomo.
      */
@@ -295,7 +299,7 @@ export interface IRichContainerTheme {
      */
     radius?: number | string;
     /**
-     * Zmienione style dla wariantów tekstu (np. body, caption) wewnątrz tego kontenera.
+     * Domyślny wariant tekstu dla treści wprowadzanych wprost, nie przez IRichText.
      */
     textVariantStyles?: Partial<RichTextVariantStyles>;
 }
@@ -435,6 +439,20 @@ export interface IRichChip extends IRichNode {
 
 export type RichTextDecoration = "bold" | "italic" | "underline" | "strikethrough" | "monospace" | "uppercase";
 
+export type RichTextAnimation = 
+    | "fade"
+    | "slide-up"
+    | "slide-down"
+    | "slide-left"
+    | "slide-right"
+    | "zoom-in"
+    | "zoom-out"
+    | "flip"
+    | "heart-beat"
+    | "glow"
+    | "rotate"
+    | "rubber-band";
+
 /**
  * Prosty tekst z opcjonalnym formatowaniem.
  */
@@ -443,7 +461,7 @@ export interface IRichText extends IRichNode {
     /**
      * Tekst do wyświetlenia
      */
-    text: RichValue<string | number>;
+    text: RichValue<RichNode>;
     /**
      * Poziom ważności wpływający na kolor
      */
@@ -456,6 +474,10 @@ export interface IRichText extends IRichNode {
      * Dekoracje tekstu (np. pogrubienie, kursywa, podkreślenie)
      */
     decoration?: RichTextDecoration[];
+    /**
+     * Animacja tekstu (np. "fade", "slide-up", "zoom-in")
+     */
+    animation?: RichTextAnimation;
 }
 
 /**
@@ -471,14 +493,6 @@ export interface IRichLink extends IRichNode {
      * Adres URL
      */
     href: string;
-    /**
-     * Poziom ważności wpływający na kolor
-     */
-    severity?: RichSeverity;
-    /**
-     * Wariant typograficzny (rozmiar, grubość czcionki)
-     */
-    variant?: RichTextVariant;
 }
 
 /**
@@ -1404,14 +1418,6 @@ export interface IRichCounter extends IRichNode {
      * @default 1000 (1 sekunda)
      */
     duration?: number;
-    /**
-     * Poziom ważności wpływający na kolor licznika (np. "success" dla wartości rosnących, "error" dla malejących, "default" dla neutralnych) - domyślnie "default", co oznacza standardowy kolor. Można ustawić różne poziomy ważności, aby wizualnie wyróżnić zmiany wartości licznika w zależności od kontekstu danych, co może pomóc użytkownikom szybko zidentyfikować pozytywne lub negatywne trendy w prezentowanych danych liczbowych.
-     */
-    severity?: RichSeverity;
-    /**
-     * Wariant tekstu dla wyświetlanej wartości licznika
-     */
-    variant?: RichTextVariant;
 }
 
 /**

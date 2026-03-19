@@ -6,7 +6,7 @@ import React from "react";
  * @param duration The duration of the animation in milliseconds.
  * @returns An array containing the animation state and the previous value.
  */
-export const useValueAnimation = (value: any, duration = 300) => {
+export const useValueAnimation = (value: any, duration = 1000) => {
     const [isAnimating, setIsAnimating] = React.useState(false);
     const [prevValue, setPrevValue] = React.useState(value);
 

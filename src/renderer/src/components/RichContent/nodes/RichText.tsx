@@ -1,13 +1,14 @@
 import React from "react";
 import { Box, useTheme } from "@mui/material";
 import { styled, SxProps } from "@mui/material/styles";
-import { IRichEnvironment, IRichText, RichTextVariant, RichTextVariantStyle, RichTextVariantStyles } from "../types";
+import { IRichEnvironment, IRichText, RichNode, RichTextVariant, RichTextVariantStyle, RichTextVariantStyles } from "../types";
 import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromFunction, RichCode, RichProp, RichIcon } from "..";
 import Markdown, { Components } from "react-markdown";
 import Code from "@renderer/components/Code";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 import Tooltip from "@renderer/components/Tooltip";
+import useValueAnimation, { animationFadeInCss, animationFlipInCss, animationFlipXCss, animationGlowCss, animationHeartBeatCss, animationRotateInCss, animationRubberBandCss, animationSlideLeftCss } from "@renderer/hooks/useValueAnimation";
 
 interface RichTextProps extends RichProp {
     node: Optional<IRichText, "type">;
@@ -17,9 +18,9 @@ interface RichTextProps extends RichProp {
 export const RICH_TEXT_VARIANT_STYLES: RichTextVariantStyles = {
     micro: { fontSize: "0.79em", lineHeight: 1.30, fontWeight: 400, component: "span" },
     caption: { fontSize: "0.89em", lineHeight: 1.35, fontWeight: 400, component: "span" },
-    description: { fontSize: "0.95em", lineHeight: 1.45, fontWeight: 400, component: "p" },
-    body: { fontSize: "1em", lineHeight: 1.50, fontWeight: 400, component: "p" },
-    lead: { fontSize: "1.12em", lineHeight: 1.45, fontWeight: 400, component: "p" },
+    description: { fontSize: "0.95em", lineHeight: 1.45, fontWeight: 400, component: "div" },
+    body: { fontSize: "1em", lineHeight: 1.50, fontWeight: 400, component: "div" },
+    lead: { fontSize: "1.12em", lineHeight: 1.45, fontWeight: 400, component: "div" },
     label: { fontSize: "0.89em", lineHeight: 1.30, fontWeight: 600, letterSpacing: "0.01em", component: "span" },
     overline: { fontSize: "0.79em", lineHeight: 1.25, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", component: "span" },
     "title-sm": { fontSize: "1.26em", lineHeight: 1.30, fontWeight: 600, component: "h4" },
@@ -83,10 +84,10 @@ const RichTextRoot: React.FC<{
 
 const RichText: React.FC<RichTextProps> = ({ node, environment, refreshId }) => {
     const theme = useTheme();
-    const [text, setText] = React.useState<string | number | null>(resolveRichValue(node.text));
+    const [text, setText] = React.useState<RichNode | null>(null);
 
     React.useEffect(() => {
-        resolveRichValueFromFunction<string | number>(node.text, setText, node);
+        resolveRichValueFromFunction<RichNode>(node.text, setText, node);
     }, [node.text, refreshId]);
 
     if (node.variant === "markdown") {
@@ -96,7 +97,7 @@ const RichText: React.FC<RichTextProps> = ({ node, environment, refreshId }) => 
             h2: (props) => <RichTextRoot variant="title-lg" component="h2" textVariantStyles={environment?.theme?.textVariantStyles} {...props} />,
             h3: (props) => <RichTextRoot variant="title" component="h3" textVariantStyles={environment?.theme?.textVariantStyles} {...props} />,
             h4: (props) => <RichTextRoot variant="title-sm" component="h4" textVariantStyles={environment?.theme?.textVariantStyles} {...props} />,
-            h5: (props) => <RichTextRoot variant="lead" component="p" textVariantStyles={environment?.theme?.textVariantStyles} {...props} />,
+            h5: (props) => <RichTextRoot variant="lead" component="h5" textVariantStyles={environment?.theme?.textVariantStyles} {...props} />,
             code: ({ className, children }) => {
                 const language = className?.match(/language-(\w+)/)?.[1];
                 const isInline = !className && !String(children).includes('\n');
@@ -111,7 +112,7 @@ const RichText: React.FC<RichTextProps> = ({ node, environment, refreshId }) => 
             },
         }), [theme, environment, environment?.theme?.textVariantStyles]);
 
-        if (node.excluded) {
+        if (node.excluded || typeof text !== "string") {
             return null;
         }
 
@@ -124,12 +125,9 @@ const RichText: React.FC<RichTextProps> = ({ node, environment, refreshId }) => 
                 style={node.style}
                 sx={{ color: getSeverityColor(node.severity, theme) }}
             >
-                <Markdown
-                    components={components}
-                >
-                    {text === null ? "" : `${text}`}
+                <Markdown components={components}>
+                    {text}
                 </Markdown>
-                {text === null && <RichIcon node={{ icon: "Loading" }} environment={environment} />}
             </Box>
         );
     }
@@ -138,12 +136,34 @@ const RichText: React.FC<RichTextProps> = ({ node, environment, refreshId }) => 
         return null;
     }
 
+    const [valueAnimated] = useValueAnimation(text);
+
+    let animation = {};
+    switch (node.animation) {
+        case "fade": animation = animationFadeInCss; break;
+        case "slide-up": animation = animationSlideLeftCss; break;
+        case "slide-down": animation = animationSlideLeftCss; break;
+        case "slide-left": animation = animationSlideLeftCss; break;
+        case "slide-right": animation = animationSlideLeftCss; break;
+        case "zoom-in": animation = animationFlipInCss; break;
+        case "zoom-out": animation = animationFlipXCss; break;
+        case "flip": animation = animationFlipInCss; break;
+        case "heart-beat": animation = animationHeartBeatCss; break;
+        case "glow": animation = animationGlowCss; break;
+        case "rotate": animation = animationRotateInCss; break;
+        case "rubber-band": animation = animationRubberBandCss; break;
+    }
+
     const result = (
         <RichTextRoot
             id={node.id}
             hidden={node.hidden}
             key={node.key ?? node.id}
-            className={clsx("RichNode-text", node.className)}
+            className={clsx(
+                "RichNode-text",
+                node.className,
+                valueAnimated && "animating",
+            )}
             style={node.style}
             variant={node.variant ?? "body"}
             sx={{
@@ -156,10 +176,16 @@ const RichText: React.FC<RichTextProps> = ({ node, environment, refreshId }) => 
                     node.decoration?.includes("strikethrough") ? "line-through" : undefined,
                     node.decoration?.includes("uppercase") ? "uppercase" : undefined,
                 ].filter(Boolean).join(" "),
+                '&.animating': {
+                    ...animation,
+                }
             }}
             textVariantStyles={environment?.theme?.textVariantStyles}
         >
-            {text === null ? <RichIcon node={{ icon: "Loading" }} environment={environment} /> : text}
+            {text === null ?
+                <RichIcon node={{ icon: "Loading" }} environment={environment} />
+                : typeof text === "object" ? <RichRenderer node={text} environment={environment} /> : `${text}`
+            }
         </RichTextRoot>
     );
 

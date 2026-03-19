@@ -42,8 +42,7 @@ const RichLink: React.FC<RichLinkProps> = ({ node, environment }) => {
             href={node.href}
             target="_blank"
             rel="noopener noreferrer"
-            variant={getVariantMapping(node.variant) as any}
-            sx={{ color: getSeverityColor(node.severity, theme), fontSize: "inherit", fontFamily: "inherit", fontWeight: "inherit" }}
+            sx={{ color: "inherit", fontSize: "inherit", fontFamily: "inherit", fontWeight: "inherit" }}
         >
             {node.text || node.href}
         </Link>
