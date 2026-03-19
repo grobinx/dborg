@@ -1,6 +1,7 @@
 import { sleep } from "@renderer/utils/sleep";
 import { IRichText, IRichTreeItem, RichNode, RichSeverity, RichTextVariant } from "./types";
 import { RICH_TEXT_VARIANT_STYLES } from "./nodes/RichText";
+import { Duration } from "luxon";
 
 type RichExampleMap = Record<string, RichNode[]>;
 
@@ -570,7 +571,7 @@ export const richContentExamples: RichExampleMap = {
             type: "timeline",
             items: [
                 {
-                    timestamp: { type: "time", value: "14:23:01", format: "relative" },
+                    timestamp: Duration.fromObject({ hours: 14, minutes: 23, seconds: 1 }).toHuman({ unitDisplay: "short" }),
                     severity: "info",
                     icon: "Info",
                     label: "Połączono z bazą danych",

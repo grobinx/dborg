@@ -3,12 +3,12 @@ import { Stack, styled, useTheme, Box, Badge } from "@mui/material"; // Importuj
 import TabPanelLabel from "@renderer/components/TabsPanel/TabPanelLabel";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 import { useTranslation } from "react-i18next";
-import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
+import { IDatabaseSession, resultsTabsId } from "@renderer/contexts/DatabaseSession";
 import { Messages, useMessages } from "@renderer/contexts/MessageContext";
 import { EditorsTabs, editorsTabsId } from "./ConnectionView/EdiorsTabs";
 import { SplitPanel, SplitPanelGroup, Splitter } from "@renderer/components/SplitPanel";
 import "./ConnectionStatusBarButton";
-import ResultsTabs, { resultsTabsId } from "./ConnectionView/ResultsTabs";
+import ResultsTabs from "./ConnectionView/ResultsTabs";
 import { SQL_RESULT_SQL_QUERY_EXECUTING } from "./ConnectionView/SqlResultPanel";
 import UnboundBadge from "@renderer/components/UnboundBadge";
 import EditorContentManager from "@renderer/contexts/EditorContentManager";

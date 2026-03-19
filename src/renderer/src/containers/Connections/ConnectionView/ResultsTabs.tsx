@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { TabsPanel } from "@renderer/components/TabsPanel/TabsPanel";
 import { useTheme } from "@mui/material";
 import { SqlResultContent, SqlResultLabel, SqlResultButtons } from "./SqlResultPanel";
-import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
+import { IDatabaseSession, resultsTabsId } from "@renderer/contexts/DatabaseSession";
 import TabPanel, { TabPanelOwnProps } from "@renderer/components/TabsPanel/TabPanel";
 import TabPanelButtons from "@renderer/components/TabsPanel/TabPanelButtons";
 import { uuidv7 } from "uuidv7";
@@ -19,10 +19,6 @@ export const SQL_RESULT_CLOSE = "sql-result:close";
 interface ResultsTabsProps {
     session: IDatabaseSession;
     additionalTabs?: React.ReactElement<TabPanelOwnProps>[];
-}
-
-export function resultsTabsId(session: IDatabaseSession): string {
-    return session.profile.sch_id + ":" + session.info.uniqueId + ":results-tabs";
 }
 
 const ResultsTabs: React.FC<ResultsTabsProps> = ({ session, additionalTabs }) => {

@@ -2,7 +2,7 @@ import React from "react";
 import { Box, useTheme } from "@mui/material";
 import { styled, SxProps } from "@mui/material/styles";
 import { IRichEnvironment, IRichText, RichTextVariant, RichTextVariantStyle, RichTextVariantStyles } from "../types";
-import RichRenderer, { getSeverityColor, RichCode, RichProp } from "..";
+import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromFunction, RichCode, RichProp, RichIcon } from "..";
 import Markdown, { Components } from "react-markdown";
 import Code from "@renderer/components/Code";
 import { Optional } from "@renderer/types/universal";
@@ -81,8 +81,13 @@ const RichTextRoot: React.FC<{
     );
 };
 
-const RichText: React.FC<RichTextProps> = ({ node, environment }) => {
+const RichText: React.FC<RichTextProps> = ({ node, environment, refreshId }) => {
     const theme = useTheme();
+    const [text, setText] = React.useState<string | number | null>(resolveRichValue(node.text));
+
+    React.useEffect(() => {
+        resolveRichValueFromFunction<string | number>(node.text, setText, node);
+    }, [node.text, refreshId]);
 
     if (node.variant === "markdown") {
         const components: Components = React.useMemo(() => ({
@@ -122,8 +127,9 @@ const RichText: React.FC<RichTextProps> = ({ node, environment }) => {
                 <Markdown
                     components={components}
                 >
-                    {`${node.text}`}
+                    {text === null ? "" : `${text}`}
                 </Markdown>
+                {text === null && <RichIcon node={{ icon: "Loading" }} environment={environment} />}
             </Box>
         );
     }
@@ -153,7 +159,7 @@ const RichText: React.FC<RichTextProps> = ({ node, environment }) => {
             }}
             textVariantStyles={environment?.theme?.textVariantStyles}
         >
-            {node.text}
+            {text === null ? <RichIcon node={{ icon: "Loading" }} environment={environment} /> : text}
         </RichTextRoot>
     );
 

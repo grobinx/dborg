@@ -38,7 +38,6 @@ export type {
     IRichTable,
     IRichSkeleton,
     IRichMetric,
-    IRichTime,
     IRichBullet,
     IRichRefresh,
     IRichSparkline,
@@ -66,7 +65,6 @@ import RichSwitch from "./nodes/RichSwitch";
 import RichTimeline from "./nodes/RichTimeline";
 import RichSkeleton from "./nodes/RichSkeleton";
 import RichMetric from "./nodes/RichMetric";
-import RichTime from "./nodes/RichTime";
 import RichBullet from "./nodes/RichBullet";
 import RichRefresh from "./nodes/RichRefresh";
 import RichSparkline from "./nodes/RichSparkline";
@@ -105,7 +103,6 @@ export { default as RichSwitch } from "./nodes/RichSwitch";
 export { default as RichTimeline } from "./nodes/RichTimeline";
 export { default as RichSkeleton } from "./nodes/RichSkeleton";
 export { default as RichMetric } from "./nodes/RichMetric";
-export { default as RichTime } from "./nodes/RichTime";
 export { default as RichBullet } from "./nodes/RichBullet";
 export { default as RichRefresh } from "./nodes/RichRefresh";
 export { default as RichSparkline } from "./nodes/RichSparkline";
@@ -159,6 +156,8 @@ export async function resolveRichValueFromFunction<V = any>(
         set(value);
         return value;
     }
+    set(resolvable);
+    return resolvable;
 }
 
 /**
@@ -246,8 +245,6 @@ const RichRenderer: React.FC<{
             return <RichSkeleton node={node} environment={environment} refreshId={refreshId} />;
         case "metric":
             return <RichMetric node={node} environment={environment} refreshId={refreshId} />;
-        case "time":
-            return <RichTime node={node} environment={environment} refreshId={refreshId} />;
         case "bullet":
             return <RichBullet node={node} environment={environment} refreshId={refreshId} />;
         case "refresh":

@@ -7,6 +7,10 @@ import { PROFILE_UPDATE_MESSAGE } from "./ProfilesContext";
 import { DataGridChangesManager, DataGridChangesOptions } from "@renderer/components/DataGrid/DataGridChangesManager";
 import { versionToNumber } from "../../../../src/api/version";
 
+export function resultsTabsId(session: IDatabaseSession): string {
+    return session.profile.sch_id + ":" + session.info.uniqueId + ":results-tabs";
+}
+
 export interface IDatabaseSession extends api.BaseConnection {
     info: api.ConnectionInfo; // Connection information
     profile: ProfileRecord; // Profile information

@@ -152,7 +152,6 @@ export type RichNodeType =
     | "entity"
     | "skeleton"
     | "metric"
-    | "time"
     | "bullet"
     | "refresh"
     | "sparkline"
@@ -186,7 +185,6 @@ export type RichNode =
     | IRichTable
     | IRichStat
     | IRichTimeline
-    | IRichTime
     | IRichSkeleton
     | IRichCustomSkeleton
     | IRichMetric
@@ -311,22 +309,6 @@ export interface IRichEnvironment {
      * Widgety pozwalające na renderowanie treści zdefiniowanej przez programistę
      */
     widgets?: Map<string, IRichWidgetRenderer>;
-}
-
-/**
- * Węzeł reprezentujący element czasu, który może wyświetlać czas względny lub absolutny w zależności od formatu.
- */
-export interface IRichTime extends IRichNode {
-    type: "time";
-    /** 
-     * Timestamp w formacie ISO lub Unix 
-     */
-    value: string | number;
-    /** 
-     * Format wyświetlania: "relative", "absolute", "full"
-     * @default "absolute"
-     */
-    format?: "relative" | "absolute" | "full";
 }
 
 /**
@@ -461,7 +443,7 @@ export interface IRichText extends IRichNode {
     /**
      * Tekst do wyświetlenia
      */
-    text: string | number;
+    text: RichValue<string | number>;
     /**
      * Poziom ważności wpływający na kolor
      */
@@ -1116,10 +1098,6 @@ export interface IRichDescriptionItem {
      * Wartość właściwości
      */
     value: RichNode;
-    /** 
-     * Opcjonalna ikona pomocnicza przy etykiecie 
-     */
-    icon?: ThemeIconName;
 }
 
 /**
@@ -1338,8 +1316,6 @@ export interface IRichRefresh extends IRichNode {
     refresh: RichNode;
 }
 
-// types.ts
-
 export type RichSparklineCurve = "linear" | "smooth";
 export type RichSparklineFill = "none" | "gradient";
 
@@ -1412,33 +1388,6 @@ export interface IRichSparkline extends IRichNode {
 //      * Czy etykieta ma być nad wartością (vertical) czy obok (horizontal) 
 //      */
 //     layout?: "horizontal" | "vertical";
-// }
-
-/**
- * Price - komponent do wyświetlania wartości pieniężnych z odpowiednim formatowaniem, symbolem waluty i opcjonalnym kolorowaniem na podstawie znaku kwoty (dodatnia, ujemna, neutralna). Ten komponent jest idealny do prezentacji cen, kosztów, przychodów lub innych danych finansowych w sposób czytelny i estetyczny.
- */
-// export interface IRichPrice extends IRichNode {
-//     type: "price";
-//     /**
-//      * Wartość pieniężna do wyświetlenia, która może być liczbą lub tekstem sformatowanym (np. "1 234,56" lub "1.234,56"). Komponent może automatycznie formatować liczby na podstawie ustawień regionalnych i dodawać odpowiednie separatory tysięcy i dziesiętne, co ułatwia czytelność wartości finansowych.
-//      */
-//     value: number;
-//     /**
-//      * Kod waluty, który będzie wyświetlany obok wartości (np. "PLN", "USD"). Komponent może również obsługiwać symbole walutowe (np. "$", "€") i umieszczać je w odpowiedniej pozycji względem wartości, zgodnie z konwencjami danej waluty, co pozwala na jasne zidentyfikowanie rodzaju prezentowanej wartości finansowej.
-//      */
-//     currency: string | "auto"; // np. "PLN", "USD"
-//     /** 
-//      * Czy kolorować automatycznie na podstawie znaku kwoty 
-//      */
-//     colored?: boolean | {
-//         positive?: RichSeverity; // default: "success"
-//         negative?: RichSeverity; // default: "error"
-//         zero?: RichSeverity;     // default: "default"
-//     };
-//     /** 
-//      * Liczba miejsc po przecinku (default: 2) 
-//      */
-//     decimals?: number;
 // }
 
 /**

@@ -1,9 +1,8 @@
-import { IDatabaseSession, IDatabaseSessionCursor } from "@renderer/contexts/DatabaseSession";
+import { IDatabaseSession, IDatabaseSessionCursor, resultsTabsId } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
 import { ConnectionSqlResultTab } from "plugins/manager/renderer/ConnectionSlots";
 import { versionToNumber } from "../../../../../../src/api/version";
 import { SlotRuntimeContext } from "plugins/manager/renderer/CustomSlots";
-import { resultsTabsId } from "@renderer/containers/Connections/ConnectionView/ResultsTabs";
 import { SWITCH_PANEL_TAB } from "@renderer/app/Messages";
 import { Action } from "@renderer/components/CommandPalette/ActionManager";
 import * as monaco from "monaco-editor";
