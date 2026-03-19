@@ -5,21 +5,21 @@ import { vs, vs2015 } from "react-syntax-highlighter/dist/esm/styles/hljs";
 import { IRichCode, IRichEnvironment } from "../types";
 import clsx from "@renderer/utils/clsx";
 import { Optional } from "@renderer/types/universal";
-import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
+import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichIcon, RichProp } from "..";
 import Tooltip from "@renderer/components/Tooltip";
 
-interface RichCodeProps {
+interface RichCodeProps extends RichProp {
     node: Optional<IRichCode, "type">;
     environment?: IRichEnvironment;
 }
 
-const RichCode: React.FC<RichCodeProps> = ({ node, environment }) => {
+const RichCode: React.FC<RichCodeProps> = ({ node, environment, refreshId }) => {
     const theme = useTheme();
     const [code, setCode] = React.useState<string | null>(resolveRichValue(node.code));
 
     React.useEffect(() => {
-        resolveRichValueFromFunction(node.code, setCode);
-    }, [node.code]);
+        resolveRichValueFromFunction(node.code, setCode, node);
+    }, [node.code, refreshId]);
 
     if (node.excluded) {
         return null;

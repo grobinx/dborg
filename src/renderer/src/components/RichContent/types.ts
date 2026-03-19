@@ -122,7 +122,7 @@ export type RichGap = number | string;
  */
 export type RichColSize = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | "auto" | "stretch";
 
-export type RichValue<V = any> = V | (() => Promise<V>);
+export type RichValue<V = any> = V | ((data: Record<string, any>) => Promise<V>);
 
 /**
  * Typ węzła w strukturze Rich Content.
@@ -531,11 +531,11 @@ export interface IRichProgress extends IRichNode {
     /**
      * Wartość postępu (0-100)
      */
-    value: number;
+    value: RichValue<number>;
     /**
      * Wartość bufora (0-100) (opcjonalnie)
      */
-    bufferValue?: number;
+    bufferValue?: RichValue<number>;
     /**
      * Etykieta postępu
      */
@@ -1329,8 +1329,9 @@ export interface IRichRefresh extends IRichNode {
     type: "refresh";
     /**
      * Interwał odświeżania danych w milisekundach - jeśli podano, komponent będzie automatycznie odświeżał dane co określony czas, wywołując ponownie funkcję value i aktualizując zawartość.
+     * @default 1000
      */
-    interval: number;
+    interval?: number;
     /**
      * Zawartość do renderowania, która będzie aktualizowana po każdym odświeżeniu. Może być dowolnym węzłem RichNode, co pozwala na dynamiczne aktualizowanie różnych typów treści (np. tekst, wykresy, tabele) w regularnych odstępach czasu.
      */
@@ -1454,14 +1455,6 @@ export interface IRichCounter extends IRichNode {
      * @default 1000 (1 sekunda)
      */
     duration?: number;
-    /** 
-     * Prefiks/Sufiks, np. "%", ">" 
-     */
-    prefix?: string;
-    /**
-     * Prefiks/Sufiks, np. "%", "<"
-     */
-    suffix?: string;
     /**
      * Poziom ważności wpływający na kolor licznika (np. "success" dla wartości rosnących, "error" dla malejących, "default" dla neutralnych) - domyślnie "default", co oznacza standardowy kolor. Można ustawić różne poziomy ważności, aby wizualnie wyróżnić zmiany wartości licznika w zależności od kontekstu danych, co może pomóc użytkownikom szybko zidentyfikować pozytywne lub negatywne trendy w prezentowanych danych liczbowych.
      */

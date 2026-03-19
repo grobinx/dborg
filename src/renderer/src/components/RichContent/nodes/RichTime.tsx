@@ -4,9 +4,9 @@ import { IRichContainerTheme, IRichEnvironment, IRichTime } from "../types";
 import clsx from "@renderer/utils/clsx";
 import { Optional } from "@renderer/types/universal";
 import Tooltip from "@renderer/components/Tooltip";
-import RichRenderer from "..";
+import RichRenderer, { RichProp } from "..";
 
-interface RichTimeProps {
+interface RichTimeProps extends RichProp {
     node: Optional<IRichTime, "type">;
     environment?: IRichEnvironment;
 }

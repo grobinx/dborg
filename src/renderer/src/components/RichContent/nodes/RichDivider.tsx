@@ -3,9 +3,9 @@ import { Divider } from "@mui/material";
 import { IRichDivider, IRichEnvironment } from "../types";
 import clsx from "@renderer/utils/clsx";
 import Tooltip from "@renderer/components/Tooltip";
-import RichRenderer from "..";
+import RichRenderer, { RichProp } from "..";
 
-interface RichDividerProps {
+interface RichDividerProps extends RichProp {
     node: IRichDivider;
     environment?: IRichEnvironment;
 }

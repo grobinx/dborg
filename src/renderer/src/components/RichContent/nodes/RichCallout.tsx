@@ -1,12 +1,12 @@
 import React from "react";
-import { IRichCallout, IRichContainerTheme, IRichEnvironment } from "../types";
-import RichRenderer from "..";
+import { IRichCallout, IRichEnvironment } from "../types";
+import RichRenderer, { RichProp } from "..";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 import CalloutBox from "../utils/CalloutBox";
 import Tooltip from "@renderer/components/Tooltip";
 
-interface RichCalloutProps {
+interface RichCalloutProps extends RichProp {
     node: Optional<IRichCallout, "type">;
     environment?: IRichEnvironment;
     children?: React.ReactNode;

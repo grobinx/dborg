@@ -5,9 +5,9 @@ import UnboundBadge from "@renderer/components/UnboundBadge";
 import { ThemeColor } from "@renderer/types/colors";
 import clsx from "@renderer/utils/clsx";
 import Tooltip from "@renderer/components/Tooltip";
-import RichRenderer from "..";
+import RichRenderer, { RichProp } from "..";
 
-interface RichBadgeProps {
+interface RichBadgeProps extends RichProp {
     node: IRichBadge;
     environment?: IRichEnvironment;
 }

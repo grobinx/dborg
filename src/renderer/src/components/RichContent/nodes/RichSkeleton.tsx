@@ -1,11 +1,11 @@
 import React from "react";
-import { Box, Skeleton } from "@mui/material";
-import { IRichContainerTheme, IRichCustomSkeleton, IRichEnvironment, IRichSkeleton, RichNode, RichSkeletonVariant } from "../types";
-import { RichRenderer } from "..";
+import { Skeleton } from "@mui/material";
+import { IRichCustomSkeleton, IRichEnvironment, IRichSkeleton, RichNode, RichSkeletonVariant } from "../types";
+import { RichProp, RichRenderer } from "..";
 import clsx from "@renderer/utils/clsx";
 import { Optional } from "@renderer/types/universal";
 
-interface RichSkeletonProps {
+interface RichSkeletonProps extends RichProp {
     node: Optional<IRichSkeleton | IRichCustomSkeleton, "type">;
     environment?: IRichEnvironment;
 }

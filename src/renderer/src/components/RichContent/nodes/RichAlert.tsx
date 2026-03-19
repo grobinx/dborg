@@ -2,23 +2,23 @@ import React from "react";
 import { Alert, useTheme } from "@mui/material";
 import { IRichAlert, IRichEnvironment, RichNode, RichSeverity } from "../types";
 import { resolveIcon } from "@renderer/themes/icons";
-import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
+import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromFunction, RichIcon, RichProp } from "..";
 import clsx from "@renderer/utils/clsx";
 import { Optional } from "@renderer/types/universal";
 import Tooltip from "@renderer/components/Tooltip";
 
-interface RichAlertProps {
+interface RichAlertProps extends RichProp {
     node: Optional<IRichAlert, "type">;
     environment?: IRichEnvironment;
 }
 
-const RichAlert: React.FC<RichAlertProps> = ({ node, environment }) => {
+const RichAlert: React.FC<RichAlertProps> = ({ node, environment, refreshId }) => {
     const theme = useTheme();
     const [message, setMessage] = React.useState<RichNode | null>(resolveRichValue(node.message));
 
     React.useEffect(() => {
-        resolveRichValueFromFunction<RichNode>(node.message, setMessage);
-    }, [node.message]);
+        resolveRichValueFromFunction<RichNode>(node.message, setMessage, node);
+    }, [node.message, refreshId]);
 
     const getSeverityForAlert = (severity?: RichSeverity): "error" | "warning" | "info" | "success" => {
         switch (severity) {

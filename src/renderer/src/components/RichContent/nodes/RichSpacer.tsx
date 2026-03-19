@@ -1,12 +1,12 @@
 import React from "react";
 import { Box } from "@mui/material";
-import { IRichContainerTheme, IRichEnvironment, IRichSpacer } from "../types";
+import { IRichEnvironment, IRichSpacer } from "../types";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 import Tooltip from "@renderer/components/Tooltip";
-import RichRenderer from "..";
+import RichRenderer, { RichProp } from "..";
 
-interface RichSpacerProps {
+interface RichSpacerProps extends RichProp {
     node: Optional<IRichSpacer, "type">;
     environment?: IRichEnvironment;
 }

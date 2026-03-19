@@ -1,11 +1,11 @@
 import React from "react";
 import { Box, FormControlLabel, Switch, SwitchProps, useTheme } from "@mui/material";
 import { IRichEnvironment, IRichSwitch } from "../types";
-import RichRenderer from "..";
+import RichRenderer, { RichProp } from "..";
 import clsx from "@renderer/utils/clsx";
 import Tooltip from "@renderer/components/Tooltip";
 
-interface RichSwitchProps {
+interface RichSwitchProps extends RichProp {
     node: IRichSwitch;
     environment?: IRichEnvironment;
 }

@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Theme } from "@mui/material";
-import { IRichContainerTheme, IRichEnvironment, RichNode, RichSeverity, RichTextVariant, RichValue } from "./types";
+import { IRichEnvironment, IRichMetadata, RichNode, RichSeverity, RichTextVariant, RichValue } from "./types";
 
 // Types
 export type {
@@ -82,6 +82,7 @@ import RichList from "./containers/RichList";
 import RichTable from "./containers/RichTable";
 import RichGroup from "./containers/RichGroup";
 import RichTree from "./containers/RichTree";
+import { Optional } from "@renderer/types/universal";
 
 // Export not typed components
 export { default as RichBadge } from "./nodes/RichBadge";
@@ -145,12 +146,29 @@ export function resolveRichValue<V = any>(resolvable: RichValue<V>): V | null {
     return null;
 }
 
-export async function resolveRichValueFromFunction<V = any>(resolvable: RichValue<V>, set: React.Dispatch<React.SetStateAction<V | null>>) {
+export async function resolveRichValueFromFunction<V = any>(
+    resolvable: RichValue<V>, 
+    set: React.Dispatch<React.SetStateAction<V | null>>,
+    node: IRichMetadata,
+): Promise<V | null | undefined> {
     if (typeof resolvable === "function") {
-        const value = await (resolvable as () => Promise<V>)();
+        if (node.data === undefined) {
+            node.data = {};
+        }
+        const value = await (resolvable as (data: Record<string, any>) => Promise<V>)(node.data);
         set(value);
         return value;
     }
+}
+
+/**
+ * Bazowy interfejs dla wszystkich węzłów Rich Content, zawierający wspólne właściwości,
+ */
+export interface RichProp {
+    /**
+     * Zwiększany licznik odświerzania dla potrzeb niektórych węzłów
+     */
+    refreshId?: bigint;
 }
 
 /**
@@ -168,80 +186,82 @@ const RichRenderer: React.FC<{
      * Opcjonalny poziom ważności wpływający na kolor tekstu dla prostych stringów/numberów.
      */
     textSeverity?: RichSeverity;
-}> = ({ node, environment, textVariant, textSeverity }) => {
+
+    refreshId?: bigint;
+}> = ({ node, environment, textVariant, textSeverity, refreshId }) => {
     if (node === null || node === undefined) {
         return null;
     }
 
     if (Array.isArray(node)) {
-        return <RichRow node={{ items: node }} environment={environment} />;
+        return <RichRow node={{ items: node }} environment={environment} refreshId={refreshId} />;
     } else if (typeof node === "string" || typeof node === "number") {
-        return <RichText node={{ text: String(node), variant: textVariant, severity: textSeverity }} environment={environment} />;
+        return <RichText node={{ text: String(node), variant: textVariant, severity: textSeverity }} environment={environment} refreshId={refreshId} />;
     }
 
     switch (node.type) {
         case "text":
-            return <RichText node={node} environment={environment} />;
+            return <RichText node={node} environment={environment} refreshId={refreshId} />;
         case "divider":
-            return <RichDividerNode node={node} environment={environment} />;
+            return <RichDividerNode node={node} environment={environment} refreshId={refreshId} />;
         case "spacer":
-            return <RichSpacer node={node} environment={environment} />;
+            return <RichSpacer node={node} environment={environment} refreshId={refreshId} />;
         case "icon":
-            return <RichIcon node={node} environment={environment} />;
+            return <RichIcon node={node} environment={environment} refreshId={refreshId} />;
         case "link":
-            return <RichLink node={node} environment={environment} />;
+            return <RichLink node={node} environment={environment} refreshId={refreshId} />;
         case "chip":
-            return <RichChip node={node} environment={environment} />;
+            return <RichChip node={node} environment={environment} refreshId={refreshId} />;
         case "kbd":
-            return <RichKbd node={node} environment={environment} />;
+            return <RichKbd node={node} environment={environment} refreshId={refreshId} />;
         case "progress":
-            return <RichProgress node={node} environment={environment} />;
+            return <RichProgress node={node} environment={environment} refreshId={refreshId} />;
         case "code":
-            return <RichCode node={node} environment={environment} />;
+            return <RichCode node={node} environment={environment} refreshId={refreshId} />;
         case "image":
-            return <RichImage node={node} environment={environment} />;
+            return <RichImage node={node} environment={environment} refreshId={refreshId} />;
         case "stat":
-            return <RichStat node={node} environment={environment} />;
+            return <RichStat node={node} environment={environment} refreshId={refreshId} />;
         case "alert":
-            return <RichAlert node={node} environment={environment} />;
+            return <RichAlert node={node} environment={environment} refreshId={refreshId} />;
         case "action":
-            return <RichAction node={node} environment={environment} />;
+            return <RichAction node={node} environment={environment} refreshId={refreshId} />;
         case "row":
-            return <RichRow node={node} environment={environment} />;
+            return <RichRow node={node} environment={environment} refreshId={refreshId} />;
         case "column":
-            return <RichColumn node={node} environment={environment} />;
+            return <RichColumn node={node} environment={environment} refreshId={refreshId} />;
         case "section":
-            return <RichSection node={node} environment={environment} />;
+            return <RichSection node={node} environment={environment} refreshId={refreshId} />;
         case "group":
-            return <RichGroup node={node} environment={environment} />;
+            return <RichGroup node={node} environment={environment} refreshId={refreshId} />;
         case "list":
-            return <RichList node={node} environment={environment} />;
+            return <RichList node={node} environment={environment} refreshId={refreshId} />;
         case "switch":
-            return <RichSwitch node={node} environment={environment} />;
+            return <RichSwitch node={node} environment={environment} refreshId={refreshId} />;
         case "timeline":
-            return <RichTimeline node={node} environment={environment} />;
+            return <RichTimeline node={node} environment={environment} refreshId={refreshId} />;
         case "table":
-            return <RichTable node={node} environment={environment} />;
+            return <RichTable node={node} environment={environment} refreshId={refreshId} />;
         case "skeleton":
-            return <RichSkeleton node={node} environment={environment} />;
+            return <RichSkeleton node={node} environment={environment} refreshId={refreshId} />;
         case "metric":
-            return <RichMetric node={node} environment={environment} />;
+            return <RichMetric node={node} environment={environment} refreshId={refreshId} />;
         case "time":
-            return <RichTime node={node} environment={environment} />;
+            return <RichTime node={node} environment={environment} refreshId={refreshId} />;
         case "bullet":
-            return <RichBullet node={node} environment={environment} />;
+            return <RichBullet node={node} environment={environment} refreshId={refreshId} />;
         case "refresh":
-            return <RichRefresh node={node} environment={environment} />;
+            return <RichRefresh node={node} environment={environment} refreshId={refreshId} />;
         case "sparkline":
-            return <RichSparkline node={node} environment={environment} />;
+            return <RichSparkline node={node} environment={environment} refreshId={refreshId} />;
         case "callout":
-            return <RichCallout node={node} environment={environment} />;
+            return <RichCallout node={node} environment={environment} refreshId={refreshId} />;
         case "tree":
-            return <RichTree node={node} environment={environment} />;
+            return <RichTree node={node} environment={environment} refreshId={refreshId} />;
         case "widget":
-            return <RichWidget node={node} environment={environment} />;
+            return <RichWidget node={node} environment={environment} refreshId={refreshId} />;
         case "counter":
-            return <RichCounter node={node} environment={environment} />;
+            return <RichCounter node={node} environment={environment} refreshId={refreshId} />;
         default:
             return <Box>Unknown node type: {(node as any).type}</Box>;
     }

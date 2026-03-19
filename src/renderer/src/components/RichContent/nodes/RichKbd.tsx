@@ -4,9 +4,9 @@ import { Shortcut } from "@renderer/components/Shortcut";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 import Tooltip from "@renderer/components/Tooltip";
-import RichRenderer from "..";
+import RichRenderer, { RichProp } from "..";
 
-interface RichKbdProps {
+interface RichKbdProps extends RichProp {
     node: Optional<IRichKbd, "type">;
     environment?: IRichEnvironment;
 }

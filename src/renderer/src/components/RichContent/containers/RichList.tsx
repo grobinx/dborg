@@ -3,23 +3,23 @@ import { List, useTheme } from "@mui/material";
 import { IRichEnvironment, IRichList, IRichListItem, RichNode } from "../types";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
-import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
+import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromFunction, RichIcon, RichProp } from "..";
 import CalloutBox from "../utils/CalloutBox";
 import Tooltip from "@renderer/components/Tooltip";
 
-interface RichListItemProps {
+interface RichListItemProps extends RichProp {
     node: IRichListItem;
     environment?: IRichEnvironment;
     children?: React.ReactNode;
 }
 
-const RichListItem: React.FC<RichListItemProps> = ({ node, environment, children }) => {
+const RichListItem: React.FC<RichListItemProps> = ({ node, environment, children, refreshId }) => {
     const theme = useTheme();
     const [content, setContent] = React.useState<RichNode | null>(resolveRichValue(node.content));
 
     React.useEffect(() => {
-        resolveRichValueFromFunction<RichNode>(node.content, setContent);
-    }, [node.content]);
+        resolveRichValueFromFunction<RichNode>(node.content, setContent, node);
+    }, [node.content, refreshId]);
 
     if (node.excluded) {
         return null;
@@ -67,18 +67,18 @@ const RichListItem: React.FC<RichListItemProps> = ({ node, environment, children
     return result;
 };
 
-interface RichListProps {
+interface RichListProps extends RichProp {
     node: Optional<IRichList, "type">;
     environment?: IRichEnvironment;
     children?: React.ReactNode;
 }
 
-const RichList: React.FC<RichListProps> = ({ node, environment, children }) => {
+const RichList: React.FC<RichListProps> = ({ node, environment, children, refreshId }) => {
     const [items, setItems] = React.useState<IRichListItem[] | null>(resolveRichValue(node.items));
 
     React.useEffect(() => {
-        resolveRichValueFromFunction(node.items, setItems);
-    }, [node.items]);
+        resolveRichValueFromFunction(node.items, setItems, node);
+    }, [node.items, refreshId]);
 
     const getListStyleType = (listType?: "bullet" | "numbered" | "none") => {
         switch (listType) {

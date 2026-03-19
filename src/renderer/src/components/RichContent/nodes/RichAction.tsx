@@ -5,8 +5,9 @@ import RichBadge from "./RichBadge";
 import { Button } from "@renderer/components/buttons/Button";
 import { ToolButton } from "@renderer/components/buttons/ToolButton";
 import clsx from "@renderer/utils/clsx";
+import { RichProp } from "..";
 
-interface RichActionProps {
+interface RichActionProps extends RichProp {
     node: IRichAction;
     environment?: IRichEnvironment;
 }

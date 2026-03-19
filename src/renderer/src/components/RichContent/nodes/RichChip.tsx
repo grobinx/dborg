@@ -2,23 +2,23 @@ import React from "react";
 import { Chip, Box, useTheme } from "@mui/material";
 import { IRichChip, IRichEnvironment, RichNode } from "../types";
 import RichBadge from "./RichBadge";
-import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
+import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichIcon, RichProp } from "..";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 import Tooltip from "@renderer/components/Tooltip";
 
-interface RichChipProps {
+interface RichChipProps extends RichProp {
     node: Optional<IRichChip, "type">;
     environment?: IRichEnvironment;
 }
 
-const RichChip: React.FC<RichChipProps> = ({ node, environment }) => {
+const RichChip: React.FC<RichChipProps> = ({ node, environment, refreshId }) => {
     const theme = useTheme();
     const [text, setText] = React.useState<RichNode | null>(resolveRichValue(node.text));
 
     React.useEffect(() => {
-        resolveRichValueFromFunction<RichNode>(node.text, setText);
-    }, [node.text]);
+        resolveRichValueFromFunction<RichNode>(node.text, setText, node);
+    }, [node.text, refreshId]);
 
     if (node.excluded) {
         return null;

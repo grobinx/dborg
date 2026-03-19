@@ -1,23 +1,23 @@
 import React from "react";
 import { Box } from "@mui/material";
 import { IRichColumn, IRichEnvironment, RichColSize, RichNode } from "../types";
-import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
+import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichIcon, RichProp } from "..";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 import Tooltip from "@renderer/components/Tooltip";
 
-interface RichColumnProps {
+interface RichColumnProps extends RichProp {
     node: Optional<IRichColumn, "type">;
     environment?: IRichEnvironment;
     children?: React.ReactNode;
 }
 
-const RichColumn: React.FC<RichColumnProps> = ({ node, environment, children }) => {
+const RichColumn: React.FC<RichColumnProps> = ({ node, environment, children, refreshId }) => {
     const [items, setItems] = React.useState<RichNode[] | null>(resolveRichValue(node.items));
 
     React.useEffect(() => {
-        resolveRichValueFromFunction(node.items, setItems);
-    }, [node.items]);
+        resolveRichValueFromFunction(node.items, setItems, node);
+    }, [node.items, refreshId]);
 
     const getColSize = (size?: RichColSize) => {
         if (size === "auto" || size === "stretch" || size === undefined) {

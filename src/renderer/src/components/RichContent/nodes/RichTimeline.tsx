@@ -1,12 +1,12 @@
 import React from "react";
 import { Box, useTheme } from "@mui/material";
 import { IRichEnvironment, IRichTimeline, IRichTimelineItem } from "../types";
-import RichRenderer, { getSeverityColor, RichIcon } from "..";
+import RichRenderer, { getSeverityColor, RichIcon, RichProp } from "..";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 import Tooltip from "@renderer/components/Tooltip";
 
-interface RichTimelineProps {
+interface RichTimelineProps extends RichProp {
     node: Optional<IRichTimeline, "type">;
     environment?: IRichEnvironment;
 }

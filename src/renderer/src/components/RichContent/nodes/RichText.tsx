@@ -2,14 +2,14 @@ import React from "react";
 import { Box, useTheme } from "@mui/material";
 import { styled, SxProps } from "@mui/material/styles";
 import { IRichEnvironment, IRichText, RichTextVariant, RichTextVariantStyle, RichTextVariantStyles } from "../types";
-import RichRenderer, { getSeverityColor, RichCode } from "..";
+import RichRenderer, { getSeverityColor, RichCode, RichProp } from "..";
 import Markdown, { Components } from "react-markdown";
 import Code from "@renderer/components/Code";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 import Tooltip from "@renderer/components/Tooltip";
 
-interface RichTextProps {
+interface RichTextProps extends RichProp {
     node: Optional<IRichText, "type">;
     environment?: IRichEnvironment;
 }

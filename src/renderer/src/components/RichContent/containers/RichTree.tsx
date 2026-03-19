@@ -1,14 +1,14 @@
 import React from "react";
 import { Box, Collapse, useTheme } from "@mui/material";
 import { IRichTree, IRichTreeItem, IRichEnvironment, RichNode } from "../types";
-import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichColumn, RichRow } from "..";
+import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichColumn, RichProp, RichRow } from "..";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 import Tooltip from "@renderer/components/Tooltip";
 import RichIcon from "../nodes/RichIcon";
 import CalloutBox from "../utils/CalloutBox";
 
-interface RichTreeItemProps {
+interface RichTreeItemProps extends RichProp {
     node: IRichTreeItem;
     tree: Optional<IRichTree, "type">;
     level: number;
@@ -19,7 +19,7 @@ const TREE_INDENT = 24;
 const CONNECTOR_X = 8;
 const CONNECTOR_Y = 16;
 
-const RichTreeItemComponent: React.FC<RichTreeItemProps> = ({ node, level, environment, tree }) => {
+const RichTreeItemComponent: React.FC<RichTreeItemProps> = ({ node, level, environment, tree, refreshId }) => {
     const theme = useTheme();
     const [expanded, setExpanded] = React.useState(node.expanded ?? true);
     const isCollapsible = node.collapsible !== false;
@@ -30,12 +30,12 @@ const RichTreeItemComponent: React.FC<RichTreeItemProps> = ({ node, level, envir
     const [content, setContent] = React.useState<RichNode | null>(resolveRichValue(node.content));
 
     React.useEffect(() => {
-        resolveRichValueFromFunction<RichNode>(node.content, setContent);
-    }, [node.content]);
+        resolveRichValueFromFunction<RichNode>(node.content, setContent, node);
+    }, [node.content, refreshId]);
 
     React.useEffect(() => {
-        resolveRichValueFromFunction<IRichTreeItem[] | null | undefined>(node.items, setItems);
-    }, [node.items]);
+        resolveRichValueFromFunction<IRichTreeItem[] | null | undefined>(node.items, setItems, node);
+    }, [node.items, refreshId]);
 
     const handleToggle = () => {
         if (hasChildren && isCollapsible) {
@@ -173,19 +173,19 @@ const RichTreeItemComponent: React.FC<RichTreeItemProps> = ({ node, level, envir
     );
 };
 
-interface RichTreeProps {
+interface RichTreeProps extends RichProp {
     node: Optional<IRichTree, "type">;
     environment?: IRichEnvironment;
 }
 
-const RichTree: React.FC<RichTreeProps> = ({ node, environment }) => {
+const RichTree: React.FC<RichTreeProps> = ({ node, environment, refreshId }) => {
     const [items, setItems] = React.useState<IRichTreeItem[] | null>(
         resolveRichValue(node.items)
     );
 
     React.useEffect(() => {
-        resolveRichValueFromFunction<IRichTreeItem[]>(node.items, setItems);
-    }, [node.items]);
+        resolveRichValueFromFunction<IRichTreeItem[]>(node.items, setItems, node);
+    }, [node.items, refreshId]);
 
     if (node.excluded) {
         return null;

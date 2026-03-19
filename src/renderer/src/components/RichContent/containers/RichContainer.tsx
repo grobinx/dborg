@@ -1,16 +1,16 @@
 import React from "react";
 import { Box } from "@mui/material";
 import { IRichContainer, IRichContainerTheme, IRichEnvironment, RichNode } from "../types";
-import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
+import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichIcon, RichProp } from "..";
 import { useSetting } from "@renderer/contexts/SettingsContext";
 import clsx from "@renderer/utils/clsx";
 
-interface RichContainerProps {
+interface RichContainerProps extends RichProp {
     node: IRichContainer;
     children?: React.ReactNode;
 }
 
-const RichContainer: React.FC<RichContainerProps> = ({ node, children }) => {
+const RichContainer: React.FC<RichContainerProps> = ({ node, children, refreshId }) => {
     const [fontSize] = useSetting("ui", "fontSize");
     const [fontFamily] = useSetting("ui", "fontFamily");
     const [fontFamilyMonospace] = useSetting("ui", "fontFamilyMonospace");
@@ -37,8 +37,8 @@ const RichContainer: React.FC<RichContainerProps> = ({ node, children }) => {
     }, [node?.widgets, theme]);
 
     React.useEffect(() => {
-        resolveRichValueFromFunction(node.items, setItems);
-    }, [node.items]);
+        resolveRichValueFromFunction(node.items, setItems, node);
+    }, [node.items, refreshId]);
 
     return (
         <Box

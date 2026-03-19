@@ -1,14 +1,14 @@
 import React from "react";
 import { Box, useTheme } from "@mui/material";
 import { IRichStat, RichColSize, IRichEnvironment } from "../types";
-import RichRenderer, { RichRow } from "..";
+import RichRenderer, { RichProp, RichRow } from "..";
 import RichIcon from "./RichIcon";
 import clsx from "@renderer/utils/clsx";
 import CalloutBox from "../utils/CalloutBox";
 import { Optional } from "@renderer/types/universal";
 import Tooltip from "@renderer/components/Tooltip";
 
-interface RichStatProps {
+interface RichStatProps extends RichProp {
     node: Optional<IRichStat, "type">;
     environment?: IRichEnvironment;
 }

@@ -3,9 +3,9 @@ import { Box, useTheme } from "@mui/material";
 import { IRichEnvironment, IRichImage } from "../types";
 import clsx from "@renderer/utils/clsx";
 import Tooltip from "@renderer/components/Tooltip";
-import RichRenderer from "..";
+import RichRenderer, { RichProp } from "..";
 
-interface RichImageProps {
+interface RichImageProps extends RichProp {
     node: IRichImage;
     environment?: IRichEnvironment;
 }

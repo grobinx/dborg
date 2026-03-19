@@ -1,27 +1,27 @@
 import React from "react";
 import { Box, Skeleton, useTheme } from "@mui/material";
 import { IRichEnvironment, IRichMetric, RichColSize } from "../types";
-import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromFunction, RichRow, RichSparkline } from "..";
+import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromFunction, RichProp, RichRow, RichSparkline } from "..";
 import RichIcon from "./RichIcon";
 import clsx from "@renderer/utils/clsx";
 import { Optional } from "@renderer/types/universal";
 import CalloutBox from "../utils/CalloutBox";
 import Tooltip from "@renderer/components/Tooltip";
 
-interface RichMetricProps {
+interface RichMetricProps extends RichProp {
     node: Optional<IRichMetric, "type">;
     environment?: IRichEnvironment;
 }
 
 const CHART_H = 28;
 
-const RichMetric: React.FC<RichMetricProps> = ({ node, environment }) => {
+const RichMetric: React.FC<RichMetricProps> = ({ node, environment, refreshId }) => {
     const theme = useTheme();
     const [sparkline, setSparkline] = React.useState<number[] | null>(resolveRichValue(node.sparkline));
 
     React.useEffect(() => {
-        resolveRichValueFromFunction(node.sparkline, setSparkline);
-    }, [node.sparkline]);
+        resolveRichValueFromFunction(node.sparkline, setSparkline, node);
+    }, [node.sparkline, refreshId]);
 
     const getColSize = (size?: RichColSize) => {
         if (size === "auto" || size === "stretch" || size === undefined) {

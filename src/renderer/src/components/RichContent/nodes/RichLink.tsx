@@ -1,11 +1,11 @@
 import React from "react";
 import { Link, useTheme } from "@mui/material";
 import { IRichEnvironment, IRichLink } from "../types";
-import RichRenderer, { getSeverityColor } from "..";
+import RichRenderer, { getSeverityColor, RichProp } from "..";
 import clsx from "@renderer/utils/clsx";
 import Tooltip from "@renderer/components/Tooltip";
 
-interface RichLinkProps {
+interface RichLinkProps extends RichProp {
     node: IRichLink;
     environment?: IRichEnvironment;
 }

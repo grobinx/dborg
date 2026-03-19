@@ -1,26 +1,25 @@
 import React from "react";
 import { Box, Paper, Collapse, useTheme } from "@mui/material";
 import { IRichEnvironment, IRichSection, RichNode } from "../types";
-import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromFunction, RichIcon, RichSpacer } from "..";
-import { ToolButton } from "@renderer/components/buttons/ToolButton";
+import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromFunction, RichIcon, RichProp, RichSpacer } from "..";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 import Tooltip from "@renderer/components/Tooltip";
 
-interface RichSectionProps {
+interface RichSectionProps extends RichProp {
     node: Optional<IRichSection, "type">;
     environment?: IRichEnvironment;
     children?: React.ReactNode;
 }
 
-const RichSection: React.FC<RichSectionProps> = ({ node, environment, children }) => {
+const RichSection: React.FC<RichSectionProps> = ({ node, environment, children, refreshId }) => {
     const theme = useTheme();
     const [expanded, setExpanded] = React.useState(node.expanded !== false);
     const [items, setItems] = React.useState<RichNode[] | null>(resolveRichValue(node.items));
 
     React.useEffect(() => {
-        resolveRichValueFromFunction(node.items, setItems);
-    }, [node.items]);
+        resolveRichValueFromFunction(node.items, setItems, node);
+    }, [node.items, refreshId]);
 
     if (node.excluded) {
         return null;

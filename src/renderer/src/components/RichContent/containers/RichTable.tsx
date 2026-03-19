@@ -4,10 +4,10 @@ import DataPresentationGrid, { DataPresentationGridColumn } from "@renderer/comp
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 import { IRichEnvironment, IRichTable, IRichTableRow, RichNode } from "../types";
-import RichRenderer, { resolveRichValue, resolveRichValueFromFunction } from "..";
+import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichProp } from "..";
 import Tooltip from "@renderer/components/Tooltip";
 
-interface RichTableProps {
+interface RichTableProps extends RichProp {
     node: Optional<IRichTable, "type">;
     environment?: IRichEnvironment;
 }
@@ -32,12 +32,12 @@ const renderRichValue = (value: RichNode | undefined, environment?: IRichEnviron
     return <RichRenderer node={value} environment={environment} textVariant="body" />;
 };
 
-const RichTable: React.FC<RichTableProps> = ({ node, environment }) => {
+const RichTable: React.FC<RichTableProps> = ({ node, environment, refreshId }) => {
     const [rows, setRows] = React.useState<IRichTableRow[] | null>(resolveRichValue(node.rows));
 
     React.useEffect(() => {
-        resolveRichValueFromFunction(node.rows, setRows);
-    }, [node.rows]);
+        resolveRichValueFromFunction(node.rows, setRows, node);
+    }, [node.rows, refreshId]);
 
     const columns = React.useMemo<DataPresentationGridColumn<IRichTableRow>[]>(() => {
         return node.columns.map((column) => ({

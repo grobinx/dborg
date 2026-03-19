@@ -1,11 +1,11 @@
 import React from "react";
 import { Box, useTheme } from "@mui/material";
 import { IRichContainerTheme, IRichEnvironment, IRichSparkline } from "../types";
-import RichRenderer, { resolveRichValue, resolveRichValueFromFunction } from "..";
+import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichProp } from "..";
 import { Optional } from "@renderer/types/universal";
 import Tooltip from "@renderer/components/Tooltip";
 
-interface Props {
+interface Props extends RichProp {
     node: Optional<IRichSparkline, "type">;
     environment?: IRichEnvironment;
 }
@@ -32,15 +32,15 @@ const buildSmoothPath = (pts: Array<{ x: number; y: number }>) => {
     return d;
 };
 
-const RichSparkline: React.FC<Props> = ({ node, environment }) => {
+const RichSparkline: React.FC<Props> = ({ node, environment, refreshId }) => {
     const theme = useTheme();
     const [values, setValues] = React.useState<number[] | null>(resolveRichValue(node.values));
     const lineRef = React.useRef<SVGPathElement | null>(null);
     const [pathLength, setPathLength] = React.useState<number | undefined>(undefined);
 
     React.useEffect(() => {
-        resolveRichValueFromFunction(node.values, setValues);
-    }, [node.values]);
+        resolveRichValueFromFunction(node.values, setValues, node);
+    }, [node.values, refreshId]);
 
     if (node.excluded) {
         return null;

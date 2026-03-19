@@ -1,12 +1,12 @@
 import React from "react";
 import { Box, useTheme } from "@mui/material";
 import { IRichBullet, IRichEnvironment } from "../types";
-import RichRenderer, { getSeverityColor } from "..";
+import RichRenderer, { getSeverityColor, RichProp } from "..";
 import clsx from "@renderer/utils/clsx";
 import { Optional } from "@renderer/types/universal";
 import Tooltip from "@renderer/components/Tooltip";
 
-interface RichBulletProps {
+interface RichBulletProps extends RichProp {
     node: Optional<IRichBullet, "type">;
     environment?: IRichEnvironment;
 }

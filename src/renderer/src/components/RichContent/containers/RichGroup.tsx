@@ -1,24 +1,24 @@
 import React from "react";
 import { Box, useTheme } from "@mui/material";
 import { IRichEnvironment, IRichGroup, RichNode } from "../types";
-import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
+import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichIcon, RichProp } from "..";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 import Tooltip from "@renderer/components/Tooltip";
 
-interface RichGroupProps {
+interface RichGroupProps extends RichProp {
     node: Optional<IRichGroup, "type">;
     environment?: IRichEnvironment;
     children?: React.ReactNode;
 }
 
-const RichGroup: React.FC<RichGroupProps> = ({ node, environment, children }) => {
+const RichGroup: React.FC<RichGroupProps> = ({ node, environment, children, refreshId }) => {
     const theme = useTheme();
     const [items, setItems] = React.useState<RichNode[] | null>(resolveRichValue(node.items));
 
     React.useEffect(() => {
-        resolveRichValueFromFunction(node.items, setItems);
-    }, [node.items]);
+        resolveRichValueFromFunction(node.items, setItems, node);
+    }, [node.items, refreshId]);
 
     if (node.excluded) {
         return null;

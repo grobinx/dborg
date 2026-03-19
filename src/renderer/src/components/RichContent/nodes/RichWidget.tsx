@@ -1,13 +1,13 @@
 import React from "react";
 import { Box, useTheme } from "@mui/material";
 import { IRichWidget, IRichEnvironment, IRichWidgetRenderer } from "../types";
-import RichRenderer, { RichColumn, RichIcon } from "..";
+import RichRenderer, { RichColumn, RichIcon, RichProp } from "..";
 import Tooltip from "@renderer/components/Tooltip";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 import { useTranslation } from "react-i18next";
 
-interface RichWidgetProps {
+interface RichWidgetProps extends RichProp {
     node: Optional<IRichWidget, "type">;
     environment?: IRichEnvironment;
 }

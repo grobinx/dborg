@@ -1,23 +1,23 @@
 import React from "react";
 import { Box } from "@mui/material";
 import { IRichEnvironment, IRichRow, RichNode } from "../types";
-import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichIcon } from "..";
+import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichIcon, RichProp } from "..";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 import Tooltip from "@renderer/components/Tooltip";
 
-interface RichRowProps {
+interface RichRowProps extends RichProp {
     node: Optional<IRichRow, "type">;
     environment?: IRichEnvironment;
     children?: React.ReactNode;
 }
 
-const RichRow: React.FC<RichRowProps> = ({ node, environment, children }) => {
+const RichRow: React.FC<RichRowProps> = ({ node, environment, children, refreshId }) => {
     const [items, setItems] = React.useState<RichNode[] | null>(resolveRichValue(node.items));
 
     React.useEffect(() => {
-        resolveRichValueFromFunction(node.items, setItems);
-    }, [node.items]);
+        resolveRichValueFromFunction(node.items, setItems, node);
+    }, [node.items, refreshId]);
 
     if (node.excluded) {
         return null;

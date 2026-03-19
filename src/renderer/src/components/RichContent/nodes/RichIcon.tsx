@@ -2,11 +2,11 @@ import React from "react";
 import { Box, Tooltip, useTheme } from "@mui/material";
 import { IRichContainerTheme, IRichEnvironment, IRichIcon, RichSeverity } from "../types";
 import { resolveIcon } from "@renderer/themes/icons";
-import RichRenderer, { getSeverityColor } from "..";
+import RichRenderer, { getSeverityColor, RichProp } from "..";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 
-interface RichIconProps {
+interface RichIconProps extends RichProp {
     node: Optional<IRichIcon, "type">;
     environment?: IRichEnvironment;
 }

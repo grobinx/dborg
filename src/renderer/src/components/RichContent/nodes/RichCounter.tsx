@@ -3,9 +3,9 @@ import { useTheme } from "@mui/material";
 import { IRichCounter, IRichEnvironment } from "../types";
 import { Optional } from "@renderer/types/universal";
 import Tooltip from "@renderer/components/Tooltip";
-import { getSeverityColor, resolveRichValue, resolveRichValueFromFunction, RichText } from "..";
+import { resolveRichValue, resolveRichValueFromFunction, RichProp, RichText } from "..";
 
-interface RichCounterProps {
+interface RichCounterProps extends RichProp {
     node: Optional<IRichCounter, "type">;
     environment?: IRichEnvironment;
 }
@@ -16,13 +16,11 @@ const formatNumber = (v: number) => {
     return v.toLocaleString(undefined);
 };
 
-const RichCounter: React.FC<RichCounterProps> = ({ node, environment }) => {
+const RichCounter: React.FC<RichCounterProps> = ({ node, environment, refreshId }) => {
     const theme = useTheme();
     const duration = node.duration ?? 1000;
-    const prefix = node.prefix ?? "";
-    const suffix = node.suffix ?? "";
 
-    const [target, setTarget] = React.useState<number | null>(resolveRichValue(node.data?._lastValue ?? node.value));
+    const [target, setTarget] = React.useState<number | null>(resolveRichValue(node.value));
     const [display, setDisplay] = React.useState<number>(target ?? 0);
     const rafRef = React.useRef<number | null>(null);
     const startRef = React.useRef<number | null>(null);
@@ -30,11 +28,8 @@ const RichCounter: React.FC<RichCounterProps> = ({ node, environment }) => {
 
     // support async value functions (if someone passed RichValue)
     React.useEffect(() => {
-        resolveRichValueFromFunction<number>(node.value, setTarget).then(value => {
-            if (!node.data) node.data = {};
-            node.data._lastValue = value;
-        });
-    }, [node.value]);
+        resolveRichValueFromFunction<number>(node.value, setTarget, node);
+    }, [node.value, refreshId]);
 
     React.useEffect(() => {
         if (target === null) {
@@ -101,11 +96,7 @@ const RichCounter: React.FC<RichCounterProps> = ({ node, environment }) => {
     if (node.excluded) return null;
 
     const content = (
-        <>
-            {prefix && <RichText node={{ text: prefix, severity: node.severity, variant: node.variant }} environment={environment} />}
-            <RichText node={{ text: formatNumber(Math.round(display)), severity: node.severity, variant: node.variant }} environment={environment} />
-            {suffix && <RichText node={{ text: suffix, severity: node.severity, variant: node.variant }} environment={environment} />}
-        </>
+        <RichText node={{ text: formatNumber(Math.round(display)), severity: node.severity, variant: node.variant }} environment={environment} />
     );
 
     if (node.tooltip) {
