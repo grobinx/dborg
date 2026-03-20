@@ -1,3 +1,4 @@
+import scheduleMicrotask from "@renderer/utils/microtask";
 import React from "react";
 export * as Messages from "../app/Messages";
 
@@ -39,11 +40,6 @@ function setBusFunctions(
         }
     }
 }
-
-const scheduleMicrotask: (callback: () => void) => void =
-    typeof queueMicrotask === "function"
-        ? queueMicrotask
-        : (callback) => { void Promise.resolve().then(callback); };
 
 export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const listenersRef = React.useRef<Map<string, Set<AnyMessageHandler>>>(new Map());

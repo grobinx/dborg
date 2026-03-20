@@ -1,3 +1,4 @@
+import scheduleMicrotask from "@renderer/utils/microtask";
 import React from "react";
 
 type ListenerMap<T = any,> = {
@@ -35,9 +36,9 @@ const useListeners = <T,>(): UseListenersType<T> => {
         if (listeners.current[type]) {
             // opóźnienie jest spowodowane tym, że niektóre komponenty mogą być renderowane w tym samym cyklu, co wywołanie emit
             // i nie zdążą się zaktualizować, więc wywołanie emit jest opóźnione
-            setTimeout(() => {
+            scheduleMicrotask(() => {   
                 listeners.current[type].forEach((listener) => listener(event));
-            }, 0);
+            });
         }
     }, []);
 
