@@ -1,7 +1,7 @@
 import React from "react";
 import { styled, Box, useThemeProps } from "@mui/material";
 import { useMessages } from "@renderer/contexts/MessageContext";
-import { TAB_PANEL_VALUE } from "@renderer/app/Messages";
+import { TAB_PANEL_VALUE, TabPanelValueMessage } from "@renderer/app/Messages";
 
 // Styled TabPanel component
 const StyledTabPanel = styled(Box, {
@@ -40,7 +40,7 @@ export const useTabValue = <T, >(itemID: string, name: string, defaultValue?: T)
     const { subscribe, queueMessage } = useMessages();
 
     React.useEffect(() => {
-        const unsubscribe = subscribe(TAB_PANEL_VALUE, (message) => {
+        const unsubscribe = subscribe(TAB_PANEL_VALUE, (message: TabPanelValueMessage) => {
             if (message.itemID === itemID && message.name === name) {
                 setValue(message.value);
             }
