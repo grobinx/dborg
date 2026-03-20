@@ -16,6 +16,7 @@ import { schemaDdl } from "../../../../common/ddls/schema";
 import { cidFactory } from "@renderer/containers/ViewSlots/helpers";
 import ObjectSafetyAnalyzer, { AnalysisResult, RiskLevel } from "./objectAnalyze";
 import { executeScriptAction } from "../../actions/ExecuteScript";
+import { RichContainer, RichNode } from "@renderer/components/RichContent";
 
 const roleCleanupTab = (session: IDatabaseSession): IPinnableTabSlot => {
     const t = i18next.t.bind(i18next);
@@ -478,9 +479,8 @@ const roleCleanupTab = (session: IDatabaseSession): IPinnableTabSlot => {
                                                     id: cid("owned-info"),
                                                     type: "tabcontent",
                                                     content: () => ({
-                                                        id: cid("owned-info-risk"),
                                                         type: "column",
-                                                        padding: 8,
+                                                        padding: 0,
                                                         items: [
                                                             {
                                                                 id: cid("owned-info-analyzing"),
@@ -494,17 +494,17 @@ const roleCleanupTab = (session: IDatabaseSession): IPinnableTabSlot => {
                                                                         );
                                                                     }
                                                                     return (
-                                                                        <Box>
-                                                                            <Typography variant="body1" component="div">
-                                                                                {selectedOwnedObject.objtype}: {selectedOwnedObject.schema}.{selectedOwnedObject.name}
-                                                                            </Typography>
-                                                                            {(analyzingRows.indexOf(selectedOwnedObject) >= 0 || (analyzingObject && !selectedOwnedObject.risk)) && (
+                                                                        (analyzingRows.indexOf(selectedOwnedObject) >= 0 || (analyzingObject && !selectedOwnedObject.risk)) ? (
+                                                                            <Box>
+                                                                                <Typography variant="body1" component="div">
+                                                                                    {selectedOwnedObject.objtype}: {selectedOwnedObject.schema}.{selectedOwnedObject.name}
+                                                                                </Typography>
                                                                                 <Typography variant="body1" component="div" style={{ display: "flex", alignItems: "center", gap: "8px" }} >
                                                                                     <slotContext.theme.icons.Loading />
                                                                                     {t("analyzing-object", "Analyzing...")}
                                                                                 </Typography>
-                                                                            )}
-                                                                        </Box>
+                                                                            </Box>
+                                                                        ) : null
                                                                     );
                                                                 }
                                                             },
@@ -512,31 +512,9 @@ const roleCleanupTab = (session: IDatabaseSession): IPinnableTabSlot => {
                                                                 id: cid("owned-info-risk-details"),
                                                                 type: "rendered",
                                                                 render: () => {
-                                                                    if (!selectedOwnedObject) {
-                                                                        return null;
-                                                                    }
+                                                                    if (!selectedOwnedObject) return null;
                                                                     const risk = selectedOwnedObject.risk as AnalysisResult | null;
-                                                                    if (!risk) {
-                                                                        return null;
-                                                                    }
-
-                                                                    // Nagłówek z podstawowymi informacjami
-                                                                    const header = (
-                                                                        <Stack gap={2}>
-                                                                            {!risk.found && !risk.error && (
-                                                                                <Typography variant="body2" color="warning">
-                                                                                    {t("object-not-found", "Object not found in metadata.")}
-                                                                                </Typography>
-                                                                            )}
-                                                                            {risk.error && (
-                                                                                <Typography variant="body2" color="error">
-                                                                                    {t("error", "Error")}: {risk.error}
-                                                                                </Typography>
-                                                                            )}
-                                                                        </Stack>
-                                                                    );
-
-                                                                    // Oceny operacji (jeśli dostępne)
+                                                                    if (!risk) return null;
                                                                     const assessment = risk.assessment;
                                                                     const ops = assessment ? [
                                                                         { key: "canDelete", label: t("delete", "Delete"), value: assessment.canDelete },
@@ -545,35 +523,37 @@ const roleCleanupTab = (session: IDatabaseSession): IPinnableTabSlot => {
                                                                     ] : [];
 
                                                                     return (
-                                                                        <Stack gap={6}>
-                                                                            {header}
-
-                                                                            {assessment && (
-                                                                                <Stack gap={3}>
-                                                                                    <Typography variant="subtitle1" component="div">
-                                                                                        {t("risk-assessment", "Risk assessment")}
-                                                                                    </Typography>
-                                                                                    <Stack gap={2}>
-                                                                                        {ops.map(op => (
-                                                                                            <Box key={op.key} sx={{ border: "1px solid #ddd", borderRadius: 4, padding: 8 }}>
-                                                                                                <Typography variant="body2" component="div">
-                                                                                                    {op.value.message}
-                                                                                                </Typography>
-                                                                                                {op.value.details?.length > 0 && (
-                                                                                                    <Stack component="ul" sx={{ pl: 2, mt: 1 }} gap={0.5}>
-                                                                                                        {op.value.details.map((d, idx) => (
-                                                                                                            <div key={idx}>
-                                                                                                                <Typography variant="body2" component="span">{d}</Typography>
-                                                                                                            </div>
-                                                                                                        ))}
-                                                                                                    </Stack>
-                                                                                                )}
-                                                                                            </Box>
-                                                                                        ))}
-                                                                                    </Stack>
-                                                                                </Stack>
-                                                                            )}
-                                                                        </Stack>
+                                                                        <RichContainer node={{
+                                                                            items: [
+                                                                                { type: "text", text: `${selectedOwnedObject.objtype}: ${selectedOwnedObject.schema}.${selectedOwnedObject.name}`, variant: "title-sm" },
+                                                                                (!risk.found && !risk.error) && {
+                                                                                    type: "alert",
+                                                                                    severity: "warning",
+                                                                                    message: t("object-not-found", "Object not found in metadata.")
+                                                                                },
+                                                                                risk.error && {
+                                                                                    type: "alert",
+                                                                                    severity: "error",
+                                                                                    message: `${t("error", "Error")}: ${risk.error}`
+                                                                                },
+                                                                                assessment && {
+                                                                                    type: "column",
+                                                                                    padding: 0,
+                                                                                    items: ops.map(op => ({
+                                                                                        type: "section",
+                                                                                        title: op.label,
+                                                                                        items: [
+                                                                                            { type: "text", text: op.value.message, variant: "description" },
+                                                                                            (op.value.details && op.value.details.length > 0) && {
+                                                                                                type: "list",
+                                                                                                listType: "bullet",
+                                                                                                items: op.value.details.map(d => ({ content: d }))
+                                                                                            },
+                                                                                        ]
+                                                                                    }))
+                                                                                }
+                                                                            ]
+                                                                        }} />
                                                                     );
                                                                 },
                                                             },

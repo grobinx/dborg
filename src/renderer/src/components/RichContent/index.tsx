@@ -188,7 +188,7 @@ const RichRenderer: React.FC<{
 
     refreshId?: bigint;
 }> = ({ node, environment, textVariant, textSeverity, refreshId }) => {
-    if (node === null || node === undefined) {
+    if (node === null || node === undefined || node === false) {
         return null;
     }
 

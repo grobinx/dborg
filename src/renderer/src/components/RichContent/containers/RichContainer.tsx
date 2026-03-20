@@ -54,7 +54,7 @@ const RichContainer: React.FC<RichContainerProps> = ({ node, children, refreshId
                 height: node.height ?? "100%",
                 overflow: node.overflow ?? "auto",
                 flex: 1,
-                p: theme.padding,
+                padding: theme.padding,
                 fontFamily: theme.fontFamily,
                 fontSize: theme.fontSize,
                 fontWeight: theme.fontWeight,

@@ -206,7 +206,11 @@ export type RichNode =
      * Prosty tekst lub liczba, renderowane jako RichText z domyślnym wariantem "body".
      */
     | string | number
-    | null | undefined;
+    /**
+     * Wartości null, undefined i false są ignorowane i nie renderowane, co pozwala na łatwe warunkowe wyświetlanie elementów bez konieczności dodatkowego sprawdzania w logice generowania danych.
+     */
+    | null | undefined
+    | false;
 
 /**
  * Metadane dla węzłów Rich Content, umożliwiające dodatkową kontrolę nad renderowaniem i interakcją.
