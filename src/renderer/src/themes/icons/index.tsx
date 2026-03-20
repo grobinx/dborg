@@ -27,14 +27,14 @@ const StyledIconWrapper = styled('span', {
     //fontSize: "1.2em",
 }));
 
-export function IconWrapper(props: IconWrapperOwnProps): React.ReactElement<IconWrapperOwnProps> {
+export const IconWrapper = React.memo(function IconWrapper(props: IconWrapperOwnProps) {
     const { className, color, sx, style } = useThemeProps({ name: 'IconWrapper', props });
     return (
         <StyledIconWrapper color={color} className={(className ?? "") + " IconWrapper-root"} sx={sx} style={style}>
             {props.children}
         </StyledIconWrapper>
     );
-}
+});
 
 interface OverlayIconProps {
     x?: number | string;
