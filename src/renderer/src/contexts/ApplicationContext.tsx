@@ -93,7 +93,7 @@ interface ApplicationSessionStateApi {
     getSessionState: (sessionId: string) => { views: View[]; selectedView: View | null };
 }
 
-interface ApplicationState extends ApplicationContainersState, ApplicationSessionsState, ApplicationSessionStateApi {}
+interface ApplicationState extends ApplicationContainersState, ApplicationSessionsState, ApplicationSessionStateApi { }
 
 interface SubscriptionHandlers {
     switchContainer: (type: ContainerType) => void;
@@ -166,10 +166,10 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     // State
     const [containers, setContainers] = useState<SpecificContainer[] | null>(null);
     const [selectedContainer, setSelectedContainer] = useState<SpecificContainer | null>(null);
-    const [views, setViews] = useState<View[] | null>(null);
-    const [selectedView, setSelectedView] = useState<View | null>(null);
+    const [selectedStaticViewId, setSelectedStaticViewId] = useState<string | null>(null);
     const [sessions, setSessions] = useState<IDatabaseSession[] | null>(null);
     const [selectedSession, setSelectedSession] = useState<IDatabaseSession | null>(null);
+    const [sessionViewStateVersion, setSessionViewStateVersion] = useState(0);
 
     // Refs
     const sessionsRef = React.useRef<IDatabaseSession[] | null>(null);
@@ -321,69 +321,90 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         }, force ? 500 : 2000);
     }, [queueMessage, addToast]);
 
-    const updateSessionViews = React.useCallback((session: IDatabaseSession | null) => {
-        if (!session) {
-            setViews(null);
-            setSelectedView(null);
-            return;
-        }
-        const sid = session.info.uniqueId;
-        const cached = sessionViewStateRef.current[sid];
-        if (cached) {
-            setViews(cached.views);
-            setSelectedView(cached.views.find(v => v.id === cached.selectedViewId) || null);
-            return;
-        }
-        const newViews = plugins.getConnectionViews(session);
-        if (newViews && newViews.length) {
-            sessionViewStateRef.current[sid] = { views: newViews, selectedViewId: null };
-            setViews(newViews);
-            setSelectedView(null);
-        } else {
-            setViews(null);
-            setSelectedView(null);
-        }
-    }, [plugins]);
+    const selectContainer = React.useCallback((container: SpecificContainer | null) => {
+        setSelectedContainer(container);
 
-    const updateViewsForContainer = React.useCallback((container: SpecificContainer | null, session: IDatabaseSession | null) => {
-        if (!container) {
-            setViews(null);
-            setSelectedView(null);
+        if (!container || container.type === "connections" || container.type === "profile-list") {
+            setSelectedStaticViewId(null);
             return;
         }
-        if (container.type === "connections") {
-            updateSessionViews(session);
-            return;
-        }
-        if ('views' in container) {
-            const list = container.views;
-            setViews(list);
+
+        if ("views" in container) {
             if (container.type === "settings") {
-                setSelectedView(list.find(v => v.id === "settings") || list[0] || null);
+                setSelectedStaticViewId("settings");
             } else {
-                setSelectedView(list[0] || null);
+                setSelectedStaticViewId(container.views[0]?.id ?? null);
             }
-        } else if (container.type === "profile-list") {
-            const views = sessionsRef.current?.map(session => {
-                return {
-                    type: "clickable",
-                    id: `connection-${session.info.uniqueId}`,
-                    icon: <ConnectedViewIcon session={session} />,
-                    label: session.profile.sch_name,
-                    onClick: () => {
-                        sendMessage(Messages.SWITCH_CONTAINER, "connections").then(() => {
-                            sendMessage(SWITCH_PANEL_TAB, "connections-tabs-panel", session.info.uniqueId);
-                        })
-                    },
-                } as ClickableView;
-            }) || null;
-            setViews(views);
-            setSelectedView(null);
-        } else {
-            setViews(null);
-            setSelectedView(null);
+            return;
         }
-    }, [updateSessionViews]);
+
+        setSelectedStaticViewId(null);
+    }, []);
+
+    const views = React.useMemo<View[] | null>(() => {
+        if (!selectedContainer) return null;
+
+        if (selectedContainer.type === "connections") {
+            if (!selectedSession) return null;
+            const sid = selectedSession.info.uniqueId;
+            const cached = sessionViewStateRef.current[sid];
+            if (cached) {
+                return cached.views;
+            }
+
+            const newViews = plugins.getConnectionViews(selectedSession);
+            if (newViews && newViews.length) {
+                sessionViewStateRef.current[sid] = { views: newViews, selectedViewId: null };
+                return newViews;
+            }
+            return null;
+        }
+
+        if ("views" in selectedContainer) {
+            return selectedContainer.views;
+        }
+
+        if (selectedContainer.type === "profile-list") {
+            return sessions?.map(session => ({
+                type: "clickable",
+                id: "connection-" + session.info.uniqueId,
+                icon: <ConnectedViewIcon session={session} />,
+                label: session.profile.sch_name,
+                onClick: () => {
+                    sendMessage(Messages.SWITCH_CONTAINER, "connections").then(() => {
+                        sendMessage(SWITCH_PANEL_TAB, "connections-tabs-panel", session.info.uniqueId);
+                    });
+                },
+            } as ClickableView)) || null;
+        }
+
+        return null;
+    }, [selectedContainer, selectedSession, plugins, sessions, sendMessage, sessionViewStateVersion]);
+
+    const selectedView = React.useMemo<View | null>(() => {
+        if (!selectedContainer || !views || views.length === 0) return null;
+
+        if (selectedContainer.type === "connections") {
+            if (!selectedSession) return null;
+            const selectedId = sessionViewStateRef.current[selectedSession.info.uniqueId]?.selectedViewId;
+            return views.find(v => v.id === selectedId) || null;
+        }
+
+        if (selectedContainer.type === "profile-list") {
+            return null;
+        }
+
+        if (selectedStaticViewId) {
+            const selected = views.find(v => v.id === selectedStaticViewId);
+            if (selected) return selected;
+        }
+
+        if (selectedContainer.type === "settings") {
+            return views.find(v => v.id === "settings") || views[0] || null;
+        }
+
+        return views[0] || null;
+    }, [selectedContainer, selectedSession, views, selectedStaticViewId, sessionViewStateVersion]);
 
     const getSessionState = React.useCallback((sessionId: string) => {
         return {
@@ -400,41 +421,43 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         if (!containers) return;
         const target = containers.find(c => c.type === type) || null;
         if (target && target !== selectedContainer) {
-            setSelectedContainer(target);
+            selectContainer(target);
         }
-    }, [containers, selectedContainer]);
+    }, [containers, selectedContainer, selectContainer]);
 
     const handleSwitchView = React.useCallback((viewId: string) => {
         if (!views) return;
+
         if (selectedView?.id === viewId) {
             const isConn = selectedContainer?.type === "connections";
-            setSelectedView(isConn ? null : selectedView);
             if (isConn && selectedSession) {
                 sessionViewStateRef.current[selectedSession.info.uniqueId] = {
                     views: sessionViewStateRef.current[selectedSession.info.uniqueId]?.views || views,
                     selectedViewId: null,
                 };
+                setSessionViewStateVersion(prev => prev + 1);
             }
             return;
         }
-        else {
-            const isSess = selectedContainer?.type === "profile-list";
-            if (isSess) {
-                const target = views.find(v => v.id === viewId) || null;
-                if (target && target.type === "clickable") {
-                    target.onClick();
-                    return;
-                }
+
+        if (selectedContainer?.type === "profile-list") {
+            const target = views.find(v => v.id === viewId) || null;
+            if (target && target.type === "clickable") {
+                target.onClick();
             }
+            return;
         }
-        const next = views.find(v => v.id === viewId) || null;
-        setSelectedView(next);
+
         if (selectedContainer?.type === "connections" && selectedSession) {
             sessionViewStateRef.current[selectedSession.info.uniqueId] = {
                 views: sessionViewStateRef.current[selectedSession.info.uniqueId]?.views || views,
                 selectedViewId: viewId,
             };
+            setSessionViewStateVersion(prev => prev + 1);
+            return;
         }
+
+        setSelectedStaticViewId(viewId);
     }, [views, selectedView, selectedContainer, selectedSession]);
 
     const handleEditSchema = React.useCallback((schemaId: string) => {
@@ -485,13 +508,13 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                 setSelectedSession(nextSel);
             }
             if (!filtered || filtered.length === 0) {
-                setSelectedContainer(chooseContainer(filtered));
+                selectContainer(chooseContainer(filtered));
             }
             sessionsRef.current = filtered;
             return filtered;
         });
         delete sessionViewStateRef.current[connectionId];
-    }, [selectedSession, chooseContainer]);
+    }, [selectedSession, chooseContainer, selectContainer]);
 
     const handleRefreshMetadata = React.useCallback((msg: RefreshMetadata) => {
         if (selectedSession && selectedSession.info.uniqueId === msg.connectionId) {
@@ -520,13 +543,9 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         if (iAmDeveloperRef.current !== iAmDeveloper) {
             iAmDeveloperRef.current = iAmDeveloper;
             const settings = next.find(c => c.type === "settings") || null;
-            setSelectedContainer(settings);
-            updateViewsForContainer(settings, selectedSession);
-        } else {
-            updateViewsForContainer(selectedContainer, selectedSession);
+            selectContainer(settings);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [t, theme.icons, iAmDeveloper]);
+    }, [initialContainers, iAmDeveloper, selectContainer]);
 
     // Inicjalizacja sesji po starcie kontekstu
     useEffect(() => {
@@ -543,16 +562,10 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             const last = restored[restored.length - 1] || null;
             setSelectedSession(last);
             const autoContainer = chooseContainer(restored);
-            setSelectedContainer(prev => prev || autoContainer);
+            selectContainer(autoContainer);
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [contextInitialized]);
-
-    // Aktualizacja widoków przy zmianie kontenera lub sesji
-    useEffect(() => {
-        updateViewsForContainer(selectedContainer, selectedSession);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedContainer, selectedSession]);
 
     // Subskrypcje na wiadomości i eventy
     useEffect(() => {
