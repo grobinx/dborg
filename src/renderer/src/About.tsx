@@ -8,6 +8,7 @@ import { MorphingSvgPaths } from './components/MorphingSvgs';
 import { TextDecorator } from './components/useful/TextDecorator';
 import clsx from './utils/clsx';
 import { generateWavePaths } from './utils/waveGenerator';
+import splashBackground from '../../../resources/splash-background.png';
 
 const ORBADA = 'ORBADA';
 const DATABASE_ORGANIZER = 'Database Organizer';
@@ -232,12 +233,21 @@ const About: React.FC<{
             overflow: 'hidden',
             background: '#181c24',
         }}>
-            {/*
-            <AnimatedWaves>
-                <LayeredWaves />
-            </AnimatedWaves>
-            */}
-
+            {/* Dodanie tła */}
+            <div
+                style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    backgroundImage: `url(${splashBackground})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    filter: 'blur(2px) brightness(0.4)',
+                    //zIndex: -1,
+                }}
+            />
             <StyledAppTitle
                 className={clsx(
                     charAnimationFinished && 'char-animation-finished'

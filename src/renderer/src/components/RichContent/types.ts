@@ -149,7 +149,6 @@ export type RichNodeType =
     | "table"
     | "stat"
     | "timeline"
-    | "entity"
     | "skeleton"
     | "metric"
     | "bullet"
@@ -1029,56 +1028,6 @@ export interface IRichTimeline extends IRichNode {
      * Zdarzenia na osi czasu
      */
     items: IRichTimelineItem[];
-}
-
-/**
- * Typ kształtu avatara.
- */
-export type RichAvatarShape = "circle" | "square" | "rounded";
-
-/**
- * Entity/Avatar - komponent prezentujący obiekt, osobę lub system.
- */
-export interface IRichEntity extends IRichNode {
-    type: "entity";
-    /**
-     * Główna nazwa/tytuł encji (np. "Jan Kowalski", "Produkcyjna Baza Danych")
-     */
-    name: RichNode;
-    /**
-     * Opcjonalny krótki opis pod nazwą
-     */
-    description?: RichNode;
-    /**
-     * URL do obrazka avatara
-     */
-    src?: string;
-    /**
-     * Inicjały wyświetlane, gdy brak obrazka (np. "JK")
-     */
-    initials?: string;
-    /**
-     * Ikona zastępcza lub dekoracyjna
-     */
-    icon?: React.ReactNode | ThemeIconName;
-    /**
-     * Rozmiar całego bloku
-     * @default "medium"
-     */
-    size?: Size;
-    /**
-     * Kształt avatara
-     * @default "circle"
-     */
-    shape?: RichAvatarShape;
-    /**
-     * Poziom ważności (może wpływać na kolor obramowania lub tła inicjałów)
-     */
-    severity?: RichSeverity;
-    /**
-     * Czy encja jest w stanie "online/aktywnym" (mała kropka statusu)
-     */
-    status?: "online" | "offline" | "away" | "busy";
 }
 
 /**
