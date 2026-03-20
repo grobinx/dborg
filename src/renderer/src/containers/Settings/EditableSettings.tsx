@@ -225,7 +225,7 @@ const EditableSettings = (props: EditableSettingsProps) => {
 
         // Tylko pinnedMap wpływa na breadcrumb i selectedNode
         if (pinnedMap.length === 0) {
-            setBreadcrumb([]);
+            setBreadcrumb(prev => prev.length ? [] : prev);
             // NIE ustawiaj selectedNode tutaj jeśli był manualny wybór
             if (!manualSelectedNode) {
                 setSelectedNode(undefined);

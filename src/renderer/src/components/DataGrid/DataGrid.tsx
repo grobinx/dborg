@@ -751,8 +751,8 @@ export const DataGrid = <T extends object>({
     }, [fontSize, cellPaddingY]);
 
     useEffect(() => {
-        setSelectedRows([]);
-        setSelectedColumns([]);
+        setSelectedRows(prev => prev.length ? [] : prev);
+        setSelectedColumns(prev => prev.length ? [] : prev);
     }, [data]);
 
     useEffect(() => {
@@ -1212,10 +1212,10 @@ export const DataGrid = <T extends object>({
             );
         },
         clearSelectedRows: () => {
-            setSelectedRows([]);
+            setSelectedRows(prev => prev.length ? [] : prev);
         },
         clearSelectedColumns: () => {
-            setSelectedColumns([]);
+            setSelectedColumns(prev => prev.length ? [] : prev);
         },
         getField: () => {
             if (selectedCellRef.current) {
@@ -1269,7 +1269,7 @@ export const DataGrid = <T extends object>({
         setShowRowNumberColumn: (show) => {
             setShowRowNumberColumn(show); // Ustawienie stanu dla kolumny z numerami wierszy
             if (!show) {
-                setSelectedRows([]); // Resetuj zaznaczenie, jeśli kolumna z numerami wierszy jest ukryta
+                setSelectedRows(prev => prev.length ? [] : prev); // Resetuj zaznaczenie, jeśli kolumna z numerami wierszy jest ukryta
             }
         },
         isShowRowNumberColumn: () => showRowNumberColumn, // Zwrócenie stanu dla kolumny z numerami wierszy
@@ -1491,12 +1491,11 @@ export const DataGrid = <T extends object>({
 
         if (document.activeElement !== containerRef.current) return;
 
-        const context: DataGridActionContext<T> = dataGridActionContext;
-        if (commandManager.current?.executeCommand(event, context)) {
+        if (commandManager.current?.executeCommand(event, dataGridActionContext)) {
             event.preventDefault();
             return;
         }
-        if (actionManager.current?.executeActionByKeybinding(event, context)) {
+        if (actionManager.current?.executeActionByKeybinding(event, dataGridActionContext)) {
             event.preventDefault();
             return;
         }
@@ -1577,7 +1576,7 @@ export const DataGrid = <T extends object>({
             if (event.ctrlKey) {
                 toggleColumnSelection(col.key);
             } else {
-                setSelectedColumns([]);
+                setSelectedColumns(prev => prev.length ? [] : prev);
             }
         }
         else if ((col.sortable ?? true) && !pivot) {
@@ -1594,7 +1593,7 @@ export const DataGrid = <T extends object>({
 
         const allSelected = selectedRows.length === displayData.length;
         if (allSelected) {
-            setSelectedRows([]);
+            setSelectedRows(prev => prev.length ? [] : prev);
         } else {
             setSelectedRows(displayData.map((_, idx) => idx));
         }
@@ -1676,7 +1675,7 @@ export const DataGrid = <T extends object>({
                     manager={actionManager.current!}
                     open={openCommandPalette}
                     onClose={() => setOpenCommandPalette(false)}
-                    getContext={() => dataGridActionContext}
+                    getContext={React.useCallback(() => dataGridActionContext, [dataGridActionContext])}
                     parentRef={containerRef}
                     prefix={commandPalettePrefix}
                     searchText={commandPalettePrefix === "*" ? searchState.current.text ?? "" : ""}

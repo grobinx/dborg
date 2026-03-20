@@ -48,7 +48,7 @@ export const useColumnsGroup = (): ColumnsGroup => {
     };
 
     const clearColumns = () => {
-        setColumns([]);
+        setColumns(prev => prev.length ? [] : prev);
     };
 
     const isInGroup = (column: string) => {

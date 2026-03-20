@@ -81,7 +81,7 @@ const TabsSlot: React.FC<TabsSlotOwnProps> = (props) => {
                 return null;
             }).filter(Boolean) as React.ReactElement<React.ComponentProps<typeof TabPanel>>[]);
         } else {
-            setTabs([]);
+            setTabs(prev => prev.length ? [] : prev);
         }
         const resolvedToolBarSlot = resolveValue(slot.toolBar, runtimeContext);
         if (resolvedToolBarSlot) {

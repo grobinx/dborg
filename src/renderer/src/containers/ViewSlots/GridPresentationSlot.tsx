@@ -88,11 +88,11 @@ const GridPresentationSlot: React.FC<GridPresentationSlotProps> = ({ slot, ref }
                     setColumns(undefined);
                 } else if (typeof result === "string") {
                     setMessage(result);
-                    setRows([]);
+                    setRows(prev => prev.length ? [] : prev);
                     setColumns(undefined);
                 } else {
                     setMessage(undefined);
-                    setRows([]);
+                    setRows(prev => prev.length ? [] : prev);
                     setColumns(undefined);
                 }
             } catch (error) {

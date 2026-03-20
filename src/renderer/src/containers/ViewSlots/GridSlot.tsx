@@ -126,14 +126,14 @@ const GridSlot: React.FC<GridSlotProps> = ({
                     setPivot(false);
                 } else if (typeof result === "string") {
                     setMessage(result);
-                    setRows([]);
-                    setColumns([]);
+                    setRows(prev => prev.length ? [] : prev);
+                    setColumns(prev => prev.length ? [] : prev);
                     setPivotColumns(undefined);
                     setPivot(false);
                 } else {
                     setMessage(undefined);
-                    setRows([]);
-                    setColumns([]);
+                    setRows(prev => prev.length ? [] : prev);
+                    setColumns(prev => prev.length ? [] : prev);
                     setPivotColumns(undefined);
                     setPivot(false);
                 }
@@ -258,7 +258,7 @@ const GridSlot: React.FC<GridSlotProps> = ({
                     onMount={dataGridMountHandler}
                     autoSaveId={slot.autoSaveId ?? slotId}
                     mode={slot.mode ?? "defined"}
-                    onChange={(status) => setDataGridStatus(status)}
+                    onChange={React.useCallback((status: DataGridStatus) => setDataGridStatus(status), [])}
                     pivot={pivot}
                     pivotColumns={pivotColumns}
                     uniqueField={slot.uniqueField}

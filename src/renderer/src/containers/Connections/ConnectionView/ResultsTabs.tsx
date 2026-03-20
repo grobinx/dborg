@@ -101,7 +101,7 @@ const ResultsTabs: React.FC<ResultsTabsProps> = ({ session, additionalTabs }) =>
                 });
             };
         } else {
-            setPluginTabs([]);
+            setPluginTabs(prev => prev.length ? [] : prev);
         }
     }, [pluginTabSlots]);
 

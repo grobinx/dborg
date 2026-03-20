@@ -125,7 +125,7 @@ export const ConsoleProvider: React.FC<{ children: React.ReactNode }> = ({ child
         // Obsługa console.clear
         console.clear = () => {
             logQueue.current = []; // Wyczyść kolejkę
-            setLogs([]); // Wyczyść logi w stanie
+            setLogs(prev => prev.length ? [] : prev); // Wyczyść logi w stanie
             logHandlerRef.current!('clear', 'Console cleared'); // Dodaj wpis o czyszczeniu konsoli
             originalConsole.current.clear(); // Wywołaj oryginalną metodę console.clear
         };

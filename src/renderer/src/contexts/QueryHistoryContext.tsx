@@ -200,7 +200,7 @@ export const QueryHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }, [maxItems, maxAgeDays, hashQuery, deduplicateMode, deduplicateTimeWindow, compressQueryText]);
 
     const clearQueryHistory = useCallback(() => {
-        setQueryHistory([]);
+        setQueryHistory(prev => prev.length ? [] : prev);
     }, []);
 
     const reloadQueryHistory = useCallback(async () => {

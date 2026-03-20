@@ -297,8 +297,8 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
             } catch (error) {
                 console.error("Error executing query", error);
                 // addToast("error", "Error executing query", { reason: error, source: session.profile.sch_name });
-                setColumns([]);
-                setRows([]);
+                setColumns(prev => prev.length ? [] : prev);
+                setRows(prev => prev.length ? [] : prev);
                 addQueryToHistory({
                     query: oryginalQuery!,
                     profileName: session.profile.sch_name,
@@ -332,8 +332,8 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                     setColumns(fillInternalColumnInfo(await session.getMetadata(), queryToDataGridColumns(result.columns ?? [])));
                 }
                 else {
-                    setRows([]);
-                    setColumns([]);
+                    setRows(prev => prev.length ? [] : prev);
+                    setColumns(prev => prev.length ? [] : prev);
                 }
                 lastQuery.current = query;
                 setQueryDuration(result.duration ?? null);
@@ -428,7 +428,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                 setQueryValues(mapSqlParamsToValues(values, params));
             }
             else {
-                setQueryValues([]);
+                setQueryValues(prev => prev.length ? [] : prev);
             }
 
             if (tabIsActiveRef.current) {
@@ -512,7 +512,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                                     : undefined
                             }
                             active={tabIsActive}
-                            onChange={(status) => {
+                            onChange={React.useCallback((status: DataGridStatus) => {
                                 setDataGridStatus(status)
                                 if (status.position) {
                                     const value = dataGridRef.current?.getValue(status.position);
@@ -525,7 +525,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                                         setColumnPreview(column ?? null);
                                     }
                                 }
-                            }}
+                            }, [valuePreview, typePreview, columnPreview])}
                             onMount={onMountHandle}
                             ref={dataGridRef}
                             autoSaveId={session.profile.sch_id}

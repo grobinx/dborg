@@ -94,7 +94,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
         onCloseRef.current();
         setSearchText('');
         setSelectedGroup(null);
-        setFilteredCommands([]);
+        setFilteredCommands(prev => prev.length ? [] : prev);
         setSelectedIndex(null);
         parentRef?.current?.focus();
         cachedActions.current = {};
@@ -247,7 +247,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     // Effect 3: Fetch commands with debounce
     useEffect(() => {
         if (!open || !selectedGroup) {
-            setFilteredCommands([]);
+            setFilteredCommands(prev => prev.length ? [] : prev);
             return;
         }
 
@@ -350,7 +350,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
 
         const fetchContextMenuActions = async () => {
             if (!manager) {
-                if (isMounted) setGroupedContextMenuActions([]);
+                if (isMounted) setGroupedContextMenuActions(prev => prev.length ? [] : prev);
                 return;
             }
 
