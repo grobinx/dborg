@@ -1,71 +1,118 @@
-import { send } from "process";
 import React from "react";
-export * as Messages from "../app/Messages"; // Export all messages for easy access
+export * as Messages from "../app/Messages";
 
-// Generic MessageHandler type with rest parameters
-type MessageHandler<Args extends any[] = any[], R = any> = (...args: Args) => Promise<R> | R;
+type MessageHandler<Args extends unknown[] = unknown[], R = unknown> = (...args: Args) => Promise<R> | R;
+type AnyMessageHandler = (...args: unknown[]) => Promise<unknown> | unknown;
 
-// MessageContextProps with generic support
 export interface MessageContextProps {
-    subscribe: <Args extends any[], R = any>(message: string, handler: MessageHandler<Args, R>) => () => void;
-    unsubscribe: <Args extends any[], R = any>(message: string, handler: MessageHandler<Args, R>) => void;
-    sendMessage: <Args extends any[], R = any>(message: string, ...args: Args) => Promise<R | undefined>;
-    queueMessage: (message: string, ...args: any[]) => void;
-    emit: <Args extends any[], R = any>(message: string, ...args: Args) => Promise<R | undefined>;
+    subscribe: <Args extends unknown[], R = unknown>(message: string, handler: MessageHandler<Args, R>) => () => void;
+    unsubscribe: <Args extends unknown[], R = unknown>(message: string, handler: MessageHandler<Args, R>) => void;
+    sendMessage: <Args extends unknown[], R = unknown>(message: string, ...args: Args) => Promise<R | undefined>;
+    queueMessage: (message: string, ...args: unknown[]) => void;
+    emit: <Args extends unknown[], R = unknown>(message: string, ...args: Args) => Promise<R | undefined>;
 }
 
 const MessageContext = React.createContext<MessageContextProps | undefined>(undefined);
 
+type PendingQueuedMessage = { message: string; args: unknown[] };
+const pendingQueuedMessages: PendingQueuedMessage[] = [];
+
+const defaultSendMessage: MessageContextProps["sendMessage"] = async () => undefined;
+const defaultQueueMessage: MessageContextProps["queueMessage"] = (message, ...args) => {
+    pendingQueuedMessages.push({ message, args });
+};
+
+export let sendMessage: MessageContextProps["sendMessage"] = defaultSendMessage;
+export let queueMessage: MessageContextProps["queueMessage"] = defaultQueueMessage;
+
+function setBusFunctions(
+    send: MessageContextProps["sendMessage"],
+    queue: MessageContextProps["queueMessage"]
+) {
+    sendMessage = send;
+    queueMessage = queue;
+
+    if (pendingQueuedMessages.length > 0) {
+        const queued = pendingQueuedMessages.splice(0, pendingQueuedMessages.length);
+        for (const item of queued) {
+            queue(item.message, ...item.args);
+        }
+    }
+}
+
+const scheduleMicrotask: (callback: () => void) => void =
+    typeof queueMicrotask === "function"
+        ? queueMicrotask
+        : (callback) => { void Promise.resolve().then(callback); };
+
 export const MessageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const listeners = React.useRef<Map<string, Set<MessageHandler>>>(new Map());
+    const listenersRef = React.useRef<Map<string, Set<AnyMessageHandler>>>(new Map());
 
-    const subscribe = <Args extends any[], R = any>(message: string, handler: MessageHandler<Args, R>) : () => void => {
-        if (!listeners.current.has(message)) {
-            listeners.current.set(message, new Set());
-        }
-        listeners.current.get(message)?.add(handler as MessageHandler);
-        return () => {
-            unsubscribe(message, handler);
-        }
-    };
+    const unsubscribe = React.useCallback<MessageContextProps["unsubscribe"]>((message, handler) => {
+        const handlers = listenersRef.current.get(message);
+        if (!handlers) return;
 
-    const unsubscribe = <Args extends any[], R = any>(message: string, handler: MessageHandler<Args, R>) => {
-        const handlers = listeners.current.get(message);
-        if (handlers) {
-            handlers.delete(handler);
-            if (handlers.size === 0) {
-                listeners.current.delete(message);
+        handlers.delete(handler as unknown as AnyMessageHandler);
+        if (handlers.size === 0) {
+            listenersRef.current.delete(message);
+        }
+    }, []);
+
+    const subscribe = React.useCallback<MessageContextProps["subscribe"]>((message, handler) => {
+        let handlers = listenersRef.current.get(message);
+        if (!handlers) {
+            handlers = new Set<AnyMessageHandler>();
+            listenersRef.current.set(message, handlers);
+        }
+
+        handlers.add(handler as unknown as AnyMessageHandler);
+        return () => unsubscribe(message, handler);
+    }, [unsubscribe]);
+
+    const sendMessageImpl = React.useCallback(
+        async <Args extends unknown[], R = unknown>(message: string, ...args: Args): Promise<R | undefined> => {
+            const handlers = listenersRef.current.get(message);
+            if (!handlers || handlers.size === 0) return undefined;
+
+            const snapshot = Array.from(handlers);
+            let firstResult: R | undefined;
+
+            for (const handler of snapshot) {
+                try {
+                    const result = await handler(...(args as unknown[]));
+                    if (firstResult === undefined && result !== undefined) {
+                        firstResult = result as R;
+                    }
+                } catch (error) {
+                    console.error(`Message handler failed for "${message}"`, error);
+                }
             }
-        }
-    };
 
-    const sendMessage = async <Args extends any[], R = any>(message: string, ...args: Args): Promise<R | undefined> => {
-        const handlers = listeners.current.get(message);
-        if (!handlers || handlers.size === 0) return undefined;
+            return firstResult;
+        },
+        []
+    );
 
-        const handlersCopy = Array.from(handlers); // Stwórz kopię uchwytów bo może być modyfikowana w trakcie iteracji
-        const results: R[] = [];
-        for (const handler of handlersCopy) {
-            const result = await handler(...args); // Spread the arguments to the handler
-            if (result !== undefined) { // Check if the result is not undefined
-                results.push(result); // Collect results
-            }
-        }
-        return results[0];
-    };
-
-    const queueMessage = (message: string, ...args: any[]) => {
-        setTimeout(() => {
-            sendMessage(message, ...args);
-        }, 0);
-    };
+    const queueMessageImpl = React.useCallback<MessageContextProps["queueMessage"]>((message, ...args) => {
+        scheduleMicrotask(() => {
+            void sendMessageImpl(message, ...(args as any[]));
+        });
+    }, [sendMessageImpl]);
 
     React.useEffect(() => {
-        setBusFunctions(sendMessage, queueMessage);
-    }, [sendMessage, queueMessage]);
+        setBusFunctions(sendMessageImpl, queueMessageImpl);
+    }, [sendMessageImpl, queueMessageImpl]);
+
+    const contextValue = React.useMemo<MessageContextProps>(() => ({
+        subscribe,
+        unsubscribe,
+        sendMessage: sendMessageImpl,
+        emit: sendMessageImpl,
+        queueMessage: queueMessageImpl,
+    }), [subscribe, unsubscribe, sendMessageImpl, queueMessageImpl]);
 
     return (
-        <MessageContext.Provider value={{ subscribe, unsubscribe, sendMessage, emit: sendMessage, queueMessage }}>
+        <MessageContext.Provider value={contextValue}>
             {children}
         </MessageContext.Provider>
     );
@@ -76,17 +123,5 @@ export const useMessages = (): MessageContextProps => {
     if (!context) {
         throw new Error("useMessages must be used within a MessageProvider");
     }
-
     return context;
 };
-
-function setBusFunctions(
-    send: MessageContextProps["sendMessage"],
-    queue: MessageContextProps["queueMessage"]
-) {
-    sendMessage = send;
-    queueMessage = queue;
-}
-
-export let sendMessage: MessageContextProps["sendMessage"];
-export let queueMessage: MessageContextProps["queueMessage"];

@@ -88,13 +88,13 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <React.StrictMode>
         <GlobalErrorHandler />
         <ErrorBoundaryWrapper>
-            <ConsoleProvider>
-                <MessageProvider>
+            <MessageProvider>
+                <ConsoleProvider>
                     <SettingsProvider>
                         <AppWrapper />
                     </SettingsProvider>
-                </MessageProvider>
-            </ConsoleProvider>
+                </ConsoleProvider>
+            </MessageProvider>
         </ErrorBoundaryWrapper>
     </React.StrictMode>
 );
