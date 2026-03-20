@@ -77,14 +77,33 @@ type SpecificContainer =
     | PluginsContainer
     | CustomContainer;
 
-interface ApplicationState {
+interface ApplicationContainersState {
     containers: SpecificContainer[] | null;
     selectedContainer: SpecificContainer | null;
     views: View[] | null;
     selectedView: View | null;
+}
+
+interface ApplicationSessionsState {
     sessions: IDatabaseSession[] | null;
     selectedSession: IDatabaseSession | null;
+}
+
+interface ApplicationSessionStateApi {
     getSessionState: (sessionId: string) => { views: View[]; selectedView: View | null };
+}
+
+interface ApplicationState extends ApplicationContainersState, ApplicationSessionsState, ApplicationSessionStateApi {}
+
+interface SubscriptionHandlers {
+    switchContainer: (type: ContainerType) => void;
+    switchView: (viewId: string) => void;
+    editSchema: (schemaId: string) => void;
+    cloneEditSchema: (schemaId: string) => void;
+    tabConnectionsChanged: (msg: TabPanelChangedMessage) => void;
+    refreshMetadata: (msg: RefreshMetadata) => void;
+    profileConnectSuccess: (connection: api.ConnectionInfo) => void;
+    schemaDisconnectSuccess: (connectionId: string) => void;
 }
 
 const ConnectedViewIcon: React.FC<{ session: IDatabaseSession }> = ({ session }) => {
@@ -125,7 +144,9 @@ const ConnectedViewIcon: React.FC<{ session: IDatabaseSession }> = ({ session })
 // CONTEXT
 // ============================================================================
 
-const ApplicationContext = createContext<ApplicationState | undefined>(undefined);
+const ApplicationContainersContext = createContext<ApplicationContainersState | undefined>(undefined);
+const ApplicationSessionsContext = createContext<ApplicationSessionsState | undefined>(undefined);
+const ApplicationSessionStateContext = createContext<ApplicationSessionStateApi | undefined>(undefined);
 
 // ============================================================================
 // PROVIDER
@@ -154,6 +175,16 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const sessionsRef = React.useRef<IDatabaseSession[] | null>(null);
     const iAmDeveloperRef = React.useRef(iAmDeveloper);
     const sessionViewStateRef = React.useRef<Record<string, { views: View[]; selectedViewId: string | null }>>({});
+    const subscriptionHandlersRef = React.useRef<SubscriptionHandlers>({
+        switchContainer: () => undefined,
+        switchView: () => undefined,
+        editSchema: () => undefined,
+        cloneEditSchema: () => undefined,
+        tabConnectionsChanged: () => undefined,
+        refreshMetadata: () => undefined,
+        profileConnectSuccess: () => undefined,
+        schemaDisconnectSuccess: () => undefined,
+    });
 
     // ========================================================================
     // HELPER FUNCTIONS
@@ -468,6 +499,16 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         }
     }, [selectedSession, initMetadata]);
 
+    // Keep latest handler implementations without forcing re-subscriptions.
+    subscriptionHandlersRef.current.switchContainer = handleSwitchContainer;
+    subscriptionHandlersRef.current.switchView = handleSwitchView;
+    subscriptionHandlersRef.current.editSchema = handleEditSchema;
+    subscriptionHandlersRef.current.cloneEditSchema = handleCloneEditSchema;
+    subscriptionHandlersRef.current.tabConnectionsChanged = handleTabConnectionsChanged;
+    subscriptionHandlersRef.current.refreshMetadata = handleRefreshMetadata;
+    subscriptionHandlersRef.current.profileConnectSuccess = handleProfileConnectSuccess;
+    subscriptionHandlersRef.current.schemaDisconnectSuccess = handleSchemaDisconnectSuccess;
+
     // ========================================================================
     // EFFECTS
     // ========================================================================
@@ -515,62 +556,83 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     // Subskrypcje na wiadomości i eventy
     useEffect(() => {
+        const onSwitchContainer = (type: ContainerType) => {
+            subscriptionHandlersRef.current.switchContainer(type);
+        };
+        const onSwitchView = (viewId: string) => {
+            subscriptionHandlersRef.current.switchView(viewId);
+        };
+        const onEditSchema = (schemaId: string) => {
+            subscriptionHandlersRef.current.editSchema(schemaId);
+        };
+        const onCloneEditSchema = (schemaId: string) => {
+            subscriptionHandlersRef.current.cloneEditSchema(schemaId);
+        };
+        const onTabConnectionsChanged = (msg: TabPanelChangedMessage) => {
+            subscriptionHandlersRef.current.tabConnectionsChanged(msg);
+        };
+        const onRefreshMetadata = (msg: RefreshMetadata) => {
+            subscriptionHandlersRef.current.refreshMetadata(msg);
+        };
+
         const offDisconnecting = onEvent("disconnecting", e => {
-            if (e.status === "success") handleSchemaDisconnectSuccess(e.connectionUniqueId);
+            if (e.status === "success") {
+                subscriptionHandlersRef.current.schemaDisconnectSuccess(e.connectionUniqueId);
+            }
         });
         const offConnecting = onEvent("connecting", e => {
-            if (e.status === "success") handleProfileConnectSuccess(e.connection!);
+            if (e.status === "success" && e.connection) {
+                subscriptionHandlersRef.current.profileConnectSuccess(e.connection);
+            }
         });
 
-        subscribe(Messages.SWITCH_CONTAINER, handleSwitchContainer);
-        subscribe(Messages.SWITCH_VIEW, handleSwitchView);
-        subscribe(Messages.EDIT_PROFILE, handleEditSchema);
-        subscribe(Messages.CLONE_EDIT_PROFILE, handleCloneEditSchema);
-        subscribe(Messages.TAB_PANEL_CHANGED, handleTabConnectionsChanged);
-        subscribe(Messages.REFRESH_METADATA, handleRefreshMetadata);
+        subscribe(Messages.SWITCH_CONTAINER, onSwitchContainer);
+        subscribe(Messages.SWITCH_VIEW, onSwitchView);
+        subscribe(Messages.EDIT_PROFILE, onEditSchema);
+        subscribe(Messages.CLONE_EDIT_PROFILE, onCloneEditSchema);
+        subscribe(Messages.TAB_PANEL_CHANGED, onTabConnectionsChanged);
+        subscribe(Messages.REFRESH_METADATA, onRefreshMetadata);
 
         return () => {
-            unsubscribe(Messages.SWITCH_CONTAINER, handleSwitchContainer);
-            unsubscribe(Messages.SWITCH_VIEW, handleSwitchView);
-            unsubscribe(Messages.EDIT_PROFILE, handleEditSchema);
-            unsubscribe(Messages.CLONE_EDIT_PROFILE, handleCloneEditSchema);
-            unsubscribe(Messages.TAB_PANEL_CHANGED, handleTabConnectionsChanged);
-            unsubscribe(Messages.REFRESH_METADATA, handleRefreshMetadata);
+            unsubscribe(Messages.SWITCH_CONTAINER, onSwitchContainer);
+            unsubscribe(Messages.SWITCH_VIEW, onSwitchView);
+            unsubscribe(Messages.EDIT_PROFILE, onEditSchema);
+            unsubscribe(Messages.CLONE_EDIT_PROFILE, onCloneEditSchema);
+            unsubscribe(Messages.TAB_PANEL_CHANGED, onTabConnectionsChanged);
+            unsubscribe(Messages.REFRESH_METADATA, onRefreshMetadata);
             offDisconnecting();
             offConnecting();
         };
-    }, [
-        handleSwitchContainer,
-        handleSwitchView,
-        handleEditSchema,
-        handleCloneEditSchema,
-        handleTabConnectionsChanged,
-        handleProfileConnectSuccess,
-        handleSchemaDisconnectSuccess,
-        handleRefreshMetadata,
-        onEvent,
-        subscribe,
-        unsubscribe,
-    ]);
+    }, [onEvent, subscribe, unsubscribe]);
 
     // ========================================================================
     // RENDER
     // ========================================================================
 
-    const appContextValue = React.useMemo(() => ({
+    const containersContextValue = React.useMemo(() => ({
         containers,
         selectedContainer,
         views,
         selectedView,
+    }), [containers, selectedContainer, views, selectedView]);
+
+    const sessionsContextValue = React.useMemo(() => ({
         sessions,
         selectedSession,
+    }), [sessions, selectedSession]);
+
+    const sessionStateContextValue = React.useMemo(() => ({
         getSessionState,
-    }), [containers, selectedContainer, views, selectedView, sessions, selectedSession, getSessionState]);
+    }), [getSessionState]);
 
     return (
-        <ApplicationContext.Provider value={appContextValue}>
-            {children}
-        </ApplicationContext.Provider>
+        <ApplicationContainersContext.Provider value={containersContextValue}>
+            <ApplicationSessionsContext.Provider value={sessionsContextValue}>
+                <ApplicationSessionStateContext.Provider value={sessionStateContextValue}>
+                    {children}
+                </ApplicationSessionStateContext.Provider>
+            </ApplicationSessionsContext.Provider>
+        </ApplicationContainersContext.Provider>
     );
 };
 
@@ -579,24 +641,39 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
 // ============================================================================
 
 export const useApplicationContext = (): ApplicationState => {
-    const context = useContext(ApplicationContext);
-    if (!context) {
+    const containersContext = useContext(ApplicationContainersContext);
+    const sessionsContext = useContext(ApplicationSessionsContext);
+    const sessionStateContext = useContext(ApplicationSessionStateContext);
+    if (!containersContext || !sessionsContext || !sessionStateContext) {
         throw new Error('useApplicationContext must be used within an ApplicationProvider');
+    }
+    return {
+        ...containersContext,
+        ...sessionsContext,
+        ...sessionStateContext,
+    };
+};
+
+export const useContainers = (): ApplicationContainersState => {
+    const context = useContext(ApplicationContainersContext);
+    if (!context) {
+        throw new Error('useContainers must be used within an ApplicationProvider');
     }
     return context;
 };
 
-export const useContainers = () => {
-    const { containers, selectedContainer, views, selectedView } = useApplicationContext();
-    return { containers, selectedContainer, views, selectedView };
-};
-
-export const useSessions = () => {
-    const { sessions, selectedSession } = useApplicationContext();
-    return { sessions, selectedSession };
+export const useSessions = (): ApplicationSessionsState => {
+    const context = useContext(ApplicationSessionsContext);
+    if (!context) {
+        throw new Error('useSessions must be used within an ApplicationProvider');
+    }
+    return context;
 };
 
 export const useSessionState = (sessionId: string) => {
-    const { getSessionState } = useApplicationContext();
-    return getSessionState(sessionId);
+    const context = useContext(ApplicationSessionStateContext);
+    if (!context) {
+        throw new Error('useSessionState must be used within an ApplicationProvider');
+    }
+    return context.getSessionState(sessionId);
 };

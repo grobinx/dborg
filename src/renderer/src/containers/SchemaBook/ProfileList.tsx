@@ -21,7 +21,7 @@ import { Indexes, useSort } from "@renderer/hooks/useSort";
 import { Group, useGroup } from "@renderer/hooks/useGroup";
 import { useSearch } from "@renderer/hooks/useSearch";
 import { useProfiles } from "@renderer/contexts/ProfilesContext";
-import { useApplicationContext } from "@renderer/contexts/ApplicationContext";
+import { useApplicationContext, useSessions } from "@renderer/contexts/ApplicationContext";
 import { useScrollIntoView } from "@renderer/hooks/useScrollIntoView";
 import clsx from "@renderer/utils/clsx";
 import { BaseList } from "@renderer/components/inputs/base/BaseList";
@@ -215,7 +215,7 @@ const ProfileList: React.FC<ProfileListOwnProps> = (props) => {
     const [sortList, setSortList] = React.useState<boolean | undefined>(JSON.parse(window.localStorage.getItem(Store_ProfileList_sortList) ?? "false"));
     const [search, setSearch] = React.useState('');
     const { initialized, profiles, getProfile, disconnectProfile, reloadProfiles, connectToDatabase, testConnection, deleteProfile, swapProfilesOrder } = useProfiles();
-    const { sessions } = useApplicationContext();
+    const { sessions } = useSessions();
     const [data, setData] = React.useState<Profile[] | null>(null);
     const sortedData = useSort(data, profileIndexes, groupList ? (sortList ? 'groupLastUsed' : 'groupOrder') : (sortList ? 'lastUsed' : 'order'));
     const [searchedData, highlightText] = useSearch({
