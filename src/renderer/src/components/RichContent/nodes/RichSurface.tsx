@@ -1,35 +1,37 @@
 import React from "react";
-import { IRichCallout, IRichEnvironment } from "../types";
+import { IRichSurface, IRichEnvironment } from "../types";
 import RichRenderer, { RichProp } from "..";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
-import CalloutBox from "../utils/CalloutBox";
+import SurfaceBox from "../utils/SurfaceBox";
 import Tooltip from "@renderer/components/Tooltip";
 
-interface RichCalloutProps extends RichProp {
-    node: Optional<IRichCallout, "type">;
+interface RichSurfaceProps extends RichProp {
+    node: Optional<IRichSurface, "type">;
     environment?: IRichEnvironment;
     children?: React.ReactNode;
 }
 
-const RichCallout: React.FC<RichCalloutProps> = ({ node, environment, children }) => {
+const RichSurface: React.FC<RichSurfaceProps> = ({ node, environment, children }) => {
     if (node.excluded) {
         return null;
     }
 
     const result = (
-        <CalloutBox
+        <SurfaceBox
             id={node.id}
             hidden={node.hidden}
             key={node.key ?? node.id}
-            className={clsx("RichNode-callout", node.className)}
+            className={clsx("RichNode-surface", node.className)}
             style={node.style}
             severity={node.severity}
+            variant={node.variant}
+            animated={node.animated}
             sx={{ p: 0, gap: 0 }}
         >
             <RichRenderer node={node.value} environment={environment} />
             {children}
-        </CalloutBox>
+        </SurfaceBox>
     );
 
     if (node.tooltip) {
@@ -43,4 +45,4 @@ const RichCallout: React.FC<RichCalloutProps> = ({ node, environment, children }
     return result;
 };
 
-export default RichCallout;
+export default RichSurface;

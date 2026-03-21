@@ -4,7 +4,7 @@ import { IRichEnvironment, IRichList, IRichListItem, RichNode } from "../types";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromFunction, RichIcon, RichProp } from "..";
-import CalloutBox from "../utils/CalloutBox";
+import SurfaceBox from "../utils/SurfaceBox";
 import Tooltip from "@renderer/components/Tooltip";
 
 interface RichListItemProps extends RichProp {
@@ -26,7 +26,7 @@ const RichListItem: React.FC<RichListItemProps> = ({ node, environment, children
     }
 
     const result = (
-        <CalloutBox
+        <SurfaceBox
             component={"li"}
             id={node.id}
             hidden={node.hidden}
@@ -38,6 +38,7 @@ const RichListItem: React.FC<RichListItemProps> = ({ node, environment, children
             )}
             style={node.style}
             severity={node.indicator ? (node.severity ?? "default") : undefined}
+            variant={node.indicator ? "callout" : undefined}
             sx={{
                 display: "list-item",
                 padding: environment?.theme?.padding ?? node.padding ?? "0px 4px",
@@ -53,7 +54,7 @@ const RichListItem: React.FC<RichListItemProps> = ({ node, environment, children
                 : <RichRenderer node={content} environment={environment} textVariant="body" />
             }
             {children}
-        </CalloutBox>
+        </SurfaceBox>
     );
 
     if (node.tooltip) {
@@ -103,7 +104,7 @@ const RichList: React.FC<RichListProps> = ({ node, environment, children, refres
                 padding: environment?.theme?.padding ?? 8,
                 paddingLeft: node.listType && node.listType !== "none" ? "24px" : "0px",
                 margin: 0,
-                "& > li.indicator + li.indicator": {
+                "& > li + li": {
                     marginTop: environment?.theme?.gap ?? 4,
                 },
             }}

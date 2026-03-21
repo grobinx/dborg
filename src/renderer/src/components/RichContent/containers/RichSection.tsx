@@ -5,6 +5,7 @@ import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromF
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 import Tooltip from "@renderer/components/Tooltip";
+import SurfaceBox from "../utils/SurfaceBox";
 
 interface RichSectionProps extends RichProp {
     node: Optional<IRichSection, "type">;
@@ -26,15 +27,14 @@ const RichSection: React.FC<RichSectionProps> = ({ node, environment, children, 
     }
 
     const result = (
-        <Paper
+        <SurfaceBox
             id={node.id}
             hidden={node.hidden}
             key={node.key ?? node.id}
             className={clsx("RichContainer-section", node.className)}
+            variant="paper"
+            severity={node.severity}
             style={node.style}
-            sx={{
-                overflow: "hidden",
-            }}
         >
             {(node.title || node.collapsible) && (
                 <Box
@@ -88,7 +88,7 @@ const RichSection: React.FC<RichSectionProps> = ({ node, environment, children, 
                     {children}
                 </Box>
             </Collapse>
-        </Paper>
+        </SurfaceBox>
     );
 
     if (node.tooltip) {

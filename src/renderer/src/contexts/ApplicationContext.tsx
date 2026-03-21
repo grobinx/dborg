@@ -171,6 +171,14 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const [selectedSession, setSelectedSession] = useState<IDatabaseSession | null>(null);
     const [sessionViewStateVersion, setSessionViewStateVersion] = useState(0);
 
+    const containerIdsRef = React.useRef({
+        "new-profile": uuidv7(),
+        "profile-list": uuidv7(),
+        "connections": uuidv7(),
+        "plugins": uuidv7(),
+        "settings": uuidv7(),
+    });
+
     // Refs
     const sessionsRef = React.useRef<IDatabaseSession[] | null>(null);
     const iAmDeveloperRef = React.useRef(iAmDeveloper);
@@ -191,9 +199,10 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     // ========================================================================
 
     const initialContainers = React.useMemo((): SpecificContainer[] => {
+        const ids = containerIdsRef.current;
         return [
             {
-                id: uuidv7(),
+                id: ids["new-profile"],
                 type: "new-profile",
                 icon: <theme.icons.NewConnection />,
                 label: t("new", "New"),
@@ -202,7 +211,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                 container: () => <SchemaAssistant />,
             },
             {
-                id: uuidv7(),
+                id: ids["profile-list"],
                 type: "profile-list",
                 icon: <theme.icons.ConnectionList />,
                 label: t("profiles", "Profiles"),
@@ -211,7 +220,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                 container: () => <ProfileBook />,
             },
             {
-                id: uuidv7(),
+                id: ids["connections"],
                 type: "connections",
                 icon: <theme.icons.Connections />,
                 label: t("sessions", "Sessions"),
@@ -221,7 +230,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                 disabled: () => (sessionsRef.current === null || sessionsRef.current.length === 0),
             },
             {
-                id: uuidv7(),
+                id: ids["plugins"],
                 type: "plugins",
                 icon: <theme.icons.Plugins />,
                 label: t("plugins", "Plugins"),
@@ -245,7 +254,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                 ],
             },
             {
-                id: uuidv7(),
+                id: ids["settings"],
                 type: "settings",
                 icon: <theme.icons.Settings />,
                 label: t("manage", "Manage"),
@@ -277,7 +286,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                 ].filter(Boolean) as View[],
             },
         ];
-    }, [theme.icons, t, iAmDeveloper]);
+    }, [theme, theme.icons, t, iAmDeveloper]);
 
     const chooseContainer = React.useCallback((list: IDatabaseSession[] | null) => {
         if (!containers) return null;
@@ -544,6 +553,11 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             iAmDeveloperRef.current = iAmDeveloper;
             const settings = next.find(c => c.type === "settings") || null;
             selectContainer(settings);
+        } else {
+            // Re-match po typie po przebudowie listy (np. zmiana motywu/języka)
+            setSelectedContainer(prev =>
+                prev ? (next.find(c => c.type === prev.type) ?? null) : null
+            );
         }
     }, [initialContainers, iAmDeveloper, selectContainer]);
 

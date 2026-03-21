@@ -6,7 +6,7 @@ import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 import Tooltip from "@renderer/components/Tooltip";
 import RichIcon from "../nodes/RichIcon";
-import CalloutBox from "../utils/CalloutBox";
+import SurfaceBox from "../utils/SurfaceBox";
 
 interface RichTreeItemProps extends RichProp {
     node: IRichTreeItem;
@@ -48,7 +48,7 @@ const RichTreeItemComponent: React.FC<RichTreeItemProps> = ({ node, level, envir
     }
 
     const itemContent = (
-        <CalloutBox
+        <SurfaceBox
             component={"li"}
             id={node.id}
             hidden={node.hidden}
@@ -60,6 +60,7 @@ const RichTreeItemComponent: React.FC<RichTreeItemProps> = ({ node, level, envir
             )}
             style={node.style}
             severity={node.indicator ? (node.severity ?? "default") : undefined}
+            variant={node.indicator ? "callout" : undefined}
             sx={{
                 display: "flex",
                 alignItems: "flex-start",
@@ -94,7 +95,7 @@ const RichTreeItemComponent: React.FC<RichTreeItemProps> = ({ node, level, envir
                 <RichIcon node={{ icon: "Loading" }} environment={environment} />
                 : <RichRenderer node={content} environment={environment} />
             }
-        </CalloutBox>
+        </SurfaceBox>
     );
 
     const itemWithTooltip = node.tooltip ? (
@@ -118,7 +119,6 @@ const RichTreeItemComponent: React.FC<RichTreeItemProps> = ({ node, level, envir
             key={node.key ?? node.id}
             sx={{
                 position: "relative",
-                mb: 0,
                 pl: level > 0 ? `${tree.indentSize ?? TREE_INDENT}px` : 0,
                 "&::before":
                     level > 0 && (tree.connectors ?? true) !== false
@@ -145,7 +145,7 @@ const RichTreeItemComponent: React.FC<RichTreeItemProps> = ({ node, level, envir
                         }
                         : undefined,
                 margin: 0,
-                "& li.indicator": {
+                "& li": {
                     marginBottom: environment?.theme?.gap ?? 4,
                 },
             }}

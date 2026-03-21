@@ -4,7 +4,7 @@ import { IRichStat, RichColSize, IRichEnvironment } from "../types";
 import RichRenderer, { RichProp, RichRow } from "..";
 import RichIcon from "./RichIcon";
 import clsx from "@renderer/utils/clsx";
-import CalloutBox from "../utils/CalloutBox";
+import SurfaceBox from "../utils/SurfaceBox";
 import { Optional } from "@renderer/types/universal";
 import Tooltip from "@renderer/components/Tooltip";
 
@@ -43,13 +43,14 @@ const RichStat: React.FC<RichStatProps> = ({ node, environment }) => {
     const severity = node.severity ?? "default";
 
     const result = (
-        <CalloutBox
+        <SurfaceBox
             id={node.id}
             hidden={node.hidden}
             key={node.key ?? node.id}
             className={clsx("RichNode-stat", node.className)}
             style={node.style}
             severity={severity}
+            variant={"callout"}
             sx={{
                 display: "flex",
                 flexDirection: "column",
@@ -75,7 +76,7 @@ const RichStat: React.FC<RichStatProps> = ({ node, environment }) => {
 
             {/* Etykieta */}
             <RichRenderer node={node.label} environment={environment} textVariant="label" />
-        </CalloutBox>
+        </SurfaceBox>
     );
 
     if (node.tooltip) {

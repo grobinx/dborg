@@ -41,7 +41,7 @@ export type {
     IRichBullet,
     IRichRefresh,
     IRichSparkline,
-    IRichCallout,
+    IRichSurface as IRichCallout,
     IRichTree,
     IRichWidget,
 } from "./types";
@@ -68,7 +68,7 @@ import RichMetric from "./nodes/RichMetric";
 import RichBullet from "./nodes/RichBullet";
 import RichRefresh from "./nodes/RichRefresh";
 import RichSparkline from "./nodes/RichSparkline";
-import RichCallout from "./nodes/RichCallout";
+import RichSurface from "./nodes/RichSurface";
 import RichWidget from "./nodes/RichWidget";
 import RichCounter from "./nodes/RichCounter";
 
@@ -106,7 +106,7 @@ export { default as RichMetric } from "./nodes/RichMetric";
 export { default as RichBullet } from "./nodes/RichBullet";
 export { default as RichRefresh } from "./nodes/RichRefresh";
 export { default as RichSparkline } from "./nodes/RichSparkline";
-export { default as RichCallout } from "./nodes/RichCallout";
+export { default as RichSurface } from "./nodes/RichSurface";
 export { default as RichWidget } from "./nodes/RichWidget";
 export { default as RichCounter } from "./nodes/RichCounter";
 
@@ -255,8 +255,8 @@ const RichRenderer: React.FC<{
             return <RichRefresh node={node} environment={environment} refreshId={refreshId} />;
         case "sparkline":
             return <RichSparkline node={node} environment={environment} refreshId={refreshId} />;
-        case "callout":
-            return <RichCallout node={node} environment={environment} refreshId={refreshId} />;
+        case "surface":
+            return <RichSurface node={node} environment={environment} refreshId={refreshId} />;
         case "tree":
             return <RichTree node={node} environment={environment} refreshId={refreshId} />;
         case "widget":

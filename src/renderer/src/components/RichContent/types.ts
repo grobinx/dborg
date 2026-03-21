@@ -2,6 +2,7 @@ import { ThemeIconName } from "@renderer/themes/icons";
 import { Action } from "../CommandPalette/ActionManager";
 import { Size } from "@renderer/types/sizes";
 import { AnimationCssType } from "@renderer/hooks/useValueAnimation";
+import { SurfaceBoxAnimationType, SurfaceBoxVariantType } from "./utils/SurfaceBox";
 
 /**
  * Poziom ważności elementu Rich Content, wpływający na jego kolor i ikonę.
@@ -155,7 +156,7 @@ export type RichNodeType =
     | "bullet"
     | "refresh"
     | "sparkline"
-    | "callout"
+    | "surface"
     | "tree"
     | "widget"
     | "counter";
@@ -188,7 +189,7 @@ export type RichNodeObject =
     | IRichBullet
     | IRichRefresh
     | IRichSparkline
-    | IRichCallout
+    | IRichSurface
     | IRichTree
     | IRichWidget
     | IRichCounter
@@ -1072,8 +1073,8 @@ export interface IRichDescriptionItem {
 /**
  * Callout - wyróżniony box z tłem i obramowaniem, używany do podkreślenia ważnej informacji lub ostrzeżenia.
  */
-export interface IRichCallout extends IRichNode {
-    type: "callout";
+export interface IRichSurface extends IRichNode {
+    type: "surface";
     /** 
      * Poziom ważności wpływający na kolor tła i obramowania
      */
@@ -1082,6 +1083,11 @@ export interface IRichCallout extends IRichNode {
      * Elementy wewnątrz boxa
      */
     value: RichNode;
+    /**
+     * Animacja pojawiania się surface
+     */
+    animated?: SurfaceBoxAnimationType;
+    variant?: SurfaceBoxVariantType;
 }
 
 /**

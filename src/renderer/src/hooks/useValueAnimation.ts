@@ -24,7 +24,8 @@ export const useValueAnimation = (value: any, duration = 1000) => {
     return [isAnimating, prevValue];
 };
 
-export type AnimationCssType = 
+export type AnimationCssType =
+    | "none"
     | "scale" 
     | "slideDown" 
     | "fadeIn" 
@@ -46,7 +47,9 @@ export type AnimationCssType =
     | "rubberBand" 
     | "flash";
 
-export const animationCss = (animation: AnimationCssType) => {
+export const animationCss = (animation: AnimationCssType | undefined) => {
+    if (!animation || animation === "none") return {};
+
     return animationCssMap[animation] || {};
 };
 
@@ -388,7 +391,7 @@ export const animationFlashCss = {
 };
 
 
-const animationCssMap: Record<AnimationCssType, React.CSSProperties> = {
+const animationCssMap: Record<Exclude<AnimationCssType, "none">, React.CSSProperties> = {
     scale: animationScaleCss,
     slideDown: animationSlideDownCss,
     fadeIn: animationFadeInCss,
@@ -409,6 +412,6 @@ const animationCssMap: Record<AnimationCssType, React.CSSProperties> = {
     heartBeat: animationHeartBeatCss,
     rubberBand: animationRubberBandCss,
     flash: animationFlashCss,
-}
+};
 
 export default useValueAnimation;

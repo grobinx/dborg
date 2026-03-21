@@ -45,7 +45,7 @@ const ThemeWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => 
         );
 
         return { themeLight, themeDark };
-    }, [fontSize, fontFamily, monospaceFontFamily]);
+    }, [uiTheme, fontSize, fontFamily, monospaceFontFamily]);
 
     const selectedTheme = () => {
         const { themeLight, themeDark } = createThemes();

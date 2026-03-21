@@ -5,7 +5,7 @@ import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromF
 import RichIcon from "./RichIcon";
 import clsx from "@renderer/utils/clsx";
 import { Optional } from "@renderer/types/universal";
-import CalloutBox from "../utils/CalloutBox";
+import SurfaceBox from "../utils/SurfaceBox";
 import Tooltip from "@renderer/components/Tooltip";
 import useValueAnimation, { animationCss } from "@renderer/hooks/useValueAnimation";
 
@@ -43,7 +43,7 @@ const RichMetric: React.FC<RichMetricProps> = ({ node, environment, refreshId })
     }
 
     const result = (
-        <CalloutBox
+        <SurfaceBox
             id={node.id}
             hidden={node.hidden}
             key={node.key ?? node.id}
@@ -53,6 +53,7 @@ const RichMetric: React.FC<RichMetricProps> = ({ node, environment, refreshId })
             )}
             style={node.style}
             severity={severity}
+            variant={"callout"}
             sx={{
                 display: "flex",
                 flexDirection: "column",
@@ -117,7 +118,7 @@ const RichMetric: React.FC<RichMetricProps> = ({ node, environment, refreshId })
             </RichRow>
 
             <RichRenderer node={node.label} environment={environment} textVariant="label" />
-        </CalloutBox>
+        </SurfaceBox>
     );
 
     if (node.tooltip) {
