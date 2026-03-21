@@ -1,6 +1,7 @@
 import { ThemeIconName } from "@renderer/themes/icons";
 import { Action } from "../CommandPalette/ActionManager";
 import { Size } from "@renderer/types/sizes";
+import { AnimationCssType } from "@renderer/hooks/useValueAnimation";
 
 /**
  * Poziom ważności elementu Rich Content, wpływający na jego kolor i ikonę.
@@ -442,20 +443,6 @@ export interface IRichChip extends IRichNode {
 
 export type RichTextDecoration = "bold" | "italic" | "underline" | "strikethrough" | "monospace" | "uppercase";
 
-export type RichTextAnimation = 
-    | "fade"
-    | "slide-up"
-    | "slide-down"
-    | "slide-left"
-    | "slide-right"
-    | "zoom-in"
-    | "zoom-out"
-    | "flip"
-    | "heart-beat"
-    | "glow"
-    | "rotate"
-    | "rubber-band";
-
 /**
  * Prosty tekst z opcjonalnym formatowaniem.
  */
@@ -480,7 +467,7 @@ export interface IRichText extends IRichNode {
     /**
      * Animacja tekstu (np. "fade", "slide-up", "zoom-in")
      */
-    animation?: RichTextAnimation;
+    animated?: AnimationCssType;
 }
 
 /**
@@ -1219,6 +1206,10 @@ export interface IRichMetric extends IRichNode {
      * Rozmiar metryki (podobnie jak dla kolumn)
      */
     size?: RichColSize;
+    /**
+     * Animacja tekstu (np. "fade", "slide-up", "zoom-in")
+     */
+    animated?: AnimationCssType;
 }
 
 /**
@@ -1329,9 +1320,9 @@ export interface IRichSparkline extends IRichNode {
      */
     showDots?: boolean;           // default: false
     /**
-     * Czy animować wykres podczas aktualizacji danych - domyślnie false, co oznacza, że wykres będzie aktualizowany natychmiast bez animacji. Ustawienie tej opcji na true spowoduje płynne przejście między starymi a nowymi wartościami, co może poprawić doświadczenie użytkownika i uczynić zmiany danych bardziej zauważalnymi, zwłaszcza gdy wykres jest często aktualizowany lub gdy chcemy podkreślić dynamiczny charakter prezentowanych danych.
+     * Czy animować wykres podczas aktualizacji danych.
      */
-    animated?: boolean;           // default: false
+    animated?: AnimationCssType;           // default: false
 }
 
 /**

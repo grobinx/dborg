@@ -4,6 +4,8 @@ import { IRichContainerTheme, IRichEnvironment, IRichSparkline } from "../types"
 import RichRenderer, { resolveRichValue, resolveRichValueFromFunction, RichProp } from "..";
 import { Optional } from "@renderer/types/universal";
 import Tooltip from "@renderer/components/Tooltip";
+import clsx from "@renderer/utils/clsx";
+import useValueAnimation, { animationCss } from "@renderer/hooks/useValueAnimation";
 
 interface Props extends RichProp {
     node: Optional<IRichSparkline, "type">;
@@ -32,11 +34,10 @@ const buildSmoothPath = (pts: Array<{ x: number; y: number }>) => {
     return d;
 };
 
-const RichSparkline: React.FC<Props> = ({ node, environment, refreshId }) => {
+const RichSparkline: React.FC<Props> = ({ node, environment, refreshId, sx }) => {
     const theme = useTheme();
     const [values, setValues] = React.useState<number[] | null>(resolveRichValue(node.values));
     const lineRef = React.useRef<SVGPathElement | null>(null);
-    const [pathLength, setPathLength] = React.useState<number | undefined>(undefined);
 
     React.useEffect(() => {
         resolveRichValueFromFunction(node.values, setValues, node);
@@ -45,6 +46,8 @@ const RichSparkline: React.FC<Props> = ({ node, environment, refreshId }) => {
     if (node.excluded) {
         return null;
     }
+
+    const [valueAnimated] = useValueAnimation(values);
 
     if (!values || values.length < 2) return null;
 
@@ -70,19 +73,32 @@ const RichSparkline: React.FC<Props> = ({ node, environment, refreshId }) => {
     const areaPath = `${linePath} L ${pts[pts.length - 1].x} ${height} L ${pts[0].x} ${height} Z`;
     const gradId = React.useId();
 
-    React.useEffect(() => {
-        if (!node.animated) {
-            setPathLength(undefined);
-            return;
-        }
-
-        const path = lineRef.current;
-        if (!path) return;
-        setPathLength(path.getTotalLength());
-    }, [linePath, node.animated]);
-
     const result = (
-        <Box sx={{ width: node.width ?? "100%", height: node.height ?? 28, display: "flex", alignItems: "center", flex: 1, minWidth: 0 }}>
+        <Box
+            id={node.id}
+            hidden={node.hidden}
+            key={node.key ?? node.id}
+            className={clsx(
+                "RichNode-sparkline",
+                node.className,
+                valueAnimated && "animating",
+            )}
+            style={node.style}
+            sx={{
+                width: node.width ?? "100%",
+                height: node.height ?? 28,
+                display: "flex",
+                alignItems: "center",
+                flex: 1,
+                minWidth: 0,
+                ...(node.animated && {
+                    '&.animating': {
+                        ...animationCss(node.animated),
+                    },
+                }),
+                ...sx
+            }}
+        >
             <svg viewBox={`-2 -2 ${width + 4} ${height + 4}`} width="100%" height="100%" preserveAspectRatio="none">
                 {node.fill === "gradient" && (
                     <defs>
@@ -103,30 +119,13 @@ const RichSparkline: React.FC<Props> = ({ node, environment, refreshId }) => {
                     strokeWidth={strokeWidth}
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    style={node.animated ? {
-                        transition: "stroke 220ms ease",
-                    } : undefined}
-                    strokeDasharray={node.animated ? pathLength : undefined}
-                    strokeDashoffset={node.animated ? pathLength : undefined}
-                >
-                    {node.animated && pathLength !== undefined && (
-                        <animate
-                            key={linePath}
-                            attributeName="stroke-dashoffset"
-                            from={pathLength}
-                            to="0"
-                            dur="420ms"
-                            fill="freeze"
-                            begin="0s"
-                        />
-                    )}
-                </path>
+                />
 
                 {node.showDots && pts.map((p, i) => (
                     <circle key={i} cx={p.x} cy={p.y} r={Math.max(1.5, strokeWidth)} fill={stroke} />
                 ))}
             </svg>
-        </Box>
+        </Box >
     );
 
     if (node.tooltip) {

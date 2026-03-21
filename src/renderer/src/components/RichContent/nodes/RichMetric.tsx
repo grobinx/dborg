@@ -1,12 +1,13 @@
 import React from "react";
 import { Box, Skeleton, useTheme } from "@mui/material";
 import { IRichEnvironment, IRichMetric, RichColSize } from "../types";
-import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromFunction, RichProp, RichRow, RichSparkline } from "..";
+import RichRenderer, { getSeverityColor, resolveRichValue, resolveRichValueFromFunction, RichProp, RichRow, RichSparkline, RichText } from "..";
 import RichIcon from "./RichIcon";
 import clsx from "@renderer/utils/clsx";
 import { Optional } from "@renderer/types/universal";
 import CalloutBox from "../utils/CalloutBox";
 import Tooltip from "@renderer/components/Tooltip";
+import useValueAnimation, { animationCss } from "@renderer/hooks/useValueAnimation";
 
 interface RichMetricProps extends RichProp {
     node: Optional<IRichMetric, "type">;
@@ -46,7 +47,10 @@ const RichMetric: React.FC<RichMetricProps> = ({ node, environment, refreshId })
             id={node.id}
             hidden={node.hidden}
             key={node.key ?? node.id}
-            className={clsx("RichNode-metric", node.className)}
+            className={clsx(
+                "RichNode-metric",
+                node.className,
+            )}
             style={node.style}
             severity={severity}
             sx={{
@@ -64,18 +68,23 @@ const RichMetric: React.FC<RichMetricProps> = ({ node, environment, refreshId })
                     <RichRow node={{ justify: "space-between", items: [] }} environment={environment}>
                         {latestValue !== null && (
                             <>
-                                <RichRenderer
-                                    node={latestValue}
+                                <RichText
+                                    node={{
+                                        text: latestValue,
+                                        variant: "title",
+                                        severity,
+                                        animated: node.animated,
+                                    }}
                                     environment={environment}
-                                    textVariant="title"
-                                    textSeverity={severity}
                                 />
                                 {node.unit && (
-                                    <RichRenderer
-                                        node={node.unit}
+                                    <RichText
+                                        node={{
+                                            text: node.unit,
+                                            variant: "title",
+                                            severity,
+                                        }}
                                         environment={environment}
-                                        textVariant="title"
-                                        textSeverity={severity}
                                     />
                                 )}
                             </>
@@ -95,7 +104,15 @@ const RichMetric: React.FC<RichMetricProps> = ({ node, environment, refreshId })
                         />
                     </Box>
                 ) : hasSparkline && (
-                    <RichSparkline node={{ values, severity, height: CHART_H }} environment={environment} />
+                    <RichSparkline
+                        node={{
+                            values,
+                            severity,
+                            height: CHART_H,
+                            animated: node.animated,
+                        }}
+                        environment={environment}
+                    />
                 )}
             </RichRow>
 

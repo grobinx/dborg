@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Theme } from "@mui/material";
+import { Box, SxProps, Theme } from "@mui/material";
 import { IRichEnvironment, IRichMetadata, RichNode, RichSeverity, RichTextVariant, RichValue } from "./types";
 
 // Types
@@ -168,6 +168,10 @@ export interface RichProp {
      * Zwiększany licznik odświerzania dla potrzeb niektórych węzłów
      */
     refreshId?: bigint;
+    /**
+     * Dodatkowe style MUI dla węzła
+     */
+    sx?: SxProps;
 }
 
 /**

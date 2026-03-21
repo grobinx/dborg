@@ -24,6 +24,32 @@ export const useValueAnimation = (value: any, duration = 1000) => {
     return [isAnimating, prevValue];
 };
 
+export type AnimationCssType = 
+    | "scale" 
+    | "slideDown" 
+    | "fadeIn" 
+    | "fadeOut" 
+    | "slideUp" 
+    | "slideLeft" 
+    | "slideRight" 
+    | "bounce" 
+    | "pulse" 
+    | "flipIn" 
+    | "zoomIn" 
+    | "shake" 
+    | "glow" 
+    | "rotateIn" 
+    | "slideInFromTop" 
+    | "flipX" 
+    | "wobble" 
+    | "heartBeat" 
+    | "rubberBand" 
+    | "flash";
+
+export const animationCss = (animation: AnimationCssType) => {
+    return animationCssMap[animation] || {};
+};
+
 export const animationScaleCss = {
     animation: 'valueChange 0.2s ease-out',
     '@keyframes valueChange': {
@@ -360,5 +386,29 @@ export const animationFlashCss = {
         },
     },
 };
+
+
+const animationCssMap: Record<AnimationCssType, React.CSSProperties> = {
+    scale: animationScaleCss,
+    slideDown: animationSlideDownCss,
+    fadeIn: animationFadeInCss,
+    fadeOut: animationFadeOutCss,
+    slideUp: animationSlideUpCss,
+    slideLeft: animationSlideLeftCss,
+    slideRight: animationSlideRightCss,
+    bounce: animationBounceCss,
+    pulse: animationPulseCss,
+    flipIn: animationFlipInCss,
+    zoomIn: animationZoomInCss,
+    shake: animationShakeCss,
+    glow: animationGlowCss,
+    rotateIn: animationRotateInCss,
+    slideInFromTop: animationSlideInFromTopCss,
+    flipX: animationFlipXCss,
+    wobble: animationWobbleCss,
+    heartBeat: animationHeartBeatCss,
+    rubberBand: animationRubberBandCss,
+    flash: animationFlashCss,
+}
 
 export default useValueAnimation;

@@ -8,7 +8,7 @@ import Code from "@renderer/components/Code";
 import { Optional } from "@renderer/types/universal";
 import clsx from "@renderer/utils/clsx";
 import Tooltip from "@renderer/components/Tooltip";
-import useValueAnimation, { animationFadeInCss, animationFlipInCss, animationFlipXCss, animationGlowCss, animationHeartBeatCss, animationRotateInCss, animationRubberBandCss, animationSlideLeftCss } from "@renderer/hooks/useValueAnimation";
+import useValueAnimation, { animationCss, animationFadeInCss, animationFlipInCss, animationFlipXCss, animationGlowCss, animationHeartBeatCss, animationRotateInCss, animationRubberBandCss, animationSlideLeftCss } from "@renderer/hooks/useValueAnimation";
 
 interface RichTextProps extends RichProp {
     node: Optional<IRichText, "type">;
@@ -138,22 +138,6 @@ const RichText: React.FC<RichTextProps> = ({ node, environment, refreshId }) => 
 
     const [valueAnimated] = useValueAnimation(text);
 
-    let animation = {};
-    switch (node.animation) {
-        case "fade": animation = animationFadeInCss; break;
-        case "slide-up": animation = animationSlideLeftCss; break;
-        case "slide-down": animation = animationSlideLeftCss; break;
-        case "slide-left": animation = animationSlideLeftCss; break;
-        case "slide-right": animation = animationSlideLeftCss; break;
-        case "zoom-in": animation = animationFlipInCss; break;
-        case "zoom-out": animation = animationFlipXCss; break;
-        case "flip": animation = animationFlipInCss; break;
-        case "heart-beat": animation = animationHeartBeatCss; break;
-        case "glow": animation = animationGlowCss; break;
-        case "rotate": animation = animationRotateInCss; break;
-        case "rubber-band": animation = animationRubberBandCss; break;
-    }
-
     const result = (
         <RichTextRoot
             id={node.id}
@@ -176,9 +160,11 @@ const RichText: React.FC<RichTextProps> = ({ node, environment, refreshId }) => 
                     node.decoration?.includes("strikethrough") ? "line-through" : undefined,
                     node.decoration?.includes("uppercase") ? "uppercase" : undefined,
                 ].filter(Boolean).join(" "),
-                '&.animating': {
-                    ...animation,
-                }
+                ...(node.animated && ({
+                    '&.animating': {
+                        ...animationCss(node.animated),
+                    }
+                })),
             }}
             textVariantStyles={environment?.theme?.textVariantStyles}
         >
@@ -186,7 +172,7 @@ const RichText: React.FC<RichTextProps> = ({ node, environment, refreshId }) => 
                 <RichIcon node={{ icon: "Loading" }} environment={environment} />
                 : typeof text === "object" ? <RichRenderer node={text} environment={environment} /> : `${text}`
             }
-        </RichTextRoot>
+        </RichTextRoot >
     );
 
     if (node.tooltip) {

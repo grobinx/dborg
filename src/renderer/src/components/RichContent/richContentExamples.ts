@@ -423,6 +423,7 @@ export const richContentExamples: RichExampleMap = {
                         size: 2,
                         tooltip: "This is a metric node with refreshing random sparkline data",
                         sparkline: async () => Array.from({ length: 15 }, () => Math.floor(Math.random() * 20) + 1),
+                        animated: "rubberBand",
                     }
                 },
                 {
@@ -458,7 +459,7 @@ export const richContentExamples: RichExampleMap = {
                                         duration: 500,
                                         value: async () => Math.floor(Math.random() * 1000),
                                     }),
-                                    animation: "heart-beat",
+                                    animated: "heartBeat",
                                 },
                             },
                             {
