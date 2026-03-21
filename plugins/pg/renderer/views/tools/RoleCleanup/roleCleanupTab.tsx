@@ -508,7 +508,13 @@ const roleCleanupTab = (session: IDatabaseSession): IPinnableTabSlot => {
 
                                                             return {
                                                                 items: [
-                                                                    { type: "text", text: `${selectedOwnedObject.objtype}: ${selectedOwnedObject.schema}.${selectedOwnedObject.name}`, variant: "title-sm" },
+                                                                    {
+                                                                        type: "surface",
+                                                                        variant: "flat",
+                                                                        severity: "info",
+                                                                        padding: 4,
+                                                                        content: { type: "text", text: `${selectedOwnedObject.objtype}: ${selectedOwnedObject.schema}.${selectedOwnedObject.name}`, variant: "title-sm" },
+                                                                    },
                                                                     (!risk.found && !risk.error) && {
                                                                         type: "alert",
                                                                         severity: "warning",

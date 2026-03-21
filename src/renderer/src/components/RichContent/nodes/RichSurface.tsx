@@ -27,9 +27,9 @@ const RichSurface: React.FC<RichSurfaceProps> = ({ node, environment, children }
             severity={node.severity}
             variant={node.variant}
             animated={node.animated}
-            sx={{ p: 0, gap: 0 }}
+            sx={{ padding: node.padding ?? 0, gap: 0 }}
         >
-            <RichRenderer node={node.value} environment={environment} />
+            <RichRenderer node={node.content} environment={environment} />
             {children}
         </SurfaceBox>
     );

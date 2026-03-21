@@ -1082,12 +1082,20 @@ export interface IRichSurface extends IRichNode {
     /** 
      * Elementy wewnątrz boxa
      */
-    value: RichNode;
+    content: RichNode;
     /**
      * Animacja pojawiania się surface
      */
     animated?: SurfaceBoxAnimationType;
+    /**
+     * Wariant stylu surface, który może wpływać na kolor, obramowanie i inne aspekty wizualne
+     */
     variant?: SurfaceBoxVariantType;
+    /**
+     * Odstęp między elementami wewnątrz surface
+     * @default 0
+     */
+    padding?: RichGap;
 }
 
 /**
