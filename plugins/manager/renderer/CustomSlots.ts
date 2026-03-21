@@ -17,6 +17,7 @@ import { LoadingOverlayMode } from "@renderer/components/useful/spinners/Spinner
 import { MessageContextProps } from "@renderer/contexts/MessageContext";
 import { DataPresentationGridColumn, SortStateOptions } from "@renderer/components/DataGrid/DataPresentationGrid";
 import { BannerSeverity } from "@renderer/components/Banner";
+import { IRichContainer } from "@renderer/components/RichContent";
 
 export type CustomSlotType =
     "split"
@@ -36,6 +37,7 @@ export type CustomSlotType =
     | "column"
     | "row"
     | "banner"
+    | "rich"
     ;
 
 export interface SlotRuntimeContext {
@@ -392,6 +394,7 @@ export type SplitSlotPartKind =
     | IEditorSlot
     | IColumnSlot
     | IRowSlot
+    | IRichSlot
     ;
 
 /**
@@ -506,11 +509,13 @@ export interface ITabContentSlot extends Omit<ICustomSlot, "onShow" | "onHide"> 
 
 export type TabLabelSlotKind =
     ITabLabelSlot
-    | IRenderedSlot;
+    | IRenderedSlot
+    | IRichSlot;
 
 export type TabContentSlotKind =
     ITabContentSlot
-    | IRenderedSlot;
+    | IRenderedSlot
+    | IRichSlot;
 
 export interface ITabSlot extends Omit<ICustomSlot, "onShow" | "onHide"> {
     id: string;
@@ -572,10 +577,19 @@ export interface IRenderedSlot extends ICustomSlot {
     render: React.FC<{ runtimeContext: SlotRuntimeContext }>;
 }
 
+export interface IRichSlot extends ICustomSlot {
+    type: "rich";
+    /**
+     * Kontener Rich do wyświetlenia w slotcie (kontener lub funkcja zwracająca kontener).
+     */
+    content: ResolvableValue<SlotRuntimeContext, IRichContainer>;
+} 
+
 export type ContentSlotKind =
     ISplitSlot
     | ITabsSlot
     | IRenderedSlot
+    | IRichSlot
     | IGridSlot
     | IGridPresentationSlot
     | IEditorSlot
@@ -588,11 +602,13 @@ export type ContentSlotKind =
 
 export type TitleSlotKind =
     ITitleSlot
-    | IRenderedSlot;
+    | IRenderedSlot
+    | IRichSlot;
 
 export type TextSlotKind =
     ITextSlot
-    | IRenderedSlot;
+    | IRenderedSlot
+    | IRichSlot;
 
 export interface IContentSlot extends ICustomSlot {
     type: "content";
@@ -973,7 +989,8 @@ export interface IToolBarSlot extends ICustomSlot {
 
 export type ToolBarSlotKind =
     IToolBarSlot
-    | IRenderedSlot;
+    | IRenderedSlot
+    | IRichSlot;
 
 export type ToolBarSlotsKind = 
     ToolBarSlotKind 

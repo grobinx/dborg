@@ -479,85 +479,65 @@ const roleCleanupTab = (session: IDatabaseSession): IPinnableTabSlot => {
                                                     id: cid("owned-info"),
                                                     type: "tabcontent",
                                                     content: () => ({
-                                                        type: "column",
-                                                        padding: 0,
-                                                        items: [
-                                                            {
-                                                                id: cid("owned-info-analyzing"),
-                                                                type: "rendered",
-                                                                render: () => {
-                                                                    if (!selectedOwnedObject) {
-                                                                        return (
-                                                                            <Typography variant="body1" component="div">
-                                                                                {t("select-object-to-see-info", "Select an object to see info")}
-                                                                            </Typography>
-                                                                        );
-                                                                    }
-                                                                    return (
-                                                                        (analyzingRows.indexOf(selectedOwnedObject) >= 0 || (analyzingObject && !selectedOwnedObject.risk)) ? (
-                                                                            <Box>
-                                                                                <Typography variant="body1" component="div">
-                                                                                    {selectedOwnedObject.objtype}: {selectedOwnedObject.schema}.{selectedOwnedObject.name}
-                                                                                </Typography>
-                                                                                <Typography variant="body1" component="div" style={{ display: "flex", alignItems: "center", gap: "8px" }} >
-                                                                                    <slotContext.theme.icons.Loading />
-                                                                                    {t("analyzing-object", "Analyzing...")}
-                                                                                </Typography>
-                                                                            </Box>
-                                                                        ) : null
-                                                                    );
-                                                                }
-                                                            },
-                                                            {
-                                                                id: cid("owned-info-risk-details"),
-                                                                type: "rendered",
-                                                                render: () => {
-                                                                    if (!selectedOwnedObject) return null;
-                                                                    const risk = selectedOwnedObject.risk as AnalysisResult | null;
-                                                                    if (!risk) return null;
-                                                                    const assessment = risk.assessment;
-                                                                    const ops = assessment ? [
-                                                                        { key: "canDelete", label: t("delete", "Delete"), value: assessment.canDelete },
-                                                                        { key: "canChangeOwner", label: t("change-owner", "Change Owner"), value: assessment.canChangeOwner },
-                                                                        { key: "canMove", label: t("move", "Move"), value: assessment.canMove },
-                                                                    ] : [];
+                                                        type: "rich",
+                                                        content: () => {
+                                                            if (!selectedOwnedObject) {
+                                                                return {
+                                                                    items: [
+                                                                        { type: "text", text: t("select-object-to-see-info", "Select an object to see info"), variant: "body1" }
+                                                                    ]
+                                                                };
+                                                            }
+                                                            if (analyzingRows.indexOf(selectedOwnedObject) >= 0 || (analyzingObject && !selectedOwnedObject.risk)) {
+                                                                return {
+                                                                    items: [
+                                                                        { type: "text", text: `${selectedOwnedObject.objtype}: ${selectedOwnedObject.schema}.${selectedOwnedObject.name}`, variant: "body1" },
+                                                                        { type: "text", text: t("analyzing-object", "Analyzing..."), variant: "body1", icon: <slotContext.theme.icons.Loading /> }
+                                                                    ]
+                                                                };
+                                                            }
 
-                                                                    return (
-                                                                        <RichContainer node={{
+                                                            const risk = selectedOwnedObject.risk as AnalysisResult | null;
+                                                            if (!risk) return null;
+                                                            const assessment = risk.assessment;
+                                                            const ops = assessment ? [
+                                                                { key: "canDelete", label: t("delete", "Delete"), value: assessment.canDelete },
+                                                                { key: "canChangeOwner", label: t("change-owner", "Change Owner"), value: assessment.canChangeOwner },
+                                                                { key: "canMove", label: t("move", "Move"), value: assessment.canMove },
+                                                            ] : [];
+
+                                                            return {
+                                                                items: [
+                                                                    { type: "text", text: `${selectedOwnedObject.objtype}: ${selectedOwnedObject.schema}.${selectedOwnedObject.name}`, variant: "title-sm" },
+                                                                    (!risk.found && !risk.error) && {
+                                                                        type: "alert",
+                                                                        severity: "warning",
+                                                                        message: t("object-not-found", "Object not found in metadata.")
+                                                                    },
+                                                                    risk.error && {
+                                                                        type: "alert",
+                                                                        severity: "error",
+                                                                        message: `${t("error", "Error")}: ${risk.error}`
+                                                                    },
+                                                                    assessment && {
+                                                                        type: "column",
+                                                                        padding: 0,
+                                                                        items: ops.map(op => ({
+                                                                            type: "section",
+                                                                            title: op.label,
                                                                             items: [
-                                                                                { type: "text", text: `${selectedOwnedObject.objtype}: ${selectedOwnedObject.schema}.${selectedOwnedObject.name}`, variant: "title-sm" },
-                                                                                (!risk.found && !risk.error) && {
-                                                                                    type: "alert",
-                                                                                    severity: "warning",
-                                                                                    message: t("object-not-found", "Object not found in metadata.")
+                                                                                { type: "text", text: op.value.message, variant: "description" },
+                                                                                (op.value.details && op.value.details.length > 0) && {
+                                                                                    type: "list",
+                                                                                    listType: "bullet",
+                                                                                    items: op.value.details.map(d => ({ content: d }))
                                                                                 },
-                                                                                risk.error && {
-                                                                                    type: "alert",
-                                                                                    severity: "error",
-                                                                                    message: `${t("error", "Error")}: ${risk.error}`
-                                                                                },
-                                                                                assessment && {
-                                                                                    type: "column",
-                                                                                    padding: 0,
-                                                                                    items: ops.map(op => ({
-                                                                                        type: "section",
-                                                                                        title: op.label,
-                                                                                        items: [
-                                                                                            { type: "text", text: op.value.message, variant: "description" },
-                                                                                            (op.value.details && op.value.details.length > 0) && {
-                                                                                                type: "list",
-                                                                                                listType: "bullet",
-                                                                                                items: op.value.details.map(d => ({ content: d }))
-                                                                                            },
-                                                                                        ]
-                                                                                    }))
-                                                                                }
                                                                             ]
-                                                                        }} />
-                                                                    );
-                                                                },
-                                                            },
-                                                        ]
+                                                                        }))
+                                                                    }
+                                                                ]
+                                                            };
+                                                        },
                                                     }),
                                                 }
                                             },

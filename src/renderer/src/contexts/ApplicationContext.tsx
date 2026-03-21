@@ -58,7 +58,7 @@ export interface IView {
 }
 
 export type View =
-    RenderedView
+    | RenderedView
     | ConnectionView
     | CustomView
     | ClickableView;

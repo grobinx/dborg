@@ -51,6 +51,7 @@ import { IEditorActionContext } from "@renderer/components/editor/MonacoEditor";
 import { Grid } from "react-bootstrap-icons";
 import GridPresentationSlot from "./GridPresentationSlot";
 import BannerSlot from "./BannerSlot";
+import RichSlot from "./RichSlot";
 
 export function createContentComponent(
     slot: ResolvableValue<SlotRuntimeContext, ContentSlotKind>,
@@ -84,6 +85,8 @@ export function createContentComponent(
                 return <TitleSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
             case "text":
                 return <TextSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
+            case "rich":
+                return <RichSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
         }
     }
     return null;
@@ -104,6 +107,8 @@ export function createTabLabel(
             return <TabLabelSlot key={resolvedLabel.id} tabSlot={tabSlot} slot={resolvedLabel} ref={ref} onClose={onClose} onPin={onPin} pinned={pinned} />;
         } else if (resolvedLabel.type === "rendered") {
             return <RenderedSlot key={resolvedLabel.id} slot={resolvedLabel} ref={ref} />;
+        } else if (resolvedLabel.type === "rich") {
+            return <RichSlot key={resolvedLabel.id} slot={resolvedLabel} ref={ref} />;
         }
     }
     return null;
@@ -118,9 +123,10 @@ export function createTabContent(
     if (resolvedContent) {
         if (resolvedContent.type === "tabcontent") {
             return <TabContentSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
-        }
-        else if (resolvedContent.type === "rendered") {
+        } else if (resolvedContent.type === "rendered") {
             return <RenderedSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
+        } else if (resolvedContent.type === "rich") {
+            return <RichSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
         }
     }
     return null;
@@ -187,6 +193,8 @@ export function createTitleContent(
             return <TitleSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
         } else if (resolvedContent.type === "rendered") {
             return <RenderedSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
+        } else if (resolvedContent.type === "rich") {
+            return <RichSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
         }
     }
     return null;
@@ -203,6 +211,8 @@ export function createTextContent(
             return <TextSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
         } else if (resolvedContent.type === "rendered") {
             return <RenderedSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
+        } else if (resolvedContent.type === "rich") {
+            return <RichSlot key={resolvedContent.id} slot={resolvedContent} ref={ref} />;
         }
     }
     return null;
@@ -236,6 +246,8 @@ export function createSplitPartContent(
                 return <ColumnSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
             case "row":
                 return <RowSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
+            case "rich":
+                return <RichSlot key={resolvedPart.id} slot={resolvedPart} ref={ref} />;
         }
     }
     return null;

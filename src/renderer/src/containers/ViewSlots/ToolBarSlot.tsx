@@ -9,6 +9,7 @@ import { createToolComponents } from "./helpers";
 import { useVisibleState } from "@renderer/hooks/useVisibleState";
 import { uuidv7 } from "uuidv7";
 import { useSlotRuntimeContext } from "./hooks/useSlotRuntimeContext";
+import RichSlot from "./RichSlot";
 
 export interface ToolBarsProps {
     slot: ToolBarSlotsKind;
@@ -110,6 +111,9 @@ const ToolBarSlot: React.FC<ToolBarProps> = ({
     React.useEffect(() => {
         if (slot.type === "rendered") {
             setRenderNode(<slot.render runtimeContext={runtimeContext} />);
+            return;
+        } else if (slot.type === "rich") {
+            setRenderNode(<RichSlot key={slot.id} slot={slot} ref={ref} />);
             return;
         }
         setActionComponents(createToolComponents(slot.tools, slot.actionSlotId, getRefSlot, runtimeContext));
