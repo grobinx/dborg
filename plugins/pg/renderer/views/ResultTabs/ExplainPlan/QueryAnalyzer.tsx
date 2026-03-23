@@ -1,15 +1,12 @@
 import { useTranslation } from "react-i18next";
-import { Box, Chip, Paper, Typography, useTheme } from "@mui/material";
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { Box, Paper, Typography, useTheme } from "@mui/material";
 import { t } from "i18next";
-import SyntaxHighlighter from 'react-syntax-highlighter';
-import { atomOneDark } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import { useSetting } from "@renderer/contexts/SettingsContext";
 import { ExplainResultKind, isErrorResult, isLoadingResult, PlanNode } from "./ExplainTypes";
 import LoadingOverlay from "@renderer/components/useful/LoadingOverlay";
 import { ExplainPlanError } from "./ExplainPlanError";
 import React from "react";
-import { RichCallout, RichChip, RichCode, RichColumn, RichContainer, RichGroup, RichNode, RichSection, RichSpacer, RichText } from "@renderer/components/RichContent";
+import { RichContainer, RichNode } from "@renderer/components/RichContent";
 
 interface Suggestion {
     type: 'warning' | 'info' | 'error';
