@@ -1,17 +1,20 @@
 import React from "react";
 import { ThemeProvider, CssBaseline, createTheme, Theme } from "@mui/material";
 import { useSetting } from "../contexts/SettingsContext";
-import defaultDarkPalette from '../themes/palettes/defaultDark';
-import defaultLightPalette from '../themes/palettes/defaultLight';
 import defaultLayout from '../themes/layouts/defaultLayout';
 import defaultIcons from '../themes/icons/defaultIcons';
 import rootLayout from '../themes/layouts/root';
 import { ThemeIcons } from "./icons";
 
+import './palettes/default';
+import './palettes/space';
+import { getPalette } from "./palettes/registry";
+
 export let icons: ThemeIcons | undefined = undefined;
 
 const ThemeWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [uiTheme] = useSetting("ui", "theme");
+    const [uiTheme] = useSetting<"system" | "light" | "dark">("ui", "theme", "system");
+    const [uiPalette] = useSetting("ui", "palette", "default");
     const [fontSize] = useSetting<number>("ui", "fontSize", 14);
     const [fontFamily] = useSetting<string>("ui", "fontFamily");
     const [monospaceFontFamily] = useSetting<string>("ui", "monospaceFontFamily");
@@ -23,40 +26,25 @@ const ThemeWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => 
             fontSize, 
             fontFamily, 
             monospaceFontFamily, 
-            (uiTheme === "system" ? (prefersDarkMode ? "dark" : "light") : uiTheme) as "light" | "dark"
+            uiTheme === "system" ? (prefersDarkMode ? "dark" : "light") : uiTheme
         );
 
-        const themeLight = createTheme(
+        const palette = getPalette(uiPalette, uiTheme === "system" ? (prefersDarkMode ? "dark" : "light") : uiTheme);
+
+        const theme = createTheme(
             {
                 ...root,
-                palette: defaultLightPalette,
+                palette: palette,
             },
-            defaultLayout(defaultLightPalette, root),
-            defaultIcons(defaultLightPalette)
+            defaultLayout(palette, root),
+            defaultIcons(palette)
         );
 
-        const themeDark = createTheme(
-            {
-                ...root,
-                palette: defaultDarkPalette,
-            },
-            defaultLayout(defaultDarkPalette, root),
-            defaultIcons(defaultDarkPalette)
-        );
-
-        return { themeLight, themeDark };
-    }, [uiTheme, fontSize, fontFamily, monospaceFontFamily]);
+        return theme;
+    }, [uiTheme, uiPalette, fontSize, fontFamily, monospaceFontFamily]);
 
     const selectedTheme = () => {
-        const { themeLight, themeDark } = createThemes();
-        const theme =
-            uiTheme === "system"
-                ? prefersDarkMode
-                    ? themeDark
-                    : themeLight
-                : uiTheme === "light"
-                    ? themeLight
-                    : themeDark;
+        const theme = createThemes();
         icons = theme.icons;
         return theme;
     }

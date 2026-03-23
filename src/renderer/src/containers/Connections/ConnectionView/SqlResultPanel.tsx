@@ -47,6 +47,7 @@ import DataPresentationGrid from "@renderer/components/DataGrid/DataPresentation
 import { Ellipsis } from "@renderer/components/useful/Elipsis";
 import { useSetting } from "@renderer/contexts/SettingsContext";
 import Banner from "@renderer/components/Banner";
+import { Tokenizer } from "@renderer/utils/SqlParser/tokenizer";
 
 export const SQL_RESULT_SQL_QUERY_EXECUTING = "sqlResult:sqlQueryExecuting";
 
@@ -378,7 +379,9 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
             return false;
         }
 
+
         if (query) {
+            console.log(new Tokenizer(query, { dialect: "postgres" }).tokenize());
             if (isSelect()) {
                 fetchData();
             }

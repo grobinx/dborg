@@ -1,9 +1,8 @@
 import { Action, ActionGroup } from "@renderer/components/CommandPalette/ActionManager";
-import { DataGridActionContext, DataGridContext } from "@renderer/components/DataGrid/DataGridTypes";
+import { DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
 import { RefreshGridAction_ID } from "@renderer/containers/ViewSlots/actions/RefreshGridAction";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
-import { DatabasesMetadata, SchemaMetadata } from "src/api/db";
 
 const sql =
     `select nspname schema_name

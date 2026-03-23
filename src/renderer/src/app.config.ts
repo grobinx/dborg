@@ -4,6 +4,7 @@ import settingsRegistry from "./components/settings/SettingsRegistry";
 import i18next from "i18next";
 import { SettingsGroup } from "./components/settings/SettingsTypes";
 import { SPINNER_TYPE_LABELS, SpinnerType } from "./components/useful/spinners/Spinners";
+import { listPalettes } from "./themes/palettes/registry";
 
 export interface AppSettings extends TSettings {
     "settings.store_timeout"?: number;
@@ -106,6 +107,7 @@ export const default_settings: ApplicationSettings = {
     },
     ui: {
         theme: 'system',
+        palette: "default",
         fontSize: 14,
         fontFamily: 'Segoe WPC, Segoe UI, sans-serif',
         monospaceFontFamily: 'Consolas, monospace, Courier New, Courier',
@@ -440,6 +442,14 @@ settingsRegistry.register((context) => {
                         { value: "dark", label: t('dark-theme', 'Dark') },
                         { value: "system", label: t('system-theme', 'System Default') },
                     ],
+                },
+                {
+                    type: 'select',
+                    storageGroup: 'ui',
+                    storageKey: 'palette',
+                    label: t('color-palette', 'Color Palette'),
+                    description: t('color-palette-description', 'Select the color palette for the application.'),
+                    options: listPalettes().map(({ id, name, description }) => ({ value: id, label: name, description })),
                 },
                 {
                     type: 'select',
