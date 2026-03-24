@@ -18,11 +18,11 @@ const theme = createTheme({
         tonalOffset: 0.2,
 
         // App-specific semantic colors (muted "space" look)
-        main: createPaletteColor(colors.grey[300], colors.grey[900]),
-        sideBar: createPaletteColor(colors.blueGrey[300], colors.blueGrey[800]),
-        menuBar: createPaletteColor(colors.blueGrey[300], colors.blueGrey[800]),
-        statusBar: createPaletteColor(colors.grey[300], colors.grey[800]),
-        table: createPaletteColor(colors.grey[300], colors.grey[800]),
+        main: createPaletteColor(colors.grey[500], colors.grey[900]),
+        sideBar: createPaletteColor(colors.blueGrey[400], colors.blueGrey[900]),
+        menuBar: createPaletteColor(colors.blueGrey[400], colors.blueGrey[900]),
+        statusBar: createPaletteColor(colors.grey[400], colors.grey[900]),
+        table: createPaletteColor(colors.grey[400], colors.grey[900]),
 
         // Backgrounds — toned down, less bright than before
         background: {
@@ -46,7 +46,7 @@ const theme = createTheme({
             boolean: colors.teal[900],
             datetime: colors.cyan[900],
             number: colors.deepOrange[900],
-            string: colors.amber[900],
+            string: colors.grey[900],
             object: colors.deepPurple[900],
             binary: colors.grey[900],
             null: colors.grey[500],
@@ -56,14 +56,14 @@ const theme = createTheme({
 
         // Text tuned for softer contrast
         text: {
-            primary: "#0b374f",
-            secondary: colors.blueGrey[700],
+            primary: "#051924",
+            secondary: colors.blueGrey[800],
             disabled: colors.blueGrey[400],
         },
 
         // Actions — subtler glows
         action: {
-            active: alpha(colors.lightBlue[700], 0.42),
+            active: alpha(colors.lightBlue[700], 0.22),
             focus: alpha(colors.lightBlue[700], 0.12),
             hover: alpha(colors.lightBlue[700], 0.06),
             selected: alpha(colors.lightBlue[700], 0.10),

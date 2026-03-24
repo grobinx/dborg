@@ -47,7 +47,7 @@ const theme = createTheme({
             boolean: colors.teal[200],
             datetime: colors.cyan[200],
             number: colors.orange[200],
-            string: colors.amber[200],
+            string: colors.grey[200],
             object: colors.deepPurple[200],
             binary: colors.grey[200],
             null: colors.grey[600],
