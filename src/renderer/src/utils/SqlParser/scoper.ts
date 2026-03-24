@@ -168,14 +168,12 @@ export class Scoper {
 
             // 1) leading CTE scopes jako osobne elementy
             let idx = 0;
-            while (
-                idx < chunk.length &&
-                this.isContainer(chunk[idx]) &&
-                chunk[idx].kind === "cte"
-            ) {
-                const cte = chunk[idx] as CteScope;
-                cte.parent = parent;
-                out.push(cte);
+            while (idx < chunk.length) {
+                const current = chunk[idx];
+                if (!this.isContainer(current) || current.kind !== "cte") break;
+
+                current.parent = parent;
+                out.push(current);
                 idx++;
             }
 
@@ -183,16 +181,17 @@ export class Scoper {
             const rest = chunk.slice(idx);
             if (rest.length === 0) continue;
 
-            if (
-                rest.length === 1 &&
-                this.isContainer(rest[0]) &&
-                (rest[0].kind === "statement" || rest[0].kind === "expression")
-            ) {
-                const existing = rest[0] as Statement | ExpressionScope;
-                existing.parent = parent;
-                this.reparentDescendants(existing.items, existing);
-                out.push(existing);
-                continue;
+            if (rest.length === 1) {
+                const only = rest[0];
+                if (
+                    this.isContainer(only) &&
+                    (only.kind === "statement" || only.kind === "expression")
+                ) {
+                    only.parent = parent;
+                    this.reparentDescendants(only.items, only);
+                    out.push(only);
+                    continue;
+                }
             }
 
             const type = this.findMainStatementType(rest);
