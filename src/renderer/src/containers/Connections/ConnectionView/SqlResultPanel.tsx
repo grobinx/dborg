@@ -48,6 +48,7 @@ import { Ellipsis } from "@renderer/components/useful/Elipsis";
 import { useSetting } from "@renderer/contexts/SettingsContext";
 import Banner from "@renderer/components/Banner";
 import { Tokenizer } from "@renderer/utils/SqlParser/tokenizer";
+import { Scoper } from "@renderer/utils/SqlParser/scoper";
 
 export const SQL_RESULT_SQL_QUERY_EXECUTING = "sqlResult:sqlQueryExecuting";
 
@@ -381,7 +382,10 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
 
 
         if (query) {
-            console.log(new Tokenizer(query, { dialect: "postgres" }).tokenize());
+            const tokens = new Tokenizer(query, { dialect: "postgres" }).tokenize();
+            const scopes = Scoper.fromTokens(tokens);
+            console.log(tokens, scopes);
+
             if (isSelect()) {
                 fetchData();
             }
