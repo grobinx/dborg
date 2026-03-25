@@ -14,6 +14,7 @@ export interface TokenPosition {
 }
 
 export interface TokenBase {
+    class: "token";
     type: TokenType;
     value: string;
     start: TokenPosition;
@@ -86,14 +87,17 @@ export interface TokenizerOptions {
     identifierStart?: RegExp;
     identifierPart?: RegExp;
     identifierQuotePairs?: Array<[string, string]>;
-    // regex pairs for additional string quote styles (e.g. dollar-quoted, triple-quoted)
-    // opening regex matched at current position; if matched token is $tag$ then same literal closes
-    stringQuotePairs?: Array<[RegExp, RegExp]>;
+    stringQuotes?: (string | RegExp)[];
+    stringEscapeChar?: string;
     punctuators?: string[];
     allowHexNumbers?: boolean;
     allowBinaryNumbers?: boolean;
     allowLeadingDotNumbers?: boolean;
     allowTrailingDotNumbers?: boolean;
+}
+
+export function isToken(obj: any): obj is Token {
+    return obj && typeof obj === "object" && obj.class === "token" && "kind" in obj && "value" in obj && "start" in obj && "end" in obj;
 }
 
 export class Tokenizer {
@@ -111,9 +115,12 @@ export class Tokenizer {
 
     private static dialectDefaults: Record<string, Partial<TokenizerOptions>> = {
         generic: {
+            dialect: "generic",
             identifierStart: /[a-zA-Z_]/,
             identifierPart: /[a-zA-Z0-9_]/,
             identifierQuotePairs: [['"', '"'], ['`', '`']],
+            stringQuotes: ["'"],
+            stringEscapeChar: "\\",
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: true,
             allowBinaryNumbers: true,
@@ -121,10 +128,12 @@ export class Tokenizer {
             allowTrailingDotNumbers: true,
         },
         postgres: {
+            dialect: "postgres",
             identifierStart: /[a-zA-Z_]/,
             identifierPart: /[a-zA-Z0-9_$]/,
             identifierQuotePairs: [['"', '"']],     // tylko cudzysłów
-            stringQuotePairs: [[/^\$[A-Za-z0-9_]*\$/, /^\$[A-Za-z0-9_]*\$/]],
+            stringQuotes: ["'", /^\$[A-Za-z0-9_]*\$/],
+            stringEscapeChar: "\\",
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: false,
             allowBinaryNumbers: false,
@@ -132,9 +141,12 @@ export class Tokenizer {
             allowTrailingDotNumbers: true,
         },
         mysql: {
+            dialect: "mysql",
             identifierStart: /[a-zA-Z_]/,
             identifierPart: /[a-zA-Z0-9_$]/,
             identifierQuotePairs: [['`', '`'], ['"', '"']],
+            stringQuotes: ["'"],
+            stringEscapeChar: "\\",
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: true,
             allowBinaryNumbers: true,
@@ -142,9 +154,12 @@ export class Tokenizer {
             allowTrailingDotNumbers: true,
         },
         mssql: {
+            dialect: "mssql",
             identifierStart: /[a-zA-Z_@#]/,
             identifierPart: /[a-zA-Z0-9_@#$]/,
             identifierQuotePairs: [['[', ']'], ['"', '"']],
+            stringQuotes: ["'"],
+            stringEscapeChar: "'",
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: false,
             allowBinaryNumbers: false,
@@ -152,9 +167,12 @@ export class Tokenizer {
             allowTrailingDotNumbers: true,
         },
         oracle: {
+            dialect: "oracle",
             identifierStart: /[a-zA-Z_]/,
             identifierPart: /[a-zA-Z0-9_$_#]/,
             identifierQuotePairs: [['"', '"']],
+            stringQuotes: ["'"],
+            stringEscapeChar: "'",
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: false,
             allowBinaryNumbers: false,
@@ -162,9 +180,12 @@ export class Tokenizer {
             allowTrailingDotNumbers: true,
         },
         sqlite: {
+            dialect: "sqlite",
             identifierStart: /[a-zA-Z_]/,
             identifierPart: /[a-zA-Z0-9_]/,
             identifierQuotePairs: [['"', '"'], ['`', '`'], ['[', ']']],
+            stringQuotes: ["'"],
+            stringEscapeChar: "'",
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: true,
             allowBinaryNumbers: false,
@@ -172,9 +193,12 @@ export class Tokenizer {
             allowTrailingDotNumbers: true,
         },
         mariadb: {
+            dialect: "mariadb",
             identifierStart: /[a-zA-Z_]/,
             identifierPart: /[a-zA-Z0-9_$]/,
             identifierQuotePairs: [['`', '`'], ['"', '"']],
+            stringQuotes: ["'"],
+            stringEscapeChar: "\\",
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: true,
             allowBinaryNumbers: true,
@@ -182,9 +206,12 @@ export class Tokenizer {
             allowTrailingDotNumbers: true,
         },
         redshift: {
+            dialect: "redshift",
             identifierStart: /[a-zA-Z_]/,
             identifierPart: /[a-zA-Z0-9_$]/,
             identifierQuotePairs: [['"', '"']],
+            stringQuotes: ["'"],
+            stringEscapeChar: "\\",
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: false,
             allowBinaryNumbers: false,
@@ -192,9 +219,12 @@ export class Tokenizer {
             allowTrailingDotNumbers: true,
         },
         snowflake: {
+            dialect: "snowflake",
             identifierStart: /[a-zA-Z_]/,
             identifierPart: /[a-zA-Z0-9_.$]/,
             identifierQuotePairs: [['"', '"'], ['`', '`']],
+            stringQuotes: ["'"],
+            stringEscapeChar: "\\",
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: false,
             allowBinaryNumbers: false,
@@ -202,9 +232,12 @@ export class Tokenizer {
             allowTrailingDotNumbers: true,
         },
         bigquery: {
+            dialect: "bigquery",
             identifierStart: /[a-zA-Z_]/,
             identifierPart: /[a-zA-Z0-9_.$]/,
             identifierQuotePairs: [['`', '`']],
+            stringQuotes: ["'"],
+            stringEscapeChar: "\\",
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: true,
             allowBinaryNumbers: false,
@@ -212,9 +245,12 @@ export class Tokenizer {
             allowTrailingDotNumbers: true,
         },
         db2: {
+            dialect: "db2",
             identifierStart: /[a-zA-Z_]/,
             identifierPart: /[a-zA-Z0-9_]/,
             identifierQuotePairs: [['"', '"']],
+            stringQuotes: ["'"],
+            stringEscapeChar: "\\",
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: false,
             allowBinaryNumbers: false,
@@ -222,9 +258,12 @@ export class Tokenizer {
             allowTrailingDotNumbers: true,
         },
         teradata: {
+            dialect: "teradata",
             identifierStart: /[a-zA-Z_]/,
             identifierPart: /[a-zA-Z0-9_]/,
             identifierQuotePairs: [['"', '"']],
+            stringQuotes: ["'"],
+            stringEscapeChar: "\\",
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: false,
             allowBinaryNumbers: false,
@@ -232,9 +271,12 @@ export class Tokenizer {
             allowTrailingDotNumbers: true,
         },
         firebird: {
+            dialect: "firebird",
             identifierStart: /[a-zA-Z_]/,
             identifierPart: /[a-zA-Z0-9_]/,
             identifierQuotePairs: [['"', '"']],
+            stringQuotes: ["'"],
+            stringEscapeChar: "\\",
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: false,
             allowBinaryNumbers: false,
@@ -242,9 +284,12 @@ export class Tokenizer {
             allowTrailingDotNumbers: true,
         },
         duckdb: {
+            dialect: "duckdb",
             identifierStart: /[a-zA-Z_]/,
             identifierPart: /[a-zA-Z0-9_.$]/,
             identifierQuotePairs: [['"', '"'], ['`', '`']],
+            stringQuotes: ["'"],
+            stringEscapeChar: "\\",
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: true,
             allowBinaryNumbers: false,
@@ -252,9 +297,12 @@ export class Tokenizer {
             allowTrailingDotNumbers: true,
         },
         clickhouse: {
+            dialect: "clickhouse",
             identifierStart: /[a-zA-Z_]/,
             identifierPart: /[a-zA-Z0-9_.$]/,
             identifierQuotePairs: [['"', '"'], ['`', '`']],
+            stringQuotes: ["'"],
+            stringEscapeChar: "\\",
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: true,
             allowBinaryNumbers: false,
@@ -312,7 +360,7 @@ export class Tokenizer {
                 let s = "";
                 while (/\s/.test(this.peek())) { s += this.peek(); this.advance(); }
                 const end = this.makePos();
-                tokens.push({ type: "whitespace", value: s, start, end } as WhitespaceToken);
+                tokens.push({ class: "token", type: "whitespace", value: s, start, end } as WhitespaceToken);
                 continue;
             }
 
@@ -327,7 +375,7 @@ export class Tokenizer {
                     raw += c; value += c; this.advance();
                 }
                 const end = this.makePos();
-                tokens.push({ type: "comment", value: value.trim(), start, end, multiline: false, raw } as CommentToken);
+                tokens.push({ class: "token", type: "comment", value: value.trim(), start, end, multiline: false, raw } as CommentToken);
                 continue;
             }
             if (ch === "/" && this.peek(1) === "*") {
@@ -345,81 +393,101 @@ export class Tokenizer {
                     raw += c; value += c; this.advance();
                 }
                 const end = this.makePos();
-                tokens.push({ type: "comment", value: value.trim(), start, end, multiline: true, raw } as CommentToken);
+                tokens.push({ class: "token", type: "comment", value: value.trim(), start, end, multiline: true, raw } as CommentToken);
                 continue;
             }
 
-            // Single-quoted strings
-            if (ch === "'") {
-                const start = this.makePos();
-                let raw = ""; raw += this.peek(); this.advance();
-                let value = "";
-                while (this.position < this.input.length) {
-                    const c = this.peek();
-                    raw += c; this.advance();
-                    if (c === "'") {
-                        if (this.peek() === "'") { raw += this.peek(); this.advance(); value += "'"; continue; }
-                        break;
-                    } else {
-                        value += c;
-                    }
-                }
-                const end = this.makePos();
-                tokens.push({ type: "string", value, start, end, quote: "'", raw } as StringToken);
-                continue;
-            }
-
-            if (this.options.stringQuotePairs) {
-                const stringPairs = this.options.stringQuotePairs;
+            if (this.options.stringQuotes) {
+                const stringQuotes = this.options.stringQuotes;
                 let stringHandled = false;
-                for (const [openRe, closeRe] of stringPairs) {
+
+                for (const sq of stringQuotes) {
                     const rest = this.input.slice(this.position);
-                    const m = rest.match(openRe);
-                    if (m && m.index === 0) {
-                        const openStr = m[0];
-                        const start = this.makePos();
-                        this.advance(openStr.length);
+                    let match: RegExpMatchArray | null = null;
+                    let openStr: string | null = null;
+                    const isRegex = typeof sq !== "string";
 
-                        let content: string;
-                        let raw: string;
-
-                        if (/^\$[A-Za-z0-9_]*\$$/.test(openStr)) {
-                            // dollar-quoted: closing = same literal tag
-                            const idx = this.input.indexOf(openStr, this.position);
-                            if (idx >= 0) {
-                                content = this.input.slice(this.position, idx);
-                                raw = openStr + content + openStr;
-                                this.advance(content.length + openStr.length);
-                            } else {
-                                // unterminated
-                                content = this.input.slice(this.position);
-                                raw = openStr + content;
-                                this.advance(content.length);
-                            }
-                        } else {
-                            // single-char style close (with doubled-char escaping)
-                            const litMatch = closeRe.source.match(/^\\?(.)/);
-                            const closeChar = litMatch ? litMatch[1] : openStr[0];
-                            content = ""; raw = openStr;
-                            while (this.position < this.input.length) {
-                                const c = this.peek();
-                                if (c === closeChar) {
-                                    if (this.peek(1) === closeChar) {
-                                        raw += c; this.advance(); raw += this.peek(); this.advance();
-                                        content += closeChar; continue;
-                                    }
-                                    raw += c; this.advance(); break;
-                                }
-                                raw += c; this.advance(); content += c;
-                            }
-                        }
-
-                        const end = this.makePos();
-                        tokens.push({ type: "string", value: content, start, end, quote: openStr, raw } as StringToken);
-                        stringHandled = true;
-                        break;
+                    if (!isRegex) {
+                        if (!rest.startsWith(sq)) continue;
+                        openStr = sq;
+                    } else {
+                        match = rest.match(sq);
+                        if (!match || match.index !== 0) continue;
+                        openStr = match[0];
                     }
+
+                    // mamy dopasowany otwieracz
+                    const start = this.makePos();
+                    this.advance(openStr.length);
+
+                    let content = "";
+                    let raw = openStr;
+
+                    // escape char only for string-type quotes (not for regex matches)
+                    const escapeChar = !isRegex ? this.options.stringEscapeChar ?? "\\" : null;
+
+                    // If the quote spec was a RegExp (e.g. dollar-quote pattern), treat closing as same literal
+                    if (isRegex) {
+                        const idx = this.input.indexOf(openStr, this.position);
+                        if (idx >= 0) {
+                            content = this.input.slice(this.position, idx);
+                            raw = openStr + content + openStr;
+                            this.advance(content.length + openStr.length);
+                        } else {
+                            // unterminated
+                            content = this.input.slice(this.position);
+                            raw = openStr + content;
+                            this.advance(content.length);
+                        }
+                    } else if (openStr.length === 1) {
+                        // single-char close with support for:
+                        // - doubled-char escaping (always)
+                        // - optional escape-char (only when escapeChar !== closeChar)
+                        const closeChar = openStr;
+                        while (this.position < this.input.length) {
+                            const c = this.peek();
+
+                            // handle escape char (only for string-type quotes, not regex)
+                            if (escapeChar && escapeChar !== closeChar && c === escapeChar) {
+                                raw += c; this.advance();
+                                const next = this.peek();
+                                if (this.position < this.input.length) { raw += next; this.advance(); content += next; }
+                                continue;
+                            }
+
+                            if (c === closeChar) {
+                                if (this.peek(1) === closeChar) {
+                                    raw += c; this.advance();
+                                    raw += this.peek(); this.advance();
+                                    content += closeChar;
+                                    continue;
+                                }
+                                raw += c; this.advance();
+                                break;
+                            }
+
+                            raw += c; this.advance(); content += c;
+                        }
+                    } else {
+                        // multi-char literal close (closing equals same sequence as opening)
+                        const idx = this.input.indexOf(openStr, this.position);
+                        if (idx >= 0) {
+                            content = this.input.slice(this.position, idx);
+                            raw = openStr + content + openStr;
+                            this.advance(content.length + openStr.length);
+                        } else {
+                            content = this.input.slice(this.position);
+                            raw = openStr + content;
+                            this.advance(content.length);
+                        }
+                    }
+
+                    const end = this.makePos();
+                    tokens.push({ class: "token", type: "string", value: content, start, end, quote: openStr, raw } as StringToken);
+                    stringHandled = true;
+                    break;
                 }
+
                 if (stringHandled) continue;
             }
 
@@ -451,7 +519,7 @@ export class Tokenizer {
                     }
                 }
                 const end = this.makePos();
-                tokens.push({ type: "number", value: s, start, end } as NumberToken);
+                tokens.push({ class: "token", type: "number", value: s, start, end } as NumberToken);
                 continue;
             }
 
@@ -474,7 +542,7 @@ export class Tokenizer {
                         }
                     }
                     const end = this.makePos();
-                    tokens.push({ type: "identifier", value, start, end, quote: [open, close], raw } as IdentifierToken);
+                    tokens.push({ class: "token", type: "identifier", value, start, end, quote: [open, close], raw } as IdentifierToken);
                     handled = true;
                     break;
                 }
@@ -488,7 +556,7 @@ export class Tokenizer {
                 raw += this.peek(); value += this.peek(); this.advance();
                 while (this.isIdentifierPart(this.peek())) { raw += this.peek(); value += this.peek(); this.advance(); }
                 const end = this.makePos();
-                tokens.push({ type: "identifier", value, start, end, quote: false, raw } as IdentifierToken);
+                tokens.push({ class: "token", type: "identifier", value, start, end, quote: false, raw } as IdentifierToken);
                 continue;
             }
 
@@ -500,7 +568,7 @@ export class Tokenizer {
                     op += this.peek(); this.advance();
                 }
                 const end = this.makePos();
-                tokens.push({ type: "operator", value: op, start, end } as OperatorToken);
+                tokens.push({ class: "token", type: "operator", value: op, start, end } as OperatorToken);
                 continue;
             }
 
@@ -509,7 +577,7 @@ export class Tokenizer {
                 const start = this.makePos();
                 this.advance();
                 const end = this.makePos();
-                tokens.push({ type: "punctuator", value: ch, start, end } as PunctuatorToken);
+                tokens.push({ class: "token", type: "punctuator", value: ch, start, end } as PunctuatorToken);
                 continue;
             }
 
@@ -517,7 +585,7 @@ export class Tokenizer {
             const start = this.makePos();
             this.advance();
             const end = this.makePos();
-            tokens.push({ type: "operator", value: ch, start, end } as OperatorToken);
+            tokens.push({ class: "token", type: "operator", value: ch, start, end } as OperatorToken);
         }
 
         return tokens;

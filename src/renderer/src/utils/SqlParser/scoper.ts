@@ -1,16 +1,77 @@
 import { Tokenizer, type Token, type TokenizerOptions } from "./tokenizer";
 
-export type ScopeKind = "root" | "statement" | "expression" | "cte";
+/**
+ * class: token | scope
+ * + token
+ *   type: identifier | string | number | operator | punctuator | comment | whitespace
+ * + scope: root | statement | expression | cte 
+ *   + statement
+ *     kind: dml | ddl | dcl | dql | tcl
+ *     type: SELECT | INSERT | UPDATE | DELETE | MERGE | VALUES
+ *   + expression
+ *     type: single | array
+ *
+ */
+
+export type Scope = "root" | "statement" | "expression" | "cte";
+
+export type StatementKind = "dml" | "ddl" | "dcl" | "dql" | "tcl" | "utility";
+
+export type DmlStatementType = "INSERT" | "UPDATE" | "DELETE" | "MERGE";
+
+export type DqlStatementType = "SELECT";
+
+export type DdlStatementType = "CREATE" | "ALTER" | "DROP" | "TRUNCATE" | "RENAME";
+
+export type DclStatementType = "GRANT" | "REVOKE";
+
+export type TclStatementType = "COMMIT" | "ROLLBACK" | "SAVEPOINT" | "SET TRANSACTION";
+
+export type UtilityStatementType = "EXPLAIN" | "ANALYZE" | "VACUUM" | "CLUSTER" | "CHECKPOINT" | "DISCARD" | "LOAD" | "RESET" | "REINDEX" | "SHOW" | "DESCRIBE" | "USE" | "HELP";
+
+export const StatementsMap: Record<StatementType, StatementKind> = {
+    SELECT: "dql",
+    INSERT: "dml",
+    UPDATE: "dml",
+    DELETE: "dml",
+    MERGE: "dml",
+    CREATE: "ddl",
+    ALTER: "ddl",
+    DROP: "ddl",
+    TRUNCATE: "ddl",
+    RENAME: "ddl",
+    GRANT: "dcl",
+    REVOKE: "dcl",
+    COMMIT: "tcl",
+    ROLLBACK: "tcl",
+    "SET TRANSACTION": "tcl",
+    SAVEPOINT: "tcl",
+    EXPLAIN: "utility",
+    ANALYZE: "utility",
+    VACUUM: "utility",
+    CLUSTER: "utility",
+    CHECKPOINT: "utility",
+    DISCARD: "utility",
+    LOAD: "utility",
+    RESET: "utility",
+    REINDEX: "utility",
+    SHOW: "utility",
+    DESCRIBE: "utility",
+    USE: "utility",
+    HELP: "utility",
+};
 
 export type StatementType =
-    | "SELECT"
-    | "INSERT"
-    | "UPDATE"
-    | "DELETE"
-    | "MERGE"
-    | "VALUES";
+    | DmlStatementType
+    | DqlStatementType
+    | DdlStatementType
+    | DclStatementType
+    | TclStatementType
+    | UtilityStatementType;
 
-export type UnionType =
+export type ExpressionType = "single" | "array";
+
+export type UnionKind =
     | "UNION"
     | "UNION ALL"
     | "INTERSECT"
@@ -18,7 +79,8 @@ export type UnionType =
     | "MINUS";
 
 export interface ScopeBase {
-    kind: ScopeKind;
+    class: "scope";
+    scope: Scope;
     open: Token | null;
     close: Token | null;
     items: ScopeNode[];
@@ -26,27 +88,29 @@ export interface ScopeBase {
 }
 
 export interface RootScope extends ScopeBase {
-    kind: "root";
+    scope: "root";
 }
 
 export interface StatementBaseScope extends ScopeBase {
-    kind: "statement";
+    scope: "statement";
+    kind: StatementKind;
     type: StatementType;
 }
 
 export interface ExpressionScope extends ScopeBase {
-    kind: "expression";
+    scope: "expression";
+    type: ExpressionType;
 }
 
 export interface CteScope extends ScopeBase {
-    kind: "cte";
+    scope: "cte";
     options: Token[];
     name: Token;
 }
 
 export interface SelectStatement extends StatementBaseScope {
     type: "SELECT";
-    union: UnionType | null;
+    union: UnionKind | null;
 }
 
 export interface DeleteStatement extends StatementBaseScope {
@@ -111,7 +175,7 @@ export class Scoper {
 
     public build(): RootScope {
         const root: RootScope = {
-            kind: "root",
+            scope: "root",
             open: null,
             close: null,
             items: [...this.tokens],
@@ -126,7 +190,7 @@ export class Scoper {
         scope.items = this.transformParentheses(scope.items, scope);
         scope.items = this.transformItemsWithCtes(scope.items, scope);
 
-        if (scope.kind === "root" || scope.kind === "cte") {
+        if (scope.scope === "root" || scope.scope === "cte") {
             scope.items = this.wrapTopLevelItemsAsScopes(scope.items, scope);
         }
 
@@ -170,7 +234,7 @@ export class Scoper {
             let idx = 0;
             while (idx < chunk.length) {
                 const current = chunk[idx];
-                if (!this.isContainer(current) || current.kind !== "cte") break;
+                if (!this.isContainer(current) || current.scope !== "cte") break;
 
                 current.parent = parent;
                 out.push(current);
@@ -185,7 +249,7 @@ export class Scoper {
                 const only = rest[0];
                 if (
                     this.isContainer(only) &&
-                    (only.kind === "statement" || only.kind === "expression")
+                    (only.scope === "statement" || only.scope === "expression")
                 ) {
                     only.parent = parent;
                     this.reparentDescendants(only.items, only);
@@ -319,7 +383,7 @@ export class Scoper {
         if (!this.isContainer(bodyNode)) return null;
 
         const cte: CteScope = {
-            kind: "cte",
+            scope: "cte",
             options,
             name: nameNode,
             open: bodyNode.open,
@@ -351,7 +415,7 @@ export class Scoper {
         parent: ScopeNode,
     ): ExpressionScope {
         return {
-            kind: "expression",
+            scope: "expression",
             open,
             close,
             items,
@@ -367,8 +431,8 @@ export class Scoper {
         parent: ScopeNode,
     ): Statement {
         const base: StatementBaseScope = {
-            kind: "statement",
-            type,
+            scope: "statement",
+            type: type,
             open,
             close,
             items,
