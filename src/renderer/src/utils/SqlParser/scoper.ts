@@ -3,13 +3,13 @@ import { Tokenizer, type Token, type TokenizerOptions } from "./tokenizer";
 /**
  * class: token | scope
  * + token
- *   type: identifier | string | number | operator | punctuator | comment | whitespace
+ *   + type: identifier | string | number | operator | punctuator | comment | whitespace
  * + scope: root | statement | expression | cte 
  *   + statement
- *     kind: dml | ddl | dcl | dql | tcl
- *     type: SELECT | INSERT | UPDATE | DELETE | MERGE | VALUES
+ *     + kind: dml | ddl | dcl | dql | tcl | utility
+ *     + type: SELECT | INSERT | UPDATE | DELETE | MERGE | VALUES
  *   + expression
- *     type: single | array
+ *     + type: single | array
  *
  */
 
@@ -19,7 +19,7 @@ export type StatementKind = "dml" | "ddl" | "dcl" | "dql" | "tcl" | "utility";
 
 export type DmlStatementType = "INSERT" | "UPDATE" | "DELETE" | "MERGE";
 
-export type DqlStatementType = "SELECT";
+export type DqlStatementType = "SELECT" | "VALUES";
 
 export type DdlStatementType = "CREATE" | "ALTER" | "DROP" | "TRUNCATE" | "RENAME";
 
@@ -27,10 +27,12 @@ export type DclStatementType = "GRANT" | "REVOKE";
 
 export type TclStatementType = "COMMIT" | "ROLLBACK" | "SAVEPOINT" | "SET TRANSACTION";
 
-export type UtilityStatementType = "EXPLAIN" | "ANALYZE" | "VACUUM" | "CLUSTER" | "CHECKPOINT" | "DISCARD" | "LOAD" | "RESET" | "REINDEX" | "SHOW" | "DESCRIBE" | "USE" | "HELP";
+export type UtilityStatementType = "EXPLAIN" | "ANALYZE" | "VACUUM" | "CLUSTER" | "CHECKPOINT" | "DISCARD" | "LOAD" | "RESET" | "REINDEX" | "USE" | "SHOW" | "DESCRIBE" | "HELP" | "EXPLAIN";
 
 export const StatementsMap: Record<StatementType, StatementKind> = {
     SELECT: "dql",
+    VALUES: "dql",
+
     INSERT: "dml",
     UPDATE: "dml",
     DELETE: "dml",
@@ -40,12 +42,15 @@ export const StatementsMap: Record<StatementType, StatementKind> = {
     DROP: "ddl",
     TRUNCATE: "ddl",
     RENAME: "ddl",
+
     GRANT: "dcl",
     REVOKE: "dcl",
+
     COMMIT: "tcl",
     ROLLBACK: "tcl",
     "SET TRANSACTION": "tcl",
     SAVEPOINT: "tcl",
+
     EXPLAIN: "utility",
     ANALYZE: "utility",
     VACUUM: "utility",
@@ -55,9 +60,9 @@ export const StatementsMap: Record<StatementType, StatementKind> = {
     LOAD: "utility",
     RESET: "utility",
     REINDEX: "utility",
+    USE: "utility",
     SHOW: "utility",
     DESCRIBE: "utility",
-    USE: "utility",
     HELP: "utility",
 };
 
