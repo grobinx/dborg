@@ -1069,7 +1069,7 @@ export const DataGrid = <T extends object>({
             const pos = position || selectedCellRef.current;
             if (pos) {
                 const column = columnsState.current[pos.column];
-                return displayDataRef.current[pos.row].data[column.key];
+                return displayDataRef.current[pos.row].data[column?.key];
             }
             return null;
         },
