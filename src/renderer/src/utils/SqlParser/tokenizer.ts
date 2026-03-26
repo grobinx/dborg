@@ -97,7 +97,11 @@ export interface TokenizerOptions {
 }
 
 export function isToken(obj: any): obj is Token {
-    return obj && typeof obj === "object" && obj.class === "token" && "kind" in obj && "value" in obj && "start" in obj && "end" in obj;
+    return obj && typeof obj === "object" && obj.class === "token" && "type" in obj && "value" in obj && "start" in obj && "end" in obj;
+}
+
+export function isIdentifier(token: Token): token is IdentifierToken {
+    return isToken(token) && token.type === "identifier";
 }
 
 export class Tokenizer {
