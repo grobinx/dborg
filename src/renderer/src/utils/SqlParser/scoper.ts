@@ -92,6 +92,10 @@ export interface BlockBase {
     parent: BlockNode | null;
 }
 
+function isBlockNode(obj: any): obj is BlockNode {
+    return obj && typeof obj === "object" && obj.class === "block" && "block" in obj && "open" in obj && "close" in obj && "items" in obj && "parent" in obj;
+}
+
 export interface RootBlock extends BlockBase {
     block: "root";
 }
@@ -105,6 +109,10 @@ export interface StatementResolved extends StatementBlock {
     type: StatementType | null;
 }
 
+function isStatementResolved(obj: any): obj is StatementResolved {
+    return isBlockNode(obj) && obj.block === "statement" && "kind" in obj && "type" in obj;
+}
+
 export interface ExpressionBlock extends BlockBase {
     block: "expression";
 }
@@ -112,7 +120,7 @@ export interface ExpressionBlock extends BlockBase {
 export interface CteBlock extends BlockBase {
     block: "cte";
     name: Token | null;
-    options: Token[];
+    options: Token[] | null;
     columns: Token[] | null;
 }
 
@@ -186,8 +194,123 @@ export class Scoper {
         };
 
         root.items = this.collectNestedItems(tokens, root);
+        this.splitStatements(root);
+        this.identifyBlocks(root);
+        this.decomposeStatements(root);
 
         return root;
+    }
+
+    private decomposeStatements(node: BlockNode): void {
+        if (!node.items) return;
+
+        for (let i = 0; i < node.items.length; i++) {
+            const item = node.items[i];
+            if (isStatementResolved(item)) {
+                if (item.type === "SELECT") {
+                    this.decomposeSelectStatement(item);
+                }
+            }
+        }
+    }
+
+    private decomposeSelectStatement(statement: StatementResolved): void {
+        if (!statement.items) return;
+
+        
+    }
+
+    private splitStatements(root: RootBlock): void {
+        if (!root.items) return;
+
+        const statements: StatementBlock[] = [];
+        let currentStatementTokens: Token[] = [];
+        let currentStatement: StatementBlock = {
+            class: "block",
+            block: "statement",
+            open: null,
+            close: null,
+            items: null,
+            parent: root,
+        };
+
+        for (const item of root.items) {
+            if (typeof item === "object" && "block" in item && item.block === "statement") {
+                item.parent = currentStatement;
+            }
+            if (typeof item === "object" && "type" in item && item.type === "punctuator" && item.value === ";") {
+                if (currentStatementTokens.length > 0) {
+                    currentStatement.open = currentStatementTokens[0];
+                    currentStatement.close = currentStatementTokens[currentStatementTokens.length - 1];
+                    currentStatement.items = currentStatementTokens;
+                    statements.push(currentStatement);
+                    currentStatementTokens = [];
+                    currentStatement = {
+                        class: "block",
+                        block: "statement",
+                        open: null,
+                        close: null,
+                        items: null,
+                        parent: root,
+                    };
+                }
+            } else {
+                currentStatementTokens.push(item as Token);
+            }
+        }
+
+        if (currentStatementTokens.length > 0) {
+            currentStatement.open = currentStatementTokens[0];
+            currentStatement.close = currentStatementTokens[currentStatementTokens.length - 1];
+            currentStatement.items = currentStatementTokens;
+            statements.push(currentStatement);
+        }
+
+        root.items = statements;
+    }
+
+    private identifyBlocks(node: BlockNode): void {
+        if (!node.items) return;
+
+        for (let i = 0; i < node.items.length; i++) {
+            const item = node.items[i];
+
+            // 1. Rekurencja: Najpierw naprawiamy dzieci
+            if (typeof item === "object" && "block" in item) {
+                this.identifyBlocks(item);
+
+                // 2. Jeśli to surowy StatementBlock, spróbujmy go uszczegółowić
+                if (item.block === "statement") {
+                    node.items[i] = this.identifyStatement(item);
+                }
+            }
+        }
+    }
+
+    private identifyStatement(block: StatementBlock): Statement {
+        const identifiers = block.items?.filter(item => isIdentifier(item) && !item.quote) as Token[] || [];
+        if (identifiers.length === 0) return block;
+
+        // Pobierz pierwszy istotny token (pomijając np. WITH dla uproszczenia na tym etapie)
+        let firstToken = identifiers[0];
+
+        if (firstToken.value.toUpperCase() === "WITH") {
+            const mainToken = identifiers.find(t => t.value.toUpperCase() in StatementKindByType);
+            if (mainToken) firstToken = mainToken;
+        }
+
+        const keyword = firstToken.value.toUpperCase() as StatementType;
+        const kind = StatementKindByType[keyword];
+
+        if (kind) {
+            return {
+                ...block,
+                kind: kind,
+                type: keyword,
+            } as StatementResolved;
+        }
+
+        return block;
     }
 
     private collectBalanced(tokens: Token[], startPos: number): { collected: Token[]; endPos: number } {
