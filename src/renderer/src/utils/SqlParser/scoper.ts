@@ -89,11 +89,10 @@ export interface BlockBase {
     open: Token | null;
     close: Token | null;
     items: BlockItem[] | null;
-    parent: BlockNode | null;
 }
 
 function isBlockNode(obj: any): obj is BlockNode {
-    return obj && typeof obj === "object" && obj.class === "block" && "block" in obj && "open" in obj && "close" in obj && "items" in obj && "parent" in obj;
+    return obj && typeof obj === "object" && obj.class === "block" && "block" in obj && "open" in obj && "close" in obj && "items" in obj;
 }
 
 export interface RootBlock extends BlockBase {
@@ -195,7 +194,6 @@ export class Scoper {
             open: null,
             close: null,
             items: null,
-            parent: null,
         };
 
         if (tokens.length === 0) {
@@ -205,7 +203,7 @@ export class Scoper {
         root.open = tokens[0];
         root.close = tokens[tokens.length - 1];
 
-        root.items = this.collectNestedItems(tokens, root);
+        root.items = this.collectNestedItems(tokens);
         this.splitStatements(root);
         this.identifyBlocks(root);
         this.decomposeStatements(root);
@@ -274,7 +272,6 @@ export class Scoper {
                 open: this.findFirstToken(item),
                 close: null,
                 items: [],
-                parent: statement,
                 operator: null,
             };
 
@@ -372,13 +369,11 @@ export class Scoper {
                     open: cteName,
                     close: cteStatement.close,
                     items: [cteStatement],
-                    parent: null,
                     name: cteName,
                     options,
                     columns: columnsExpression && columnsExpression.items ? columnsExpression.items.filter(item => !isPunctuator(item, ",")) : null,
                 };
 
-                cteStatement.parent = cte;
                 collected.push(cte);
 
                 // recursively decompose inner statements
@@ -405,17 +400,10 @@ export class Scoper {
                     open: cteName,
                     close: this.findLastToken(last),
                     items: rawPart.length > 0 ? rawPart.slice() : null,
-                    parent: null,
                     name: cteName,
                     options,
                     columns: columnsExpression && columnsExpression.items ? columnsExpression.items.filter(item => !isPunctuator(item, ",")) : null,
                 };
-
-                if (cte.items) {
-                    for (const it of cte.items) {
-                        if (isBlockNode(it)) it.parent = cte;
-                    }
-                }
 
                 collected.push(cte);
 
@@ -444,13 +432,9 @@ export class Scoper {
             open: null,
             close: null,
             items: null,
-            parent: null, //root,
         };
 
         for (const item of root.items) {
-            if (typeof item === "object" && "block" in item && item.block === "statement") {
-                item.parent = null; //currentStatement;
-            }
             if (isPunctuator(item, ";")) {
                 if (currentStatementTokens.length > 0) {
                     currentStatement.open = this.findFirstToken(currentStatementTokens[0]);
@@ -464,7 +448,6 @@ export class Scoper {
                         open: null,
                         close: null,
                         items: null,
-                        parent: null, //root,
                     };
                 }
             } else {
@@ -569,7 +552,6 @@ export class Scoper {
 
     private collectNestedItems(
         tokens: Token[],
-        parent: BlockNode | null = null,
     ): BlockItem[] {
         const items: BlockItem[] = [];
         let pos = 0;
@@ -599,7 +581,6 @@ export class Scoper {
                             open,
                             close,
                             items: null,
-                            parent: null, // parent
                         };
                     } else {
                         node = {
@@ -608,12 +589,11 @@ export class Scoper {
                             open,
                             close,
                             items: null,
-                            parent: null, // parent
                         };
                     }
 
                     // Rekurencyjnie buduj drzewo tylko z zawartosci nawiasu
-                    node.items = this.collectNestedItems(innerTokens, node);
+                    node.items = this.collectNestedItems(innerTokens);
 
                     // BlockBase nie jest bezposrednio w BlockNode, wiec rzutowanie do BlockItem
                     items.push(node!);

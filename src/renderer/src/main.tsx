@@ -37,6 +37,7 @@ const AppWrapper: React.FC = () => {
         <div style={{ height: '100vh', width: '100vw' }}>
             {initStep < 4 &&
                 <RectangleDoor
+                    rectangleCount={Math.ceil(window.innerHeight / 100)}
                     key="door"
                     isOpen={initStep === 1 || initStep === 3}
                     //baseColor='#005500'

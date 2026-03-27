@@ -249,7 +249,6 @@ const RectangleDoor: React.FC<RectangleDoorProps> = ({
             const timer = setTimeout(onAnimationEnd, totalTime);
             return () => clearTimeout(timer);
         }
-        return;
     }, [isOpen, duration, onAnimationEnd]);
 
     return (
