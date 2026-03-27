@@ -1,4 +1,4 @@
-import { isIdentifier, Tokenizer, type Token, type TokenizerOptions } from "./tokenizer";
+import { isIdentifier, isPunctuator, Tokenizer, type Token, type TokenizerOptions } from "./tokenizer";
 
 /**
  * class: token | scope
@@ -238,7 +238,7 @@ export class Scoper {
             if (typeof item === "object" && "block" in item && item.block === "statement") {
                 item.parent = currentStatement;
             }
-            if (typeof item === "object" && "type" in item && item.type === "punctuator" && item.value === ";") {
+            if (isPunctuator(item, ";")) {
                 if (currentStatementTokens.length > 0) {
                     currentStatement.open = currentStatementTokens[0];
                     currentStatement.close = currentStatementTokens[currentStatementTokens.length - 1];
@@ -343,29 +343,7 @@ export class Scoper {
     }
 
     private isArrayExpression(tokens: Token[]): boolean {
-        if (tokens.length === 0) return false;
-
-        const stack: string[] = [];
-        let commaCount = 0;
-
-        for (let i = 0; i < tokens.length; i++) {
-            const t = tokens[i];
-            if (t.type === "punctuator") {
-                if (this.openBrackets.includes(t.value)) {
-                    stack.push(t.value);
-                } else if (this.closeBrackets.includes(t.value)) {
-                    const top = stack.pop();
-                    if (!top) return false; // closing without opening
-                    if (this.openBrackets.indexOf(top) !== this.closeBrackets.indexOf(t.value)) {
-                        return false; // mismatched pair
-                    }
-                } else if (t.value === "," && stack.length === 0) {
-                    commaCount++;
-                }
-            }
-        }
-
-        return commaCount > 0;
+        return tokens.some(t => isPunctuator(t, ","));
     }
 
     private isStatement(tokens: Token[]): boolean {

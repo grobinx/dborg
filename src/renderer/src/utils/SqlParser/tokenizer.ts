@@ -104,6 +104,14 @@ export function isIdentifier(token: any): token is IdentifierToken {
     return isToken(token) && token.type === "identifier";
 }
 
+export function isKeyword(token: any, ...keywords: string[]): boolean {
+    return isIdentifier(token) && !token.quote && keywords.some(kw => kw.toLowerCase() === token.value.toLowerCase());
+}
+
+export function isPunctuator(token: any, punctuator: string): boolean {
+    return isToken(token) && token.type === "punctuator" && token.value === punctuator;
+}
+
 export class Tokenizer {
     private input: string;
     private position: number;
