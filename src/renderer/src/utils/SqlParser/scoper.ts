@@ -1,4 +1,4 @@
-import { isIdentifier, isPunctuator, Tokenizer, type Token, type TokenizerOptions } from "./tokenizer";
+import { isIdentifier, isKeyword, isPunctuator, isToken, Tokenizer, type Token, type TokenizerOptions } from "./tokenizer";
 
 /**
  * class: token | scope
@@ -13,7 +13,7 @@ import { isIdentifier, isPunctuator, Tokenizer, type Token, type TokenizerOption
  *
  */
 
-export type BlockType = "root" | "statement" | "expression" | "cte";
+export type BlockType = "root" | "statement" | "expression" | "cte" | "set_operator";
 
 export type StatementKind = "dml" | "ddl" | "dcl" | "dql" | "tcl" | "utility";
 
@@ -120,13 +120,17 @@ export interface ExpressionBlock extends BlockBase {
 export interface CteBlock extends BlockBase {
     block: "cte";
     name: Token | null;
-    options: Token[] | null;
-    columns: Token[] | null;
+    options: BlockItem[] | null;
+    columns: BlockItem[] | null;
+}
+
+export interface SetOperatorBlock extends BlockBase {
+    block: "set_operator";
+    operator: SetOperator | null;
 }
 
 export interface SelectStatement extends StatementBlock {
     type: "SELECT";
-    union: SetOperator | null;
 }
 
 export interface DeleteStatement extends StatementBlock {
@@ -163,6 +167,7 @@ export type BlockNode =
     | Statement
     | ExpressionBlock
     | CteBlock
+    | SetOperatorBlock;
 
 export type BlockItem = BlockNode | Token;
 
@@ -193,6 +198,13 @@ export class Scoper {
             parent: null,
         };
 
+        if (tokens.length === 0) {
+            return root;
+        }
+
+        root.open = tokens[0];
+        root.close = tokens[tokens.length - 1];
+
         root.items = this.collectNestedItems(tokens, root);
         this.splitStatements(root);
         this.identifyBlocks(root);
@@ -209,15 +221,216 @@ export class Scoper {
             if (isStatementResolved(item)) {
                 if (item.type === "SELECT") {
                     this.decomposeSelectStatement(item);
+                } else if (item.type === "INSERT") {
+                    this.decomposeInsertStatement(item);
                 }
             }
         }
     }
 
-    private decomposeSelectStatement(statement: StatementResolved): void {
-        if (!statement.items) return;
+    private decomposeInsertStatement(statement: StatementResolved): void {
+        if (!statement.items || statement.items.length === 0) return;
 
-        
+        const items: BlockItem[] = [];
+        let pos = 0;
+
+        let item = statement.items[pos];
+        if (isKeyword(item, "WITH")) {
+            const { collected, endPos } = this.decomposeWithClasue(statement.items, pos + 1);
+            items.push(...collected);
+            pos = endPos;
+        }
+
+        item = statement.items[pos];
+        if (isKeyword(item, "INSERT")) {
+            while (pos < statement.items.length) {
+                item = statement.items[pos];
+                items.push(item);
+                pos++;
+            }
+        }
+
+        statement.items = items;
+    }
+
+    private decomposeSelectStatement(statement: StatementResolved): void {
+        if (!statement.items || statement.items.length === 0) return;
+
+        const items: BlockItem[] = [];
+        let pos = 0;
+
+        let item = statement.items[pos];
+        if (isKeyword(item, "WITH")) {
+            const { collected, endPos } = this.decomposeWithClasue(statement.items, pos + 1);
+            items.push(...collected);
+            pos = endPos;
+        }
+
+        item = statement.items[pos];
+        if (isKeyword(item, "SELECT")) {
+            const setOperators: SetOperatorBlock = {
+                class: "block",
+                block: "set_operator",
+                open: this.findFirstToken(item),
+                close: null,
+                items: [],
+                parent: statement,
+                operator: null,
+            };
+
+            while (pos < statement.items.length) {
+                item = statement.items[pos];
+                setOperators.items!.push(item);
+                pos++;
+            }
+
+            if (setOperators.items && setOperators.items.length > 0) {
+                const lastItem = setOperators.items[setOperators.items.length - 1];
+                setOperators.close = this.findLastToken(lastItem);
+            }
+
+            items.push(setOperators);
+        } else {
+            items.push(...statement.items);
+        }
+
+        statement.items = items;
+    }
+
+    private decomposeWithClasue(items: BlockItem[], startPos: number): { collected: CteBlock[]; endPos: number } {
+        const collected: CteBlock[] = [];
+        let pos = startPos;
+
+        while (pos < items.length) {
+            // skip any leading commas
+            while (pos < items.length && isPunctuator(items[pos], ",")) pos++;
+            if (pos >= items.length) break;
+
+            const segmentStart = pos;
+
+            // collect identifier-like tokens (includes keywords but stop at AS)
+            const nameTokens: Token[] = [];
+            while (pos < items.length && isIdentifier(items[pos]) && !isKeyword(items[pos], "AS")) {
+                nameTokens.push(items[pos] as Token);
+                pos++;
+            }
+
+            // optional column-list expression: "(...)" -> expression block
+            let columnsExpression: ExpressionBlock | null = null;
+            if (pos < items.length) {
+                const maybeCols = items[pos];
+                if (isBlockNode(maybeCols) && maybeCols.block === "expression") {
+                    columnsExpression = maybeCols as ExpressionBlock;
+                    pos++;
+                }
+            }
+
+            // optional AS
+            let hasAS = false;
+            if (pos < items.length && isKeyword(items[pos], "AS")) {
+                hasAS = true;
+                pos++;
+            }
+
+            // next should be a statement block "(SELECT ...)"
+            let cteStatement: StatementBlock | null = null;
+            if (pos < items.length) {
+                const maybeStmt = items[pos];
+                if (isBlockNode(maybeStmt) && maybeStmt.block === "statement") {
+                    cteStatement = maybeStmt as StatementBlock;
+                    pos++;
+                }
+            }
+
+            // If we have no name tokens and no statement yet, try to look ahead for a statement up to next comma
+            if (nameTokens.length === 0 && !cteStatement) {
+                let look = pos;
+                while (look < items.length && !isPunctuator(items[look], ",")) {
+                    const maybe = items[look];
+                    if (isBlockNode(maybe) && maybe.block === "statement") {
+                        cteStatement = maybe as StatementBlock;
+                        pos = look + 1;
+                        break;
+                    }
+                    look++;
+                }
+            }
+
+            // If still nothing meaningful parsed for this segment, bail out (leave caller to handle remaining tokens)
+            if (nameTokens.length === 0 && !cteStatement) {
+                break;
+            }
+
+            const cteName = nameTokens.length > 0 ? nameTokens[nameTokens.length - 1] : null;
+            const options = nameTokens.length > 1 ? nameTokens.slice(0, -1) : null;
+
+            if (cteStatement) {
+                // Normal (or tolerant) CTE: we have a statement block (AS optional)
+                const cte: CteBlock = {
+                    class: "block",
+                    block: "cte",
+                    open: cteName,
+                    close: cteStatement.close,
+                    items: [cteStatement],
+                    parent: null,
+                    name: cteName,
+                    options,
+                    columns: columnsExpression && columnsExpression.items ? columnsExpression.items.filter(item => !isPunctuator(item, ",")) : null,
+                };
+
+                cteStatement.parent = cte;
+                collected.push(cte);
+
+                // recursively decompose inner statements
+                this.decomposeStatements(cte);
+
+                // if next token is a comma, consume it and continue to next CTE
+                if (pos < items.length && isPunctuator(items[pos], ",")) {
+                    pos++;
+                    continue;
+                } else {
+                    break;
+                }
+            } else {
+                // Fallback: we couldn't find a statement block; collect raw tokens up to next comma
+                let scan = segmentStart;
+                while (scan < items.length && !isPunctuator(items[scan], ",")) scan++;
+                const rawPart = items.slice(segmentStart, scan);
+
+                const last = rawPart.length > 0 ? rawPart[rawPart.length - 1] : null;
+
+                const cte: CteBlock = {
+                    class: "block",
+                    block: "cte",
+                    open: cteName,
+                    close: this.findLastToken(last),
+                    items: rawPart.length > 0 ? rawPart.slice() : null,
+                    parent: null,
+                    name: cteName,
+                    options,
+                    columns: columnsExpression && columnsExpression.items ? columnsExpression.items.filter(item => !isPunctuator(item, ",")) : null,
+                };
+
+                if (cte.items) {
+                    for (const it of cte.items) {
+                        if (isBlockNode(it)) it.parent = cte;
+                    }
+                }
+
+                collected.push(cte);
+
+                // advance pos to the token after the raw segment; skip comma if present
+                pos = scan;
+                if (pos < items.length && isPunctuator(items[pos], ",")) {
+                    pos++;
+                    continue;
+                } else {
+                    break;
+                }
+            }
+        }
+
+        return { collected, endPos: pos };
     }
 
     private splitStatements(root: RootBlock): void {
@@ -231,17 +444,17 @@ export class Scoper {
             open: null,
             close: null,
             items: null,
-            parent: root,
+            parent: null, //root,
         };
 
         for (const item of root.items) {
             if (typeof item === "object" && "block" in item && item.block === "statement") {
-                item.parent = currentStatement;
+                item.parent = null; //currentStatement;
             }
             if (isPunctuator(item, ";")) {
                 if (currentStatementTokens.length > 0) {
-                    currentStatement.open = currentStatementTokens[0];
-                    currentStatement.close = currentStatementTokens[currentStatementTokens.length - 1];
+                    currentStatement.open = this.findFirstToken(currentStatementTokens[0]);
+                    currentStatement.close = this.findLastToken(currentStatementTokens[currentStatementTokens.length - 1]);
                     currentStatement.items = currentStatementTokens;
                     statements.push(currentStatement);
                     currentStatementTokens = [];
@@ -251,7 +464,7 @@ export class Scoper {
                         open: null,
                         close: null,
                         items: null,
-                        parent: root,
+                        parent: null, //root,
                     };
                 }
             } else {
@@ -260,8 +473,8 @@ export class Scoper {
         }
 
         if (currentStatementTokens.length > 0) {
-            currentStatement.open = currentStatementTokens[0];
-            currentStatement.close = currentStatementTokens[currentStatementTokens.length - 1];
+            currentStatement.open = this.findFirstToken(currentStatementTokens[0]);
+            currentStatement.close = this.findLastToken(currentStatementTokens[currentStatementTokens.length - 1]);
             currentStatement.items = currentStatementTokens;
             statements.push(currentStatement);
         }
@@ -386,7 +599,7 @@ export class Scoper {
                             open,
                             close,
                             items: null,
-                            parent,
+                            parent: null, // parent
                         };
                     } else {
                         node = {
@@ -395,7 +608,7 @@ export class Scoper {
                             open,
                             close,
                             items: null,
-                            parent,
+                            parent: null, // parent
                         };
                     }
 
@@ -421,5 +634,50 @@ export class Scoper {
         }
 
         return items;
+    }
+
+    private findFirstToken(node: BlockItem | null): Token | null {
+        if (!node) return null;
+        if (isToken(node)) return node;
+
+        if (isBlockNode(node)) {
+            for (const item of node.items || []) {
+                if (isToken(item)) {
+                    return item;
+                }
+                const found = this.findFirstToken(item);
+                if (found) {
+                    return found;
+                }
+            }
+
+            return node.open;
+        }
+
+        return null;
+    }
+
+    private findLastToken(node: BlockItem | null): Token | null {
+        if (!node) return null;
+        if (isToken(node)) return node;
+
+        if (isBlockNode(node)) {
+            if (node.close) {
+                return node.close;
+            }
+
+            for (let i = (node.items || []).length - 1; i >= 0; i--) {
+                const item = node.items![i];
+                if (isToken(item)) {
+                    return item;
+                }
+                const found = this.findLastToken(item);
+                if (found) {
+                    return found;
+                }
+            }
+        }
+
+        return null;
     }
 }
