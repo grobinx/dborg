@@ -89,6 +89,7 @@ export interface TokenizerOptions {
     identifierQuotePairs?: Array<[string, string]>;
     stringQuotes?: (string | RegExp)[];
     stringEscapeChar?: string;
+    operators?: string[];
     punctuators?: string[];
     allowHexNumbers?: boolean;
     allowBinaryNumbers?: boolean;
@@ -118,12 +119,8 @@ export class Tokenizer {
     private line: number;
     private column: number;
     private options: TokenizerOptions;
-
-    private static operatorChars = new Set<string>([
-        "+", "-", "*", "/", "%", "=", "<", ">", "!", "&", "|", "^", "~", ":", "?"
-    ]);
-
-    private static defaultPunctuators = [".", ",", ";", "(", ")", "{", "}", "[", "]"];
+    private operators: Set<string>;
+    private punctuators: Set<string>;
 
     private static dialectDefaults: Record<string, Partial<TokenizerOptions>> = {
         generic: {
@@ -133,6 +130,7 @@ export class Tokenizer {
             identifierQuotePairs: [['"', '"'], ['`', '`']],
             stringQuotes: ["'"],
             stringEscapeChar: "\\",
+            operators: ["+", "-", "*", "/", "%", "=", "<", ">", "!", "&", "|", "^", "~", ":", "?"],
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: true,
             allowBinaryNumbers: true,
@@ -146,6 +144,7 @@ export class Tokenizer {
             identifierQuotePairs: [['"', '"']],     // tylko cudzysłów
             stringQuotes: ["'", /^\$[A-Za-z0-9_]*\$/],
             stringEscapeChar: "\\",
+            operators: ["+", "-", "*", "/", "%", "=", "<", ">", "!", "&", "|", "^", "~", ":", "?"],
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: false,
             allowBinaryNumbers: false,
@@ -159,6 +158,7 @@ export class Tokenizer {
             identifierQuotePairs: [['`', '`'], ['"', '"']],
             stringQuotes: ["'"],
             stringEscapeChar: "\\",
+            operators: ["+", "-", "*", "/", "%", "=", "<", ">", "!", "&", "|", "^", "~", ":", "?"],
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: true,
             allowBinaryNumbers: true,
@@ -172,6 +172,7 @@ export class Tokenizer {
             identifierQuotePairs: [['[', ']'], ['"', '"']],
             stringQuotes: ["'"],
             stringEscapeChar: "'",
+            operators: ["+", "-", "*", "/", "%", "=", "<", ">", "!", "&", "|", "^", "~", ":", "?"],
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: false,
             allowBinaryNumbers: false,
@@ -185,6 +186,7 @@ export class Tokenizer {
             identifierQuotePairs: [['"', '"']],
             stringQuotes: ["'"],
             stringEscapeChar: "'",
+            operators: ["+", "-", "*", "/", "%", "=", "<", ">", "!", "&", "|", "^", "~", ":", "?"],
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: false,
             allowBinaryNumbers: false,
@@ -198,6 +200,7 @@ export class Tokenizer {
             identifierQuotePairs: [['"', '"'], ['`', '`'], ['[', ']']],
             stringQuotes: ["'"],
             stringEscapeChar: "'",
+            operators: ["+", "-", "*", "/", "%", "=", "<", ">", "!", "&", "|", "^", "~", ":", "?"],
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: true,
             allowBinaryNumbers: false,
@@ -211,6 +214,7 @@ export class Tokenizer {
             identifierQuotePairs: [['`', '`'], ['"', '"']],
             stringQuotes: ["'"],
             stringEscapeChar: "\\",
+            operators: ["+", "-", "*", "/", "%", "=", "<", ">", "!", "&", "|", "^", "~", ":", "?"],
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: true,
             allowBinaryNumbers: true,
@@ -224,6 +228,7 @@ export class Tokenizer {
             identifierQuotePairs: [['"', '"']],
             stringQuotes: ["'"],
             stringEscapeChar: "\\",
+            operators: ["+", "-", "*", "/", "%", "=", "<", ">", "!", "&", "|", "^", "~", ":", "?"],
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: false,
             allowBinaryNumbers: false,
@@ -237,6 +242,7 @@ export class Tokenizer {
             identifierQuotePairs: [['"', '"'], ['`', '`']],
             stringQuotes: ["'"],
             stringEscapeChar: "\\",
+            operators: ["+", "-", "*", "/", "%", "=", "<", ">", "!", "&", "|", "^", "~", ":", "?"],
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: false,
             allowBinaryNumbers: false,
@@ -250,6 +256,7 @@ export class Tokenizer {
             identifierQuotePairs: [['`', '`']],
             stringQuotes: ["'"],
             stringEscapeChar: "\\",
+            operators: ["+", "-", "*", "/", "%", "=", "<", ">", "!", "&", "|", "^", "~", ":", "?"],
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: true,
             allowBinaryNumbers: false,
@@ -263,6 +270,7 @@ export class Tokenizer {
             identifierQuotePairs: [['"', '"']],
             stringQuotes: ["'"],
             stringEscapeChar: "\\",
+            operators: ["+", "-", "*", "/", "%", "=", "<", ">", "!", "&", "|", "^", "~", ":", "?"],
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: false,
             allowBinaryNumbers: false,
@@ -276,6 +284,7 @@ export class Tokenizer {
             identifierQuotePairs: [['"', '"']],
             stringQuotes: ["'"],
             stringEscapeChar: "\\",
+            operators: ["+", "-", "*", "/", "%", "=", "<", ">", "!", "&", "|", "^", "~", ":", "?"],
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: false,
             allowBinaryNumbers: false,
@@ -289,6 +298,7 @@ export class Tokenizer {
             identifierQuotePairs: [['"', '"']],
             stringQuotes: ["'"],
             stringEscapeChar: "\\",
+            operators: ["+", "-", "*", "/", "%", "=", "<", ">", "!", "&", "|", "^", "~", ":", "?"],
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: false,
             allowBinaryNumbers: false,
@@ -302,6 +312,7 @@ export class Tokenizer {
             identifierQuotePairs: [['"', '"'], ['`', '`']],
             stringQuotes: ["'"],
             stringEscapeChar: "\\",
+            operators: ["+", "-", "*", "/", "%", "=", "<", ">", "!", "&", "|", "^", "~", ":", "?"],
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: true,
             allowBinaryNumbers: false,
@@ -315,6 +326,7 @@ export class Tokenizer {
             identifierQuotePairs: [['"', '"'], ['`', '`']],
             stringQuotes: ["'"],
             stringEscapeChar: "\\",
+            operators: ["+", "-", "*", "/", "%", "=", "<", ">", "!", "&", "|", "^", "~", ":", "?"],
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: true,
             allowBinaryNumbers: false,
@@ -334,6 +346,8 @@ export class Tokenizer {
             ...(Tokenizer.dialectDefaults[dialect] || {}),
             ...options,
         };
+        this.operators = new Set(this.options.operators);
+        this.punctuators = new Set(this.options.punctuators);
     }
 
     private peek(offset = 0): string {
@@ -573,10 +587,10 @@ export class Tokenizer {
             }
 
             // Operators: consume consecutive operator chars as single operator token
-            if (Tokenizer.operatorChars.has(ch)) {
+            if (this.operators && this.operators.has(ch)) {
                 const start = this.makePos();
                 let op = "";
-                while (this.position < this.input.length && Tokenizer.operatorChars.has(this.peek())) {
+                while (this.position < this.input.length && this.operators.has(this.peek())) {
                     op += this.peek(); this.advance();
                 }
                 const end = this.makePos();
@@ -585,7 +599,7 @@ export class Tokenizer {
             }
 
             // Punctuators
-            if (this.options.punctuators && this.options.punctuators.includes(ch)) {
+            if (this.punctuators && this.punctuators.has(ch)) {
                 const start = this.makePos();
                 this.advance();
                 const end = this.makePos();

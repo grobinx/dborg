@@ -456,6 +456,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                 setQueryDuration(null);
                 setColumns(message.columns);
                 setRows(message.data);
+                setErrorMessage(null);
             }
         };
 

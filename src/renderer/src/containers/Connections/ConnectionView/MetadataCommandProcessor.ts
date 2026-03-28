@@ -1,4 +1,6 @@
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
+import { Definition, Interpreter } from "@renderer/utils/SqlParser/interpreter";
+import { Tokenizer } from "@renderer/utils/SqlParser/tokenizer";
 import { DatabasesMetadata, DatabaseMetadata, RelationType, RoutineType } from "src/api/db/Metadata";
 
 /**
@@ -40,231 +42,230 @@ export interface ObjectName {
     type?: ObjectType;
 }
 
+export interface GridResult {
+    columns: ColumnDefinition[];
+    rows: any[]
+}
+
 export class MetadataCommandProcessor {
-    static processCommand(command: string, metadata: DatabasesMetadata): { columns: ColumnDefinition[]; rows: any[] } | null {
-        let mainCommand: string | undefined;
-        let args: string[] | undefined;
-
-        if (!command.startsWith("/")) {
-            if (!/^(?:"([^"]+)"\.|"([a-zA-Z_][a-zA-Z0-9_]*)"\.|([a-zA-Z_][a-zA-Z0-9_]*)\.)?(?:"([^"]+)"|([a-zA-Z_][a-zA-Z0-9_]*))$/.test(command)) {
-                return null;
-            }
-            const [schemaName, objectName] = MCP.resolveObjectName(metadata, command);
-            if (schemaName && objectName || !schemaName && objectName) {
-                if (objectName.type === "relation") {
-                    mainCommand = "columns";
+    private static createDefinition(metadata: DatabasesMetadata): Definition<GridResult> {
+        const definition: Definition<GridResult> = {
+            name: "orbada_editor_commands",
+            references: {
+                schema_object: {
+                    name: "schema_object",
+                    sequence: [
+                        { type: "wild_identifier", key: "schema" },
+                        { type: "punctuator", value: "." },
+                        { type: "wild_identifier", key: "object" },
+                    ]
+                },
+                object: {
+                    name: "object",
+                    sequence: [
+                        { type: "wild_identifier", key: "object" },
+                    ]
+                },
+                schema: {
+                    name: "schema",
+                    sequence: [
+                        { type: "wild_identifier", key: "schema" },
+                    ]
+                },
+                schema_or_object: {
+                    name: "schema_or_object",
+                    sequence: [
+                        {
+                            type: "alternative",
+                            options: [
+                                [{ type: "reference", name: "schema_object" }],
+                                [{ type: "reference", name: "schema" }]
+                            ]
+                        }
+                    ]
                 }
-                else if (objectName.type === "routine") {
-                    mainCommand = "arguments";
-                }
-                else {
-                    return null;
-                }
-                args = [command];
-            }
-            else {
-                mainCommand = "relations";
-                args = [command];
-            }
-        }
-        else {
-            const parts = command.slice(1).split(" ");
-            mainCommand = parts[0].toLowerCase(); // Główne polecenie
-            args = parts.slice(1); // Argumenty polecenia
-        }
-
-        switch (mainCommand) {
-            case "help":
-                return MCP.getHelp(metadata);
-            case "d":
-            case "databases":
-                return MCP.getDatabases(metadata);
-            case "s":
-            case "schemas":
-                return MCP.getSchemas(metadata);
-            case "rel":
-            case "relations":
-                return MCP.getRelations(metadata, args[0]);
-            case "t":
-            case "tables":
-                return MCP.getRelations(metadata, args[0], "table");
-            case "v":
-            case "views":
-                return MCP.getRelations(metadata, args[0], "view");
-            case "r":
-            case "routines":
-                return MCP.getRoutines(metadata, args[0]);
-            case "f":
-            case "functions":
-                return MCP.getRoutines(metadata, args[0], "function");
-            case "p":
-            case "procedures":
-                return MCP.getRoutines(metadata, args[0], "procedure");
-            case "a":
-            case "arguments":
-                return MCP.getArguments(metadata, args[0]);
-            case "c":
-            case "columns":
-                return MCP.getColumns(metadata, args[0]);
-            case "i":
-            case "indexes":
-                return MCP.getIndexes(metadata, args[0]);
-            case "co":
-            case "constraints":
-                return MCP.getConstraints(metadata, args[0]);
-            case "foreign":
-                if (args[0]?.toLowerCase() === "keys") {
-                    return MCP.getForeignKeys(metadata, args[1]);
-                }
-                break;
-            case "primary":
-                if (args[0]?.toLowerCase() === "key") {
-                    return MCP.getPrimaryKey(metadata, args[1]);
-                }
-                break;
-            case "ty":
-            case "types":
-                return MCP.getTypes(metadata, args[0]);
-        }
-
-        return null; // Jeśli polecenie nie pasuje do żadnego case
-    }
-
-    private static getDatabases(metadata: DatabasesMetadata): { columns: ColumnDefinition[]; rows: any[] } {
-        const columns: ColumnDefinition[] = [
-            { key: "database", label: "Database", dataType: "string" },
-            { key: "description", label: "Description", dataType: "string" },
-        ];
-
-        const rows: any[] = Object.entries(metadata).map(([dbName, dbMetadata]) => ({
-            database: dbName,
-            description: dbMetadata.description || "",
-        }));
-
-        return { columns, rows };
-    }
-
-    static resolveObjectName(metadata: DatabasesMetadata, name?: string): [ObjectName | null, ObjectName | null] {
-        if (!name) {
-            return [null, null];
-        }
-
-        const parts = name.split(".").map(part => {
-            const quoted = part.startsWith('"') && part.endsWith('"');
-            const name = quoted ? part.slice(1, -1) : part.toLowerCase();
-            return { quoted, name } as ObjectName;
-        });
-
-        let schemaName: ObjectName | null = null;
-        let objectName: ObjectName | null = null;
-
-        if (parts.length === 1) {
-            // Sprawdź, czy podana nazwa jest schematem
-            const isSchema = MCP.getConnectedDatabases(metadata).some(db =>
-                Object.values(db.schemas).some(schema =>
-                    MCP.nameEquals({ quoted: parts[0].quoted, name: schema.name }, parts[0])
-                )
-            );
-
-            if (isSchema) {
-                schemaName = parts[0];
-                schemaName.type = "schema";
-            } else {
-                objectName = parts[0];
-                objectName.type = MCP.resolveObjectType(metadata, null, objectName);
-            }
-        } else if (parts.length === 2) {
-            // Podano schemat i obiekt
-            schemaName = parts[0];
-            schemaName.type = "schema";
-            objectName = parts[1];
-            objectName.type = MCP.resolveObjectType(metadata, schemaName, objectName);
-        }
-
-        return [schemaName, objectName];
-    }
-
-    private static resolveObjectType(metadata: DatabasesMetadata, schemaName: ObjectName | null, objectName: ObjectName | null): ObjectType {
-        if (!objectName) {
-            return null;
-        }
-
-        for (const database of MCP.getConnectedDatabases(metadata)) {
-            for (const schema of Object.values(database.schemas).filter(schema => !schemaName || MCP.nameEquals({ quoted: schemaName.quoted, name: schema.name }, schemaName))) {
-                for (const relation of Object.values(schema.relations)) {
-                    if (MCP.nameEquals({ quoted: objectName.quoted, name: relation.name }, objectName)) {
-                        return "relation";
-                    }
-                }
-                if (schema.routines) {
-                    for (const routines of Object.values(schema.routines)) {
-                        for (const routine of routines) {
-                            if (MCP.nameEquals({ quoted: objectName.quoted, name: routine.name }, objectName)) {
-                                return "routine";
+            },
+            actions: [
+                {
+                    name: "help",
+                    syntax: "/ help | h",
+                    description: "Displays this help message",
+                    sequence: [
+                        { type: "operator", value: "/" },
+                        { type: "keyword", value: ["help", "h"] },
+                    ],
+                    action() {
+                        return MCP.getHelp(definition);
+                    },
+                },
+                {
+                    name: "schemas",
+                    syntax: "/ schemas | s [ <schema> ]",
+                    description: "Displays schemas",
+                    sequence: [
+                        { type: "operator", value: "/" },
+                        { type: "keyword", value: ["schemas", "s"] },
+                        { type: "wild_identifier", key: "schema", optional: true },
+                    ],
+                    action(values) {
+                        return MCP.getSchemas(metadata, values.schema ?? null);
+                    },
+                },
+                {
+                    name: "tables",
+                    syntax: "/ tables | t [ <schema> [ . <table> ] ]",
+                    description: "Displays tables in a specific schema or all tables if no schema is specified",
+                    sequence: [
+                        { type: "operator", value: "/" },
+                        { type: "keyword", value: ["tables", "t"] },
+                        { type: "reference", name: "schema_or_object", optional: true, key: "soo" },
+                    ],
+                    action(values) {
+                        return MCP.getRelations(metadata, values.soo?.schema ?? null, values.soo?.object ?? null);
+                    },
+                },
+                {
+                    name: "functions",
+                    syntax: "/ functions | f [ <schema> [ . <function> ] ]",
+                    description: "Displays functions in a specific schema or all functions if no schema is specified",
+                    sequence: [
+                        { type: "operator", value: "/" },
+                        { type: "keyword", value: ["functions", "f"] },
+                        { type: "reference", name: "schema_or_object", optional: true, key: "soo" },
+                    ],
+                    action(values) {
+                        return MCP.getRoutines(metadata, values.soo?.schema ?? null, values.soo?.object ?? null);
+                    },
+                },
+                {
+                    name: "schema_or_object",
+                    syntax: "<schema> [ . <object> ] | <object>",
+                    description: "Interprets input as either a schema or an object and displays relevant information",
+                    sequence: [
+                        {
+                            type: "alternative",
+                            options: [
+                                [{ type: "reference", name: "schema_object" }],
+                                [{ type: "reference", name: "object" }]
+                            ],
+                            key: "soo"
+                        }
+                    ],
+                    action(values) {
+                        if (!values.soo?.schema && values.soo?.object) {
+                            const isSchema = MCP.isSchema(metadata, values.soo.object);
+                            if (isSchema === "one") {
+                                return MCP.getObjects(metadata, values.soo.object, null);
+                            } else if (isSchema === "many") {
+                                return MCP.getSchemas(metadata, values.soo.object);
+                            } else {
+                                const isObject = MCP.isObject(metadata, null, values.soo.object);
+                                if (isObject) {
+                                    if (isObject === "relation") {
+                                        return MCP.getColumns(metadata, null, values.soo.object);
+                                    } else if (isObject === "routine") {
+                                        return MCP.getArguments(metadata, null, values.soo.object);
+                                    } else if (isObject === "many") {
+                                        return MCP.getObjects(metadata, null, values.soo.object);
+                                    }
+                                }
+                            }
+                        } else if (values.soo?.schema && values.soo?.object) {
+                            const isObject = MCP.isObject(metadata, values.soo.schema, values.soo.object);
+                            if (isObject === "relation") {
+                                return MCP.getColumns(metadata, values.soo.schema, values.soo.object);
+                            } else if (isObject === "routine") {
+                                return MCP.getArguments(metadata, values.soo.schema, values.soo.object);
+                            } else if (isObject === "many") {
+                                return MCP.getObjects(metadata, values.soo.schema, values.soo.object);
                             }
                         }
-                    }
+                        return null;
+                    },
                 }
+            ]
+        };
+
+        return definition;
+    }
+
+    static processCommand(command: string, metadata: DatabasesMetadata): { columns: ColumnDefinition[]; rows: any[] } | null {
+        const tokens = new Tokenizer(command).tokenize();
+        const definition = MCP.createDefinition(metadata);
+        const interpreter = new Interpreter(tokens, definition);
+        return interpreter.interpret();
+    }
+
+    private static isSchema(metadata: DatabasesMetadata, name: string): "one" | "many" | false {
+        const matchingSchemas = MCP.getConnectedDatabases(metadata).flatMap(db =>
+            Object.values(db.schemas).filter(schema => Interpreter.maskMatch(name, schema.name))
+        );
+        if (matchingSchemas.length === 0) {
+            return false;
+        } else if (matchingSchemas.length === 1) {
+            return "one";
+        } else {
+            return "many";
+        }
+    }
+
+    private static isObject(metadata: DatabasesMetadata, schemaName: string | null, objectName: string): "one" | "many" | "relation" | "routine" | false {
+        const matchingObjects = MCP.getConnectedDatabases(metadata).flatMap(db =>
+            Object.values(db.schemas)
+                .filter(schema => Interpreter.maskMatch(schemaName, schema.name))
+                .flatMap(schema => {
+                    const relations = Object.values(schema.relations)
+                        .filter(relation => Interpreter.maskMatch(objectName, relation.name));
+
+                    const routines = schema.routines
+                        ? Object.values(schema.routines)
+                            .flatMap(routines => routines)
+                            .filter(routine => Interpreter.maskMatch(objectName, routine.name))
+                        : [];
+
+                    return [...relations, ...routines];
+                })
+        );
+
+        if (matchingObjects.length === 0) {
+            return false;
+        }
+        if (matchingObjects.length === 1) {
+            const obj = matchingObjects[0];
+            if ("columns" in obj) {
+                return "relation";
+            } else if ("parameters" in obj) {
+                return "routine";
             }
+            return "one";
         }
-
-        return null;
+        return "many";
     }
 
-    private static nameEquals(n1: ObjectName, n2: ObjectName): boolean {
-        if (!n1.quoted) {
-            n1.name = n1.name.toLowerCase();
-        }
-        if (!n2.quoted) {
-            n2.name = n2.name.toLowerCase();
-        }
-        return n1.name === n2.name;
-    }
 
     private static getConnectedDatabases(metadata: DatabasesMetadata): DatabaseMetadata[] {
         return Object.values(metadata).filter(db => db.connected);
     }
 
-    private static getHelp(_metadata: DatabasesMetadata): { columns: ColumnDefinition[]; rows: any[] } {
+    private static getHelp(definition: Definition): { columns: ColumnDefinition[]; rows: any[] } {
         const columns: ColumnDefinition[] = [
             { key: "command", label: "Command", dataType: "string" },
             { key: "description", label: "Description", dataType: "string" },
         ];
 
-        const rows: any[] = [
-            { command: "/databases | /d", description: "Displays databases" },
-            { command: "/schemas | /s", description: "Displays schemas in the active database" },
-            { command: "/relations | /rel", description: "Displays relations in the schemas in the active database" },
-            { command: "/relations | /rel <schema>", description: "Displays relations in a specific schema" },
-            { command: "/tables | /t", description: "Displays tables in the schemas in the active database" },
-            { command: "/tables | /t <schema>", description: "Displays tables in a specific schema" },
-            { command: "/views | /v", description: "Displays views in the schemas in the active database" },
-            { command: "/views | /v <schema>", description: "Displays views in a specific schema" },
-            { command: "/routines | /r", description: "Displays procedures and functions in the schemas in the active database" },
-            { command: "/routines | /r <schema>", description: "Displays procedures and functions in a specific schema" },
-            { command: "/arguments | /a [<schema>.]<routine>", description: "Displays arguments of a procedure or function" },
-            { command: "/functions | /f", description: "Displays functions in the schemas in the active database" },
-            { command: "/functions | /f <schema>", description: "Displays functions in a specific schema" },
-            { command: "/procedures | /p", description: "Displays procedures in the schemas in the active database" },
-            { command: "/procedures | /p <schema>", description: "Displays procedures in a specific schema" },
-            { command: "/columns | /c [<schema>.]<relation>", description: "Displays columns in a table" },
-            { command: "/indexes | /i [<schema>.]<relation>", description: "Displays indexes in a table" },
-            { command: "/constraints | /co [<schema>.]<relation>", description: "Displays constraints in a table" },
-            { command: "/foreign keys [<schema>.]<relation>", description: "Displays foreign keys in a table" },
-            { command: "/primary key [<schema>.]<relation>", description: "Displays primary keys in a table" },
-            { command: "/types | /ty", description: "Displays data types in the active database" },
-            { command: "/types | /ty <schema>", description: "Displays data types in a specific schema" },
-            { command: "<table>", description: "Displays columns in a table" },
-            { command: "<schema>", description: "Displays relations in a schema" },
-            { command: "<schema>.<table>", description: "Displays columns in a table" },
-            { command: "<routine>", description: "Displays arguments of a procedure or function" },
-            { command: "<schema>.<routine>", description: "Displays arguments of a procedure or function" },
-        ];
+        const rows: any[] = [];
+
+        for (const action of definition.actions) {
+            rows.push({
+                command: action.syntax,
+                description: action.description,
+            });
+        }
 
         return { columns, rows };
     }
 
-    private static getSchemas(metadata: DatabasesMetadata): { columns: ColumnDefinition[]; rows: any[] } {
+    private static getSchemas(metadata: DatabasesMetadata, schemaName?: string | null): { columns: ColumnDefinition[]; rows: any[] } {
         const columns: ColumnDefinition[] = [
             { key: "database", label: "Database", dataType: "string" },
             { key: "schema", label: "Schema", dataType: "string" },
@@ -274,7 +275,7 @@ export class MetadataCommandProcessor {
 
         const rows: any[] = [];
         for (const database of MCP.getConnectedDatabases(metadata)) {
-            for (const schema of Object.values(database.schemas)) {
+            for (const schema of Object.values(database.schemas).filter(schema => Interpreter.maskMatch(schemaName ?? null, schema.name))) {
                 rows.push({
                     database: database.name,
                     schema: schema.name,
@@ -287,7 +288,7 @@ export class MetadataCommandProcessor {
         return { columns, rows };
     }
 
-    private static getRelations(metadata: DatabasesMetadata, typedSchemaName?: string, type?: RelationType): { columns: ColumnDefinition[]; rows: any[] } {
+    private static getRelations(metadata: DatabasesMetadata, schemaName: string | null, objectName: string | null, type?: RelationType): { columns: ColumnDefinition[]; rows: any[] } {
         const columns: ColumnDefinition[] = [
             { key: "database", label: "Database", dataType: "string" },
             { key: "schema", label: "Schema", dataType: "string" },
@@ -300,14 +301,10 @@ export class MetadataCommandProcessor {
         ];
 
         const rows: any[] = [];
-        const [schemaName, objectName] = MCP.resolveObjectName(metadata, typedSchemaName);
 
         for (const database of MCP.getConnectedDatabases(metadata)) {
-            for (const schema of Object.values(database.schemas).filter(schema => !schemaName || MCP.nameEquals({ quoted: schemaName.quoted, name: schema.name }, schemaName))) {
-                for (const relation of Object.values(schema.relations)) {
-                    if (objectName && !MCP.nameEquals({ quoted: objectName.quoted, name: relation.name }, objectName)) {
-                        continue;
-                    }
+            for (const schema of Object.values(database.schemas).filter(schema => Interpreter.maskMatch(schemaName, schema.name))) {
+                for (const relation of Object.values(schema.relations).filter(relation => Interpreter.maskMatch(objectName, relation.name))) {
                     if (type && relation.type !== type) {
                         continue;
                     }
@@ -328,7 +325,7 @@ export class MetadataCommandProcessor {
         return { columns, rows };
     }
 
-    private static getRoutines(metadata: DatabasesMetadata, typedSchemaName?: string, type?: RoutineType): { columns: ColumnDefinition[]; rows: any[] } {
+    private static getRoutines(metadata: DatabasesMetadata, schemaName: string | null, objectName: string | null, type?: RoutineType): { columns: ColumnDefinition[]; rows: any[] } {
         const columns: ColumnDefinition[] = [
             { key: "database", label: "Database", dataType: "string" },
             { key: "schema", label: "Schema", dataType: "string" },
@@ -342,16 +339,12 @@ export class MetadataCommandProcessor {
         ];
 
         const rows: any[] = [];
-        const [schemaName, objectName] = MCP.resolveObjectName(metadata, typedSchemaName);
 
         for (const database of MCP.getConnectedDatabases(metadata)) {
-            for (const schema of Object.values(database.schemas).filter(schema => !schemaName || MCP.nameEquals({ quoted: schemaName.quoted, name: schema.name }, schemaName))) {
+            for (const schema of Object.values(database.schemas).filter(schema => Interpreter.maskMatch(schemaName ?? null, schema.name))) {
                 if (schema.routines) {
-                    for (const routines of Object.values(schema.routines)) {
+                    for (const routines of Object.values(schema.routines).filter(routines => Interpreter.maskMatch(objectName ?? null, routines[0]?.name ?? null))) {
                         for (const [index, routine] of routines.entries()) {
-                            if (objectName && !MCP.nameEquals({ quoted: objectName.quoted, name: routine.name }, objectName)) {
-                                continue;
-                            }
                             if (type && routine.type !== type) {
                                 continue;
                             }
@@ -375,7 +368,68 @@ export class MetadataCommandProcessor {
         return { columns, rows };
     }
 
-    private static getArguments(metadata: DatabasesMetadata, routineName?: string): { columns: ColumnDefinition[]; rows: any[] } {
+    private static getObjects(
+        metadata: DatabasesMetadata,
+        schemaName: string | null,
+        objectName: string | null,
+    ): { columns: ColumnDefinition[]; rows: any[] } {
+        const columns: ColumnDefinition[] = [
+            { key: "database", label: "Database", dataType: "string" },
+            { key: "schema", label: "Schema", dataType: "string" },
+            { key: "object", label: "Object", dataType: "string" },
+            { key: "owner", label: "Owner", dataType: "string" },
+            { key: "type", label: "Type", dataType: "string" },
+            { key: "kind", label: "Kind", dataType: "string" },
+            { key: "description", label: "Description", dataType: "string" },
+        ];
+
+        const rows: any[] = [];
+
+        for (const database of MCP.getConnectedDatabases(metadata)) {
+            for (const schema of Object.values(database.schemas).filter(schema =>
+                Interpreter.maskMatch(schemaName, schema.name)
+            )) {
+                // relations
+                for (const relation of Object.values(schema.relations).filter(relation =>
+                    Interpreter.maskMatch(objectName, relation.name)
+                )) {
+                    rows.push({
+                        database: database.name,
+                        schema: schema.name,
+                        object: relation.name,
+                        owner: relation.owner,
+                        type: relation.type,
+                        kind: relation.kind,
+                        description: relation.description,
+                    });
+                }
+
+                // routines
+                if (schema.routines) {
+                    for (const routines of Object.values(schema.routines)) {
+                        for (const [index, routine] of routines.entries()) {
+                            if (!Interpreter.maskMatch(objectName, routine.name)) {
+                                continue;
+                            }
+                            rows.push({
+                                database: database.name,
+                                schema: schema.name,
+                                object: routine.name,
+                                owner: routine.owner,
+                                type: routine.type,
+                                kind: routine.kind,
+                                description: routine.description,
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        return { columns, rows };
+    }
+
+    private static getArguments(metadata: DatabasesMetadata, schemaName: string | null, routineName: string | null): { columns: ColumnDefinition[]; rows: any[] } {
         const columns: ColumnDefinition[] = [
             { key: "database", label: "Database", dataType: "string" },
             { key: "schema", label: "Schema", dataType: "string" },
@@ -390,18 +444,13 @@ export class MetadataCommandProcessor {
         ];
 
         const rows: any[] = [];
-        const [schemaName, objectName] = MCP.resolveObjectName(metadata, routineName);
-
-        if (!objectName) {
-            return { columns, rows };
-        }
 
         for (const database of MCP.getConnectedDatabases(metadata)) {
-            for (const schema of Object.values(database.schemas).filter(schema => !schemaName || MCP.nameEquals({ quoted: schemaName.quoted, name: schema.name }, schemaName))) {
+            for (const schema of Object.values(database.schemas).filter(schema => Interpreter.maskMatch(schemaName, schema.name))) {
                 if (schema.routines) {
                     for (const routines of Object.values(schema.routines)) {
                         for (const [index, routine] of routines.entries()) {
-                            if (MCP.nameEquals({ quoted: objectName.quoted, name: routine.name }, objectName)) {
+                            if (Interpreter.maskMatch(routineName, routine.name)) {
                                 for (const arg of routine.arguments || []) {
                                     rows.push({
                                         database: database.name,
@@ -439,7 +488,7 @@ export class MetadataCommandProcessor {
         return { columns, rows };
     }
 
-    private static getColumns(metadata: DatabasesMetadata, relationName: string): { columns: ColumnDefinition[]; rows: any[] } {
+    private static getColumns(metadata: DatabasesMetadata, schemaName: string | null, relationName: string | null): { columns: ColumnDefinition[]; rows: any[] } {
         const columns: ColumnDefinition[] = [
             { key: "database", label: "Database", dataType: "string" },
             { key: "schema", label: "Schema", dataType: "string" },
@@ -453,16 +502,11 @@ export class MetadataCommandProcessor {
         ];
 
         const rows: any[] = [];
-        const [schemaName, objectName] = MCP.resolveObjectName(metadata, relationName);
-
-        if (!objectName) {
-            return { columns, rows };
-        }
 
         for (const database of MCP.getConnectedDatabases(metadata)) {
-            for (const schema of Object.values(database.schemas).filter(schema => !schemaName || MCP.nameEquals({ quoted: schemaName.quoted, name: schema.name }, schemaName))) {
+            for (const schema of Object.values(database.schemas).filter(schema => Interpreter.maskMatch(schemaName, schema.name))) {
                 for (const relation of Object.values(schema.relations)) {
-                    if (MCP.nameEquals({ quoted: objectName.quoted, name: relation.name }, objectName)) {
+                    if (Interpreter.maskMatch(relationName, relation.name)) {
                         for (const column of Object.values(relation.columns)) {
                             rows.push({
                                 database: database.name,
@@ -477,245 +521,6 @@ export class MetadataCommandProcessor {
                             });
                         }
                     }
-                }
-            }
-        }
-
-        return { columns, rows };
-    }
-
-    private static getIndexes(metadata: DatabasesMetadata, relationName: string): { columns: ColumnDefinition[]; rows: any[] } {
-        const columns: ColumnDefinition[] = [
-            { key: "database", label: "Database", dataType: "string" },
-            { key: "schema", label: "Schema", dataType: "string" },
-            { key: "relation", label: "Relation", dataType: "string" },
-            { key: "index", label: "Index", dataType: "string" },
-            { key: "columns", label: "Columns", dataType: "string" },
-            { key: "description", label: "Description", dataType: "string" },
-        ];
-
-        const rows: any[] = [];
-        const [schemaName, objectName] = MCP.resolveObjectName(metadata, relationName);
-
-        if (!objectName) {
-            return { columns, rows };
-        }
-
-        for (const database of MCP.getConnectedDatabases(metadata)) {
-            for (const schema of Object.values(database.schemas).filter(schema => !schemaName || MCP.nameEquals({ quoted: schemaName.quoted, name: schema.name }, schemaName))) {
-                for (const relation of Object.values(schema.relations)) {
-                    if (MCP.nameEquals({ quoted: objectName.quoted, name: relation.name }, objectName)) {
-                        for (const index of Object.values(relation.indexes || {})) {
-                            rows.push({
-                                database: database.name,
-                                schema: schema.name,
-                                relation: relation.name,
-                                index: index.name,
-                                columns: index.columns.map(col => col.name).join(", "),
-                                description: index.description,
-                            });
-                        }
-                    }
-                }
-            }
-        }
-
-        return { columns, rows };
-    }
-
-    private static getConstraints(metadata: DatabasesMetadata, relationName: string): { columns: ColumnDefinition[]; rows: any[] } {
-        const columns: ColumnDefinition[] = [
-            { key: "database", label: "Database", dataType: "string" },
-            { key: "schema", label: "Schema", dataType: "string" },
-            { key: "relation", label: "Relation", dataType: "string" },
-            { key: "constraint", label: "Constraint", dataType: "string" },
-            { key: "type", label: "Type", dataType: "string" },
-            { key: "expression", label: "Expression", dataType: "string" },
-            { key: "description", label: "Description", dataType: "string" },
-        ];
-
-        const rows: any[] = [];
-        const [schemaName, objectName] = MCP.resolveObjectName(metadata, relationName);
-
-        if (!objectName) {
-            return { columns, rows };
-        }
-
-        for (const database of MCP.getConnectedDatabases(metadata)) {
-            for (const schema of Object.values(database.schemas).filter(schema => !schemaName || MCP.nameEquals({ quoted: schemaName.quoted, name: schema.name }, schemaName))) {
-                for (const relation of Object.values(schema.relations)) {
-                    if (MCP.nameEquals({ quoted: objectName.quoted, name: relation.name }, objectName)) {
-                        for (const constraint of Object.values(relation.constraints || {})) {
-                            rows.push({
-                                database: database.name,
-                                schema: schema.name,
-                                relation: relation.name,
-                                constraint: constraint.name,
-                                type: constraint.type,
-                                expression: constraint.expression,
-                                description: constraint.description,
-                            });
-                        }
-                        if (relation.indexes) {
-                            for (const index of Object.values(relation.indexes).filter(index => index.unique)) {
-                                rows.push({
-                                    database: database.name,
-                                    schema: schema.name,
-                                    relation: relation.name,
-                                    constraint: index.name,
-                                    type: "unique",
-                                    expression: `UNIQUE (${index.columns.map(col => col.name).join(", ")})`,
-                                    description: index.description,
-                                });
-                            }
-                        }
-                        if (relation.primaryKey) {
-                            rows.push({
-                                database: database.name,
-                                schema: schema.name,
-                                relation: relation.name,
-                                constraint: relation.primaryKey.name,
-                                type: "primary key",
-                                expression: `PRIMARY KEY (${relation.primaryKey.columns.join(", ")})`,
-                                description: relation.primaryKey.description,
-                            });
-                        }
-                        if (relation.foreignKeys) {
-                            for (const foreignKey of Object.values(relation.foreignKeys)) {
-                                rows.push({
-                                    database: database.name,
-                                    schema: schema.name,
-                                    relation: relation.name,
-                                    constraint: foreignKey.name,
-                                    type: "foreign key",
-                                    expression: `FOREIGN KEY (${foreignKey.column.join(", ")}) REFERENCES ${foreignKey.referencedTable}(${foreignKey.referencedColumn.join(", ")})`,
-                                    description: foreignKey.description,
-                                });
-                            }
-                        }
-                        for (const column of Object.values(relation.columns).filter(column => !column.nullable)) {
-                            rows.push({
-                                database: database.name,
-                                schema: schema.name,
-                                relation: relation.name,
-                                constraint: undefined,
-                                type: "not null",
-                                expression: `${column.name} IS NOT NULL`,
-                                description: column.description,
-                            });
-                        }
-                    }
-                }
-            }
-        }
-
-        return { columns, rows };
-    }
-
-    private static getForeignKeys(metadata: DatabasesMetadata, relationName: string): { columns: ColumnDefinition[]; rows: any[] } {
-        const columns: ColumnDefinition[] = [
-            { key: "database", label: "Database", dataType: "string" },
-            { key: "schema", label: "Schema", dataType: "string" },
-            { key: "relation", label: "Relation", dataType: "string" },
-            { key: "foreignKey", label: "Foreign Key", dataType: "string" },
-            { key: "referencedTable", label: "Referenced Table", dataType: "string" },
-            { key: "columns", label: "Columns", dataType: "string" },
-            { key: "description", label: "Description", dataType: "string" },
-        ];
-
-        const rows: any[] = [];
-        const [schemaName, objectName] = MCP.resolveObjectName(metadata, relationName);
-
-        if (!objectName) {
-            return { columns, rows };
-        }
-
-        for (const database of MCP.getConnectedDatabases(metadata)) {
-            for (const schema of Object.values(database.schemas).filter(schema => !schemaName || MCP.nameEquals({ quoted: schemaName.quoted, name: schema.name }, schemaName))) {
-                for (const relation of Object.values(schema.relations)) {
-                    if (MCP.nameEquals({ quoted: objectName.quoted, name: relation.name }, objectName)) {
-                        for (const foreignKey of Object.values(relation.foreignKeys || {})) {
-                            rows.push({
-                                database: database.name,
-                                schema: schema.name,
-                                relation: relation.name,
-                                foreignKey: foreignKey.name,
-                                referencedTable: foreignKey.referencedTable,
-                                columns: foreignKey.column,
-                                description: foreignKey.description,
-                            });
-                        }
-                    }
-                }
-            }
-        }
-
-        return { columns, rows };
-    }
-
-    private static getPrimaryKey(metadata: DatabasesMetadata, relationName: string): { columns: ColumnDefinition[]; rows: any[] } {
-        const columns: ColumnDefinition[] = [
-            { key: "database", label: "Database", dataType: "string" },
-            { key: "schema", label: "Schema", dataType: "string" },
-            { key: "relation", label: "Relation", dataType: "string" },
-            { key: "primaryKey", label: "Primary Key", dataType: "string" },
-            { key: "columns", label: "Columns", dataType: "string" },
-            { key: "description", label: "Description", dataType: "string" },
-        ];
-
-        const rows: any[] = [];
-        const [schemaName, objectName] = MCP.resolveObjectName(metadata, relationName);
-
-        if (!objectName) {
-            return { columns, rows };
-        }
-
-        for (const database of MCP.getConnectedDatabases(metadata)) {
-            for (const schema of Object.values(database.schemas).filter(schema => !schemaName || MCP.nameEquals({ quoted: schemaName.quoted, name: schema.name }, schemaName))) {
-                for (const relation of Object.values(schema.relations)) {
-                    if (MCP.nameEquals({ quoted: objectName.quoted, name: relation.name }, objectName)) {
-                        if (relation.primaryKey) {
-                            rows.push({
-                                database: database.name,
-                                schema: schema.name,
-                                relation: relation.name,
-                                primaryKey: relation.primaryKey.name,
-                                columns: relation.primaryKey.columns.join(", "),
-                                description: relation.primaryKey.description,
-                            });
-                        }
-                    }
-                }
-            }
-        }
-
-        return { columns, rows };
-    }
-
-    private static getTypes(metadata: DatabasesMetadata, schemaName?: string): { columns: ColumnDefinition[]; rows: any[] } {
-        const columns: ColumnDefinition[] = [
-            { key: "database", label: "Database", dataType: "string" },
-            { key: "schema", label: "Schema", dataType: "string" },
-            { key: "owner", label: "Owner", dataType: "string" },
-            { key: "kind", label: "Kind", dataType: "string" },
-            { key: "type", label: "Type", dataType: "string" },
-            { key: "description", label: "Description", dataType: "string" },
-        ];
-
-        const rows: any[] = [];
-        const [resolvedSchemaName] = MCP.resolveObjectName(metadata, schemaName);
-
-        for (const database of MCP.getConnectedDatabases(metadata)) {
-            for (const schema of Object.values(database.schemas).filter(schema => !resolvedSchemaName || MCP.nameEquals({ quoted: resolvedSchemaName.quoted, name: schema.name }, resolvedSchemaName))) {
-                for (const type of Object.values(schema.types || {})) {
-                    rows.push({
-                        database: database.name,
-                        schema: schema.name,
-                        owner: type.owner,
-                        kind: type.kind,
-                        type: type.name,
-                        description: type.description,
-                    });
                 }
             }
         }
