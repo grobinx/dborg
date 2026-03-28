@@ -573,9 +573,9 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
                         selectedGroup?.options?.length ? (
                             <Adornment position="end">
                                 <ButtonGroup>
-                                    {selectedGroup.options.map((option) => (
+                                    {selectedGroup.options.map((option, index) => (
                                         <Tooltip
-                                            key={option.id}
+                                            key={option.id ?? index}
                                             title={
                                                 [[
                                                     option.label,
