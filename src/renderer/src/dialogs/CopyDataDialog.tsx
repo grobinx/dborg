@@ -505,8 +505,27 @@ export const CopyDataDialog: React.FC<CopyDataDialogProps> = ({
     const { t } = useTranslation();
     const saved = loadFormatOptions(format);
 
+    const fileFilters = React.useMemo(() => {
+        const filters = Object.keys(formatOptionsMap)
+            .map((format) => ({
+                name: t("{{type}} Files", { type: format.charAt(0).toUpperCase() + format.slice(1) }),
+                extensions: [format],
+            }));
+
+        filters.push({ name: t("all-files", "All Files"), extensions: ["*"] });
+        return filters;
+    }, [t]);
+
+
     const dialogConfig = React.useMemo((): IDialogStandalone => {
-        const items = [...formatOptionsMap[format]];
+        const items: DialogLayoutItemKind[] = [
+            ...formatOptionsMap[format],
+            {
+                type: "boolean",
+                key: "saveToFile",
+                label: t("save-to-file", "Save to file"),
+            }
+        ];
 
         // Dodaj pole edytora podglądu
         items.push({
@@ -520,9 +539,9 @@ export const CopyDataDialog: React.FC<CopyDataDialogProps> = ({
         });
 
         return {
-            title: t("copy-data-as-format", "Copy Data as {{format}}", { format: exportFormats[format].label }),
+            title: (values) => values.saveToFile ? t("save-data-as-format", "Save Data as {{format}}", { format: exportFormats[format].label }) : t("copy-data-as-format", "Copy Data as {{format}}", { format: exportFormats[format].label }),
             items: items,
-            confirmLabel: t("copy", "Copy"),
+            confirmLabel: (values) => values.saveToFile ? t("save", "Save") : t("copy", "Copy"),
             cancelLabel: t("cancel", "Cancel"),
             onOpen: (values) => {
                 // Usuń pole preview z opcji eksportu
@@ -572,12 +591,27 @@ export const CopyDataDialog: React.FC<CopyDataDialogProps> = ({
                     exportOptions.columns = columns;
                 }
 
-                const result = await exportToClipboard(data, format as any, exportOptions);
-                if (showNotification) {
-                    if (result) {
-                        addToast("success", t("data-copied", "Data copied to clipboard in {{format}} format.", { format: exportFormats[format].label }));
-                    } else {
-                        addToast("error", t("data-copy-failed", "Failed to copy data to clipboard."));
+                if (values.saveToFile) {
+                    const result = await window.electron.dialog.showSaveDialog({
+                        title: t("save-file", "Save File"),
+                        filters: fileFilters,
+                    });
+                    if (result.canceled) {
+                        return;
+                    }
+                    await window.dborg.file.writeFile(result.filePath, arrayTo(data, format as any, exportOptions).content ?? "", "utf-8");
+                    if (showNotification) {
+                        addToast("success", t("data-saved", "Data saved to file in {{format}} format.", { format: exportFormats[format].label }));
+                    }
+                }
+                else {
+                    const result = await exportToClipboard(data, format as any, exportOptions);
+                    if (showNotification) {
+                        if (result) {
+                            addToast("success", t("data-copied", "Data copied to clipboard in {{format}} format.", { format: exportFormats[format].label }));
+                        } else {
+                            addToast("error", t("data-copy-failed", "Failed to copy data to clipboard."));
+                        }
                     }
                 }
             },
