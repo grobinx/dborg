@@ -467,9 +467,6 @@ export interface IndexStatsMetadata {
     /** Number of scans on the index, e.g., sequential scans */
     scans?: number | null;
 
-    /** Usage count of the index (number of times the index was used in query plans) */
-    usage?: number | null;
-
     [key: string]: any;
 }
 

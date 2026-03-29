@@ -229,8 +229,10 @@ export class MetadataCollector implements api.IMetadataCollector {
             await this.updateRelationsStats(progress, schemaName, objectName);
             await this.updateRoutines(progress, schemaName, objectName);
             await this.updateColumns(progress, schemaName, objectName);
+            await this.updateColumnsStats(progress, schemaName, objectName);
             await this.updateForeignKeys(progress, schemaName, objectName);
             await this.updateIndexes(progress, schemaName, objectName);
+            await this.updateIndexesStats(progress, schemaName, objectName);
             await this.updatePrimaryKeys(progress, schemaName, objectName);
             await this.updateConstraints(progress, schemaName, objectName);
             await this.updateTypes(progress, schemaName, objectName);
@@ -247,8 +249,10 @@ export class MetadataCollector implements api.IMetadataCollector {
         await this.updateRelationsStats(progress);
         await this.updateRoutines(progress);
         await this.updateColumns(progress);
+        await this.updateColumnsStats(progress);
         await this.updateForeignKeys(progress);
         await this.updateIndexes(progress);
+        await this.updateIndexesStats(progress);
         await this.updatePrimaryKeys(progress);
         await this.updateConstraints(progress);
         await this.updateTypes(progress);
@@ -548,6 +552,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                 deletes: row.deletes != null ? Number(row.deletes) : null,
                 lastAnalyze: row.last_analyze != null ? row.last_analyze : null
             };
+
         }
     }
 
@@ -734,6 +739,49 @@ export class MetadataCollector implements api.IMetadataCollector {
         }
     }
 
+    async updateColumnsStats(progress?: (current: string) => void, schemaName?: string, name?: string): Promise<void> {
+        const database = this.connectedDatabase();
+        if (progress) progress('column statistics' + (schemaName ? (" of " + schemaName) : ""));
+
+        const { rows } = await this.client!.query(
+            `
+    SELECT st.schemaname AS schema_name,
+           st.tablename AS relation_name,
+           st.attname AS column_name,
+           st.null_frac,
+           st.avg_width,
+           st.n_distinct,
+           array_to_json(st.most_common_vals) AS most_common_vals,
+           array_to_json(st.most_common_freqs) AS most_common_freqs,
+           array_to_json(st.histogram_bounds) AS histogram
+    FROM pg_stats st
+    WHERE ($1::text IS NULL OR st.schemaname = $1)
+      AND ($2::text IS NULL OR st.tablename = $2)
+    ORDER BY st.schemaname, st.tablename, st.attname
+    `,
+            [schemaName ?? null, name ?? null]
+        );
+
+        for (const row of rows as any[]) {
+            const schema = database.schemas[row.schema_name];
+            if (!schema) continue;
+            const rel = schema.relations[row.relation_name];
+            if (!rel) continue;
+
+            const col = rel.columns.find(c => c.name === row.column_name);
+            if (!col) continue;
+
+            col.stats = Object.assign(col.stats || {}, {
+                nullFraction: row.null_frac != null ? Number(row.null_frac) : null,
+                avgWidth: row.avg_width != null ? Number(row.avg_width) : null,
+                nDistinct: row.n_distinct != null ? Number(row.n_distinct) : null,
+                mostCommonValues: row.most_common_vals ?? null,
+                mostCommonFreqs: row.most_common_freqs ?? null,
+                histogram: row.histogram ?? null
+            });
+        }
+    }
+
     async updateForeignKeys(progress?: (current: string) => void, schemaName?: string, name?: string): Promise<void> {
         const database = this.connectedDatabase();
 
@@ -857,6 +905,56 @@ export class MetadataCollector implements api.IMetadataCollector {
             if (database.schemas[row.schema_name] !== undefined && database.schemas[row.schema_name].relations[row.relation_name] !== undefined) {
                 database.schemas[row.schema_name].relations[row.relation_name].indexes = row.indexes;
             }
+        }
+    }
+
+    async updateIndexesStats(progress?: (current: string) => void, schemaName?: string, name?: string): Promise<void> {
+        const database = this.connectedDatabase();
+        if (progress) progress('index statistics' + (schemaName ? (" of " + schemaName) : ""));
+
+        const { rows } = await this.client!.query(
+            `
+    SELECT n.nspname AS schema_name,
+           ct.relname AS relation_name,
+           ci.relname AS index_name,
+           ix.indexrelid AS index_oid,
+           pg_relation_size(ix.indexrelid) AS size,
+           (pg_relation_size(ix.indexrelid) / current_setting('block_size')::bigint) AS pages,
+           NULLIF(ci.reltuples, -1)::bigint AS rows,
+           (COALESCE(st.idx_blks_read,0) * current_setting('block_size')::bigint) AS reads,
+           (COALESCE(st.idx_blks_hit,0) * current_setting('block_size')::bigint) AS hits,
+           COALESCE(si.idx_scan,0) AS scans
+    FROM pg_index ix
+    JOIN pg_class ci ON ci.oid = ix.indexrelid
+    JOIN pg_class ct ON ct.oid = ix.indrelid
+    JOIN pg_namespace n ON ct.relnamespace = n.oid
+    LEFT JOIN pg_stat_all_indexes si ON si.indexrelid = ix.indexrelid
+    LEFT JOIN pg_statio_all_indexes st ON st.indexrelid = ix.indexrelid
+    WHERE n.nspname NOT ILIKE 'pg_toast%' AND n.nspname NOT ILIKE 'pg_temp%'
+      AND ($1::text IS NULL OR n.nspname = $1)
+      AND ($2::text IS NULL OR ct.relname = $2)
+    ORDER BY schema_name, relation_name, index_name
+    `,
+            [schemaName ?? null, name ?? null]
+        );
+
+        for (const row of rows as any[]) {
+            const schema = database.schemas[row.schema_name];
+            if (!schema) continue;
+            const rel = schema.relations[row.relation_name];
+            if (!rel || !rel.indexes) continue;
+
+            const idx = rel.indexes.find(i => String(i.id) === String(row.index_oid) || i.name === row.index_name);
+            if (!idx) continue;
+
+            idx.stats = Object.assign(idx.stats || {}, {
+                rows: row.rows != null ? Number(row.rows) : null,
+                size: row.size != null ? Number(row.size) : null, 
+                pages: row.pages != null ? Number(row.pages) : null,
+                reads: row.reads != null ? Number(row.reads) : null,
+                hits: row.hits != null ? Number(row.hits) : null,
+                scans: row.scans != null ? Number(row.scans) : null,
+            });
         }
     }
 
