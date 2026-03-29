@@ -3,37 +3,6 @@ import { Definition, Interpreter } from "@renderer/utils/SqlParser/interpreter";
 import { Tokenizer } from "@renderer/utils/SqlParser/tokenizer";
 import { DatabasesMetadata, DatabaseMetadata, RelationType, RoutineType } from "src/api/db/Metadata";
 
-/**
- * Polecenia
- * /databases | /d - wyświetla bazy danych
- * /schemas | /s - wyświetla schematy w aktywnej bazie danych
- * /relations | /r - wyświetla relacje w domyślnych schematach w aktywnej bazie danych
- * /relations | /r <schema> - wyświetla relacje w konkretnym schemacie
- * /tables | /t - wyświetla tabele w domyślnych schematach w aktywnej bazie danych
- * /tables | /t <schema> - wyświetla tabele w konkretnym schemacie
- * /views | /v - wyświetla widoki w domyślnych schematach w aktywnej bazie danych
- * /views | /v <schema> - wyświetla widoki w konkretnym schemacie
- * /routines | /r - wyświetla procedury i funkcje w domyślnych schematach w aktywnej bazie danych
- * /routines | /r <schema> - wyświetla procedury i funkcje w konkretnym schemacie
- * /arguments | /a [<schema>.]<routine> - wyświetla argumenty procedury lub funkcji
- * /functions | /f - wyświetla funkcje w domyślnych schematach w aktywnej bazie danych
- * /functions | /f <schema> - wyświetla funkcje w konkretnym schemacie
- * /procedures | /p - wyświetla procedury w domyślnych schematach w aktywnej bazie danych
- * /procedures | /p <schema> - wyświetla procedury w konkretnym schemacie
- * /columns | /c [<schema>.]<relation> - wyświetla kolumny w tabeli
- * /indexes | /i [<schema>.]<relation> - wyświetla indeksy w tabeli
- * /constraints | /co [<schema>.]<relation> - wyświetla ograniczenia w tabeli
- * /foreign keys [<schema>.]<relation> - wyświetla klucze obce w tabeli
- * /primary key [<schema>.]<relation> - wyświetla klucze główne w tabeli
- * /types | /ty - wyświetla typy danych w aktywnej bazie danych
- * /types | /ty <schema> - wyświetla typy danych w konkretnym schemacie
- * <table> - wyświetla kolumny w tabeli
- * <schema> - wyświetla relacje w schemacie
- * <schema>.<table> - wyświetla kolumny w tabeli
- * <routine> - wyświetla argumenty procedury lub funkcji
- * <schema>.<routine> - wyświetla argumenty procedury lub funkcji
- */
-
 export type ObjectType = "relation" | "routine" | "schema" | null;
 
 export interface ObjectName {
@@ -47,7 +16,7 @@ export interface GridResult {
     rows: any[]
 }
 
-export class MetadataCommandProcessor {
+export class CommandProcessor {
     private static createDefinition(metadata: DatabasesMetadata): Definition<GridResult> {
         const definition: Definition<GridResult> = {
             name: "orbada_editor_commands",
@@ -530,4 +499,4 @@ export class MetadataCommandProcessor {
 
 }
 
-const MCP = MetadataCommandProcessor;
+const MCP = CommandProcessor;

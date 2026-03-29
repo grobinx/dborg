@@ -21,7 +21,7 @@ import { DatabaseMetadata } from "src/api/db";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { getFragmentAroundCursor, getNextNeighbor, getPrevNeighbor, getStringTypeAroundCursor, resolveWordAlias } from "@renderer/components/editor/editorUtils";
 import { AstComponent, SqlAnalyzer, SqlAstBuilder, SqlTokenizer, Token } from "sql-taaf";
-import { MetadataCommandProcessor } from "./MetadataCommandProcessor";
+import { CommandProcessor } from "./MetadataCommandProcessor";
 import { useTabs } from "@renderer/components/TabsPanel/useTabs";
 import { SQL_RESULT_FOCUS } from "./SqlResultPanel";
 import Tooltip from "@renderer/components/Tooltip";
@@ -317,7 +317,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
             } | null = null;
 
             if (session.metadata) {
-                result = MetadataCommandProcessor.processCommand(query, session.metadata);
+                result = CommandProcessor.processCommand(query, session.metadata);
                 if (result) {
                     queueMessage(SQL_EDITOR_SHOW_STRUCTURE, {
                         to: session.info.uniqueId,
