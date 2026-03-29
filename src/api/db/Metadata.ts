@@ -19,19 +19,19 @@ export interface DatabaseMetadata {
     name: string;
 
     /** Unique object identity */
-    identity?: string;
+    identity?: string | null;
 
     /** Description of the database */
-    description?: string;
+    description?: string | null;
 
     /** Owner of the database */
-    owner?: string;
+    owner?: string | null;
 
     /** To this database are you connected */
-    connected?: boolean;
+    connected?: boolean | null;
 
     /** Whether the database is the template database */
-    template?: boolean;
+    template?: boolean | null;
 
     /** Permissions assigned to the database */
     permissions?: DatabasePermissions;
@@ -55,10 +55,10 @@ export interface DatabaseMetadata {
 /** List of permissions? assigned to the schema */
 export type SchemaPermissions = {
     /** User have permission for create object */
-    create: boolean;
+    create?: boolean | null;
 
     /** User have permission for usage */
-    usage: boolean;
+    usage?: boolean | null;
 }
 
 /** Structure describing a schema */
@@ -67,22 +67,22 @@ export interface SchemaMetadata {
     id: string;
 
     /** Whether the schema is the default schema for logged user, can be more than one */
-    default?: boolean;
+    default?: boolean | null;
 
     /** is database catalog schema */
-    catalog?: boolean;
+    catalog?: boolean | null;
 
     /** Schema name */
     name: string;
 
     /** Unique object identity */
-    identity?: string;
+    identity?: string | null;
 
     /** Description of the schema */
-    description?: string;
+    description?: string | null;
 
     /** Owner of the schema */
-    owner?: string;
+    owner?: string | null;
 
     /** Permissions assigned to the schema */
     permissions?: SchemaPermissions;
@@ -120,13 +120,13 @@ export interface PackageMetadata {
     name: string;
 
     /** Unique object identity */
-    identity?: string;
+    identity?: string | null;
 
     /** Description of the package */
-    description?: string;
+    description?: string | null;
 
     /** Owner of the package */
-    owner?: string;
+    owner?: string | null;
 
     /** Permissions assigned to the package */
     permissions?: RoutinePermissions;
@@ -153,7 +153,7 @@ export interface RoutineMetadata {
     name: string;
 
     /** Unique object identity */
-    identity?: string;
+    identity?: string | null;
 
     /** Routine type */
     type: RoutineType;
@@ -162,10 +162,10 @@ export interface RoutineMetadata {
     kind?: RoutineKind;
 
     /** Description of the function */
-    description?: string;
+    description?: string | null;
 
     /** Owner of the function */
-    owner?: string;
+    owner?: string | null;
 
     /** Permissions assigned to the function */
     permissions?: RoutinePermissions;
@@ -177,7 +177,7 @@ export interface RoutineMetadata {
     arguments: RoutineArgumentMetadata[];
 
     /** List of identifiers for the routine code */
-    identifiers?: string[];
+    identifiers?: string[] | null;
 
     /** Custom data */
     data?: Record<string, any>;
@@ -194,19 +194,19 @@ export interface RoutineArgumentMetadata {
     no: number;
 
     /** Argument name */
-    name?: string;
+    name?: string | null;
 
     /** Description of the argument */
-    description?: string;
+    description?: string | null;
 
     /** Data type of the argument */
     dataType: string;
 
     /** Default value of the argument */
-    defaultValue?: string;
+    defaultValue?: string | null;
 
     /** Argument mode */
-    mode?: RoutineArgumentMode;
+    mode?: RoutineArgumentMode | null;
 
     /** Custom data */
     data?: Record<string, any>;
@@ -218,42 +218,53 @@ export type RelationKind = "regular" | "foreign" | "partitioned" | "temporary" |
 /** Structure describing permissions? */
 export interface RelationPermissions {
     /** User have permission for select */
-    select: boolean;
+    select?: boolean | null;
 
     /** User have permission for update */
-    update: boolean;
+    update?: boolean | null;
 
     /** User have permission for insert */
-    insert: boolean;
+    insert?: boolean | null;
 
     /** List of users or roles with delete access */
-    delete: boolean;
+    delete?: boolean | null;
 }
 
 export interface RelationStatsMetadata {
-    /** Number of rows in the relation */
-    rows: number;
-
     /** Size of the relation (bytes) */
-    size: string;
+    size?: number | null;
+
+    /** Number of pages in the relation */
+    pages?: number | null;
+
+    /** Number of rows in the relation */
+    rows?: number | null;
+
+    /** Average row length (bytes) */
+    avgRowLength?: number | null;
 
     /** Bytes reads from the relation */
-    reads: number;
+    reads?: number | null;
 
     /** Bytes writes to the relation */
-    writes: number;
+    writes?: number | null;
 
     /** Number of scans on the relation, e.g., sequential scans */
-    scans: number;
+    scans?: number | null;
 
     /** Number of inserts on the relation */
-    inserts: number;
+    inserts?: number | null;
     
     /** Number of updates on the relation */
-    updates: number;
+    updates?: number | null;
     
     /** Number of deletes on the relation */
-    deletes: number;
+    deletes?: number | null;
+
+    /** Timestamp of the last analyze operation (ISO 8601 format) */
+    lastAnalyze?: string | null;
+
+    [key: string]: any;
 }
 
 /** Structure describing a table */
@@ -265,19 +276,19 @@ export interface RelationMetadata {
     name: string;
 
     /** Unique object identity */
-    identity?: string;
+    identity?: string | null;
 
     /** Type of the relation */
-    type?: RelationType;
+    type: RelationType;
 
     /** Kind of the relation */
-    kind?: RelationKind;
+    kind?: RelationKind | null;
 
     /** Description of the relation */
-    description?: string;
+    description?: string | null;
 
     /** Owner of the relation */
-    owner?: string;
+    owner?: string | null;
 
     /** Permissions assigned to the relation */
     permissions?: RelationPermissions;
@@ -298,21 +309,43 @@ export interface RelationMetadata {
     indexes?: IndexMetadata[];
 
     /** Stats of the relation */
-    stats?: Partial<RelationStatsMetadata>;
+    stats?: RelationStatsMetadata;
 
     /** Custom data */
     data?: Record<string, any>;
 
     /** List of identifiers (for views) */
-    identifiers?: string[];
+    identifiers?: string[] | null;
 }
 
 export type ColumnPermissions = {
     /** User have permission for select */
-    select: boolean;
+    select?: boolean | null;
 
     /** User have permission for update */
-    update: boolean;
+    update?: boolean | null;
+}
+
+export type ColumnStatsMetadata = {
+    /** Fraction of NULL values in the column */
+    nullFraction?: number | null;
+
+    /** Average width of the column (bytes) */
+    avgWidth?: number | null;
+
+    /** Number of distinct values in the column */
+    nDistinct?: number | null;
+
+    /** Most common values in the column */
+    mostCommonValues?: any[] | null;
+
+    /** Frequencies of the most common values */
+    mostCommonFreqs?: number[] | null;
+
+    /** Histogram of the column values */
+    histogram?: any[] | null;
+
+    [key: string]: any;
 }
 
 /** Structure describing a column */
@@ -327,34 +360,36 @@ export interface ColumnMetadata {
     name: string;
 
     /** Unique object identity */
-    identity?: string;
+    identity?: string | null;
 
     /** Description of the column */
-    description?: string;
+    description?: string | null;
 
     /** Data type (e.g., VARCHAR, INT) */
     dataType: string;
 
     /** Full data type (e.g., VARCHAR(255), NUMERIC(10, 2)) */
-    displayType?: string;
+    displayType?: string | null;
 
     /** Permissions assigned to the column */
     permissions?: ColumnPermissions;
 
     /** Whether the column can be NULL */
-    nullable: boolean;
+    nullable?: boolean | null;
 
     /** Default value of the column */
-    defaultValue?: string;
+    defaultValue?: string | null;
 
     /** Whether the column is part of the primary key */
-    primaryKey?: boolean;
+    primaryKey?: boolean | null;
 
     /** Whether the column is part of a foreign key */
-    foreignKey?: boolean;
+    foreignKey?: boolean | null;
 
     /** Whether the column has a unique index */
-    unique?: boolean;
+    unique?: boolean | null;
+
+    stats?: ColumnStatsMetadata;
 
     /** Custom data */
     data?: Record<string, any>;
@@ -371,13 +406,13 @@ export interface ForeignKeyMetadata {
     name: string;
 
     /** Unique object identity */
-    identity?: string;
+    identity?: string | null;
 
     /** Column name in the relation */
     column: string[];
 
     /** Description of the foreign key */
-    description?: string;
+    description?: string | null;
 
     /** Name of the referenced schema */
     referencedSchema: string;
@@ -407,30 +442,35 @@ export interface IndexColumnMetadata {
     name: string;
 
     /** Unique object identity */
-    identity?: string;
+    identity?: string | null;
 
     /** Sort order (e.g., ASC, DESC) */
-    order?: SortOrder;
+    order?: SortOrder | null;
 
     /** Position of nulls in the sort order (e.g., FIRST, LAST) */
-    nulls?: NullsPosition;
+    nulls?: NullsPosition | null;
 }
 
 export interface IndexStatsMetadata {
     /** Number of rows in the index */
-    rows: number;
+    rows?: number | null;
 
     /** Size of the index (bytes) */
-    size: string;
+    size?: string | null;
 
     /** Bytes reads from the index */
-    reads: number;
+    reads?: number | null;
 
     /** Bytes writes to the index */
-    writes: number;
+    writes?: number | null;
 
     /** Number of scans on the index, e.g., sequential scans */
-    scans: number;
+    scans?: number | null;
+
+    /** Usage count of the index (number of times the index was used in query plans) */
+    usage?: number | null;
+
+    [key: string]: any;
 }
 
 /** Structure describing an index */
@@ -442,10 +482,10 @@ export interface IndexMetadata {
     name: string;
 
     /** Unique object identity */
-    identity?: string;
+    identity?: string | null;
 
     /** Description of the index */
-    description?: string;
+    description?: string | null;
 
     /** List of columns in the index */
     columns: IndexColumnMetadata[];
@@ -454,10 +494,10 @@ export interface IndexMetadata {
     unique: boolean;
 
     /** Whether the index is a primary key */
-    primary?: boolean;
+    primary?: boolean | null;
 
     /** Stats of the index */
-    stats?: Partial<IndexStatsMetadata>;
+    stats?: IndexStatsMetadata;
 
     /** Custom data */
     data?: Record<string, any>;
@@ -471,13 +511,13 @@ export interface PrimaryKeyMetadata {
     name: string;
 
     /** Unique object identity */
-    identity?: string;
+    identity?: string | null;
 
     /** List of columns in the primary key */
     columns: string[];
 
     /** Description of the primary key */
-    description?: string;
+    description?: string | null;
 
     /** Custom data */
     data?: Record<string, any>;
@@ -493,16 +533,16 @@ export interface ConstraintMetadata {
     name: string;
 
     /** Unique object identity */
-    identity?: string;
+    identity?: string | null;
 
     /** Description of the constraint */
-    description?: string;
+    description?: string | null;
 
     /** Type of the constraint (e.g., CHECK, UNIQUE) */
     type: ConstraintType;
 
     /** Expression defining the constraint */
-    expression?: string;
+    expression?: string | null;
 
     /** Custom data */
     data?: Record<string, any>;
@@ -511,13 +551,13 @@ export interface ConstraintMetadata {
 /** Structure describing permissions? for the sequence */
 export type SequencePermissions = {
     /** User have permission for select current value */
-    select: boolean;
+    select?: boolean | null;
 
     /** User have permission for usage */
-    usage: boolean;
+    usage?: boolean | null;
 
     /** User have permission for update next value */
-    update: boolean;
+    update?: boolean | null;
 }
 
 /** Structure describing a sequence */
@@ -529,34 +569,34 @@ export interface SequenceMetadata {
     name: string;
 
     /** Unique object identity */
-    identity?: string;
+    identity?: string | null;
 
     /** Description of the sequence */
-    description?: string;
+    description?: string | null;
 
     /** Owner of the sequence */
-    owner?: string;
+    owner?: string | null;
 
     /** Permissions assigned to the sequence */
     permissions?: SequencePermissions;
 
     /** Increment value */
-    increment?: number;
+    increment?: number | null;
 
     /** Minimum value */
-    min?: number;
+    min?: number | null;
 
     /** Maximum value */
-    max?: number;
+    max?: number | null;
 
     /** Starting value */
-    start?: number;
+    start?: number | null;
 
     /** Cache size */
-    cache?: number;
+    cache?: number | null;
 
     /** Whether the sequence is cyclic */
-    cycled?: boolean;
+    cycled?: boolean | null;
 
     /** Custom data */
     data?: Record<string, any>;
@@ -567,7 +607,7 @@ export type TypeKind = "enum" | "composite" | "base" | "domain" | "range" | "pse
 /** Structure describing permissions? for the type */
 export type TypePermissions = {
     /** User have permission for usage type */
-    usage: boolean;
+    usage?: boolean | null;
 }
 
 /** Structure describing a user-defined type */
@@ -579,13 +619,13 @@ export interface TypeMetadata {
     name: string;
 
     /** Unique object identity */
-    identity?: string;
+    identity?: string | null;
 
     /** Description of the type */
-    description?: string;
+    description?: string | null;
 
     /** Owner of the type */
-    owner?: string;
+    owner?: string | null;
 
     /** Permissions assigned to the type */
     permissions?: TypePermissions;
@@ -600,7 +640,7 @@ export interface TypeMetadata {
     attributes?: ColumnMetadata[];
 
     /** Custom data */
-    data?: Record<string, any>;
+    data?: Record<string, any> | null;
 }
 
 export interface IMetadataCollector {

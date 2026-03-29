@@ -8,6 +8,7 @@ import { Readable } from 'stream';
 import { pipeline } from 'stream/promises';
 import zlib from 'zlib';
 import { version } from '../../../../src/api/consts';
+import { DateTime } from 'luxon';
 
 const METADATA_ARCHIVE_FORMAT = 'dborg-metadata-ndjson-v1';
 const NOT_ARCHIVE_ERROR = '__NOT_DBORG_METADATA_ARCHIVE__';
@@ -222,11 +223,10 @@ export class MetadataCollector implements api.IMetadataCollector {
     }
 
     async updateObject(progress?: (current: string) => void, schemaName?: string, objectName?: string): Promise<void> {
-        if (schemaName) {
+        if (schemaName && objectName) {
             await this.updateSchemas(progress, schemaName);
-        }
-        if (objectName) {
             await this.updateRelations(progress, schemaName, objectName);
+            await this.updateRelationsStats(progress, schemaName, objectName);
             await this.updateRoutines(progress, schemaName, objectName);
             await this.updateColumns(progress, schemaName, objectName);
             await this.updateForeignKeys(progress, schemaName, objectName);
@@ -244,6 +244,7 @@ export class MetadataCollector implements api.IMetadataCollector {
         await this.updateDatabases(progress);
         await this.updateSchemas(progress);
         await this.updateRelations(progress);
+        await this.updateRelationsStats(progress);
         await this.updateRoutines(progress);
         await this.updateColumns(progress);
         await this.updateForeignKeys(progress);
@@ -383,7 +384,7 @@ export class MetadataCollector implements api.IMetadataCollector {
         const database = this.connectedDatabase();
 
         if (progress) {
-            progress("tables" + (schemaName ? (" of " + schemaName) : ""));
+            progress("relations" + (schemaName ? (" of " + schemaName) : ""));
         }
         const { rows } = await this.client!.query(
             `with kw as (
@@ -482,6 +483,71 @@ export class MetadataCollector implements api.IMetadataCollector {
 
         if (!name && schema) {
             this.removeUnused(schema.relations, exists);
+        }
+    }
+
+    async updateRelationsStats(progress?: (current: string) => void, schemaName?: string, name?: string): Promise<void> {
+        const database = this.connectedDatabase();
+
+        if (progress) {
+            progress('relation statistics' + (schemaName ? (" of " + schemaName) : ""));
+        }
+
+        const { rows } = await this.client!.query<api.RelationStatsMetadata>(
+            `
+    SELECT n.nspname AS schema_name,
+           c.relname AS relation_name,
+           pg_total_relation_size(c.oid) AS size,
+           (pg_relation_size(c.oid) / current_setting('block_size')::bigint) AS pages,
+           COALESCE(s.n_live_tup, c.reltuples::bigint) AS rows,
+           CASE WHEN COALESCE(s.n_live_tup, c.reltuples::bigint) > 0
+                THEN (pg_total_relation_size(c.oid)::float / GREATEST(COALESCE(s.n_live_tup, c.reltuples::bigint),1))
+           END AS avg_row_length,
+           (COALESCE(st.heap_blks_read,0) * current_setting('block_size')::bigint) AS reads,
+           ((COALESCE(s.n_tup_ins,0) + COALESCE(s.n_tup_upd,0) + COALESCE(s.n_tup_del,0)) *
+            CASE WHEN COALESCE(s.n_live_tup, c.reltuples::bigint) > 0
+                 THEN (pg_total_relation_size(c.oid)::float / GREATEST(COALESCE(s.n_live_tup, c.reltuples::bigint),1))
+                 ELSE 0 END)::bigint AS writes,
+           (COALESCE(s.seq_scan,0) + COALESCE(s.idx_scan,0)) AS scans,
+           COALESCE(s.n_tup_ins,0) AS inserts,
+           COALESCE(s.n_tup_upd,0) AS updates,
+           COALESCE(s.n_tup_del,0) AS deletes,
+           s.last_analyze
+    FROM pg_class c
+    JOIN pg_namespace n ON c.relnamespace = n.oid
+    LEFT JOIN pg_stat_all_tables s ON s.relid = c.oid
+    LEFT JOIN pg_statio_all_tables st ON st.relid = c.oid
+    WHERE c.relkind IN ('r','f','p','t','v','m')
+      AND n.nspname NOT ILIKE 'pg_toast%' AND n.nspname NOT ILIKE 'pg_temp%'
+      AND ($1::text IS NULL OR n.nspname = $1)
+      AND ($2::text IS NULL OR c.relname = $2)
+    ORDER BY schema_name, relation_name
+    `,
+            [schemaName ?? null, name ?? null]
+        );
+
+        for (const row of rows) {
+            const schema = database.schemas[row["schema_name"]];
+            if (!schema) continue;
+            const rel = schema.relations[row["relation_name"]];
+            if (!rel) continue;
+
+            delete row["schema_name"];
+            delete row["relation_name"];
+
+            rel.stats = {
+                size: row.size != null ? Number(row.size) : null,
+                pages: row.pages != null ? Number(row.pages) : null,
+                rows: row.rows != null ? Number(row.rows) : null,
+                avgRowLength: row.avg_row_length != null ? Number(row.avg_row_length) : null,
+                reads: row.reads != null ? Number(row.reads) : null,
+                writes: row.writes != null ? Number(row.writes) : null,
+                scans: row.scans != null ? Number(row.scans) : null,
+                inserts: row.inserts != null ? Number(row.inserts) : null,
+                updates: row.updates != null ? Number(row.updates) : null,
+                deletes: row.deletes != null ? Number(row.deletes) : null,
+                lastAnalyze: row.last_analyze != null ? row.last_analyze : null
+            };
         }
     }
 

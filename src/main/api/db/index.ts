@@ -22,6 +22,7 @@ const EVENT_CONNECTION_QUERY = "dborg:database:connection:query";
 const EVENT_CONNECTION_OPEN = "dborg:database:connection:open";
 const EVENT_CONNECTION_EXECUTE = "dborg:database:connection:execute";
 const EVENT_CONNECTION_GET_METADATA = "dborg:database:connection:getMetadata";
+const EVENT_CONNECTION_UPDATE_METADATA = "dborg:database:connection:updateMetadata";
 const EVENT_CONNECTION_GET_METADATA_PROGRESS = "dborg:database:connection:getMetadata:progress";
 const EVENT_CONNECTION_CANCEL = "dborg:database:connection:cancel";
 
@@ -196,6 +197,20 @@ export function init(): void {
         }
     );
     ipcMain.handle(
+        EVENT_CONNECTION_UPDATE_METADATA,
+        async (event: IpcMainInvokeEvent, uniqueId: string, schemaName?: string, objectName?: string): Promise<InvokeResult> => {
+            return handleResult(async () => {
+                const foundConnection = driver.Driver.getConnection(uniqueId);
+                if (!foundConnection) {
+                    throw ConnectionError(uniqueId);
+                }
+                return await foundConnection.updateObject((current: string) => {
+                    event.sender.send(EVENT_CONNECTION_GET_METADATA_PROGRESS, uniqueId, current);
+                }, schemaName, objectName);
+            })
+        }
+    );
+    ipcMain.handle(
         EVENT_CONNECTION_CANCEL,
         async (_: IpcMainInvokeEvent, uniqueId: string): Promise<InvokeResult> => {
             return handleResult(async () => {
@@ -329,6 +344,23 @@ export const preload = {
 
             try {
                 return await invokeResult(ipcRenderer.invoke(EVENT_CONNECTION_GET_METADATA, uniqueId, force));
+            }
+            finally {
+                ipcRenderer.removeListener(EVENT_CONNECTION_GET_METADATA_PROGRESS, listener);
+            };
+        },
+        updateObject: async (uniqueId: string, progress?: (current: string) => void, schemaName?: string, objectName?: string): Promise<void> => {
+            const listener = (_event: IpcRendererEvent, eUniqueId: string, current: string): void => {
+                if (eUniqueId !== uniqueId) {
+                    return;
+                }
+                if (progress) {
+                    progress(current);
+                }
+            };
+            ipcRenderer.on(EVENT_CONNECTION_GET_METADATA_PROGRESS, listener);
+            try {
+                return await invokeResult(ipcRenderer.invoke(EVENT_CONNECTION_UPDATE_METADATA, uniqueId, schemaName, objectName));
             }
             finally {
                 ipcRenderer.removeListener(EVENT_CONNECTION_GET_METADATA_PROGRESS, listener);

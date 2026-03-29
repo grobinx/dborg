@@ -108,7 +108,7 @@ declare global {
                         cancel: (connectionId: string, uniqueId: string) => Promise<void>,
                     },
                     getMetadata: (uniqueId: string, progress?: (current: string) => void, force?: boolean) => Promise<DatabasesMetadata>,
-                    //updateObject: (uniqueId: string, progress?: (current: string) => void, schemaName?: string, objectName?: string) => Promise<void>,
+                    updateObject: (uniqueId: string, progress?: (current: string) => void, schemaName?: string, objectName?: string) => Promise<void>,
                 },
                 internal: {
                     query: <R extends api.QueryResultRow = api.QueryResultRow>(sql: string, values?: unknown[]) => Promise<QueryResult<R>>,
