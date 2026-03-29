@@ -21,7 +21,7 @@ import { DatabaseMetadata } from "src/api/db";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { getFragmentAroundCursor, getNextNeighbor, getPrevNeighbor, getStringTypeAroundCursor, resolveWordAlias } from "@renderer/components/editor/editorUtils";
 import { AstComponent, SqlAnalyzer, SqlAstBuilder, SqlTokenizer, Token } from "sql-taaf";
-import { CommandProcessor } from "./MetadataCommandProcessor";
+import { CommandProcessor } from "./CommandProcessor";
 import { useTabs } from "@renderer/components/TabsPanel/useTabs";
 import { SQL_RESULT_FOCUS } from "./SqlResultPanel";
 import Tooltip from "@renderer/components/Tooltip";

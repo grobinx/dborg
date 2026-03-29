@@ -13,7 +13,7 @@ import { isIdentifier, isKeyword, isPunctuator, isToken, Tokenizer, type Token, 
  *
  */
 
-export type BlockType = "root" | "statement" | "expression" | "cte" | "set_operator";
+export type BlockType = "root" | "statement" | "expression" | "cte" | "set" | "clause" | "column" | "source";
 
 export type StatementKind = "dml" | "ddl" | "dcl" | "dql" | "tcl" | "utility";
 
@@ -28,6 +28,8 @@ export type DclStatementType = "GRANT" | "REVOKE";
 export type TclStatementType = "COMMIT" | "ROLLBACK" | "SAVEPOINT" | "SET TRANSACTION";
 
 export type UtilityStatementType = "EXPLAIN" | "ANALYZE" | "VACUUM" | "CLUSTER" | "CHECKPOINT" | "DISCARD" | "LOAD" | "RESET" | "REINDEX" | "USE" | "SHOW" | "DESCRIBE" | "HELP";
+
+export type ClauseType = "SELECT" | "FROM" | "WHERE" | "GROUP BY" | "HAVING" | "ORDER BY" | "VALUES" | "SET" | "RETURNING";
 
 export const StatementKindByType: Record<StatementType, StatementKind> = {
     SELECT: "dql",
@@ -73,8 +75,6 @@ export type StatementType =
     | DclStatementType
     | TclStatementType
     | UtilityStatementType;
-
-export type ExpressionType = "single" | "array" | "statement";
 
 export type SetOperator =
     | "UNION"
@@ -123,8 +123,8 @@ export interface CteBlock extends BlockBase {
     columns: BlockItem[] | null;
 }
 
-export interface SetOperatorBlock extends BlockBase {
-    block: "set_operator";
+export interface SetBlock extends BlockBase {
+    block: "set";
     operator: SetOperator | null;
 }
 
@@ -152,6 +152,57 @@ export interface ValuesStatement extends StatementBlock {
     type: "VALUES";
 }
 
+export interface ClauseBlock extends BlockBase {
+    block: "clause";
+    clause: ClauseType;
+}
+
+export interface SelectClause extends ClauseBlock {
+    clause: "SELECT";
+}
+
+export interface FromClause extends ClauseBlock {
+    clause: "FROM";
+}
+
+export interface WhereClause extends ClauseBlock {
+    clause: "WHERE";
+}
+
+export interface GroupByClause extends ClauseBlock {
+    clause: "GROUP BY";
+}
+
+export interface HavingClause extends ClauseBlock {
+    clause: "HAVING";
+}
+
+export interface OrderByClause extends ClauseBlock {
+    clause: "ORDER BY";
+}
+
+export interface ValuesClause extends ClauseBlock {
+    clause: "VALUES";
+}
+
+export interface SetClause extends ClauseBlock {
+    clause: "SET";
+}
+
+export interface ReturningClause extends ClauseBlock {
+    clause: "RETURNING";
+}
+
+export interface ColumnBlock extends BlockBase {
+    block: "column";
+    alias: Token | null;
+}
+
+export interface SourceBlock extends BlockBase {
+    block: "source";
+    alias: Token | null;
+}
+
 export type Statement =
     | StatementBlock
     | SelectStatement
@@ -161,12 +212,26 @@ export type Statement =
     | MergeStatement
     | ValuesStatement;
 
+export type Clause =
+    | SelectClause
+    | FromClause
+    | WhereClause
+    | GroupByClause
+    | HavingClause
+    | OrderByClause
+    | ValuesClause
+    | SetClause
+    | ReturningClause;
+
 export type BlockNode =
     | RootBlock
     | Statement
+    | ClauseBlock
     | ExpressionBlock
     | CteBlock
-    | SetOperatorBlock;
+    | SetBlock
+    | ColumnBlock
+    | SourceBlock;
 
 export type BlockItem = BlockNode | Token;
 
@@ -266,9 +331,9 @@ export class Scoper {
 
         item = statement.items[pos];
         if (isKeyword(item, "SELECT")) {
-            const setOperators: SetOperatorBlock = {
+            const setBlock: SetBlock = {
                 class: "block",
-                block: "set_operator",
+                block: "set",
                 open: this.findFirstToken(item),
                 close: null,
                 items: [],
@@ -277,16 +342,16 @@ export class Scoper {
 
             while (pos < statement.items.length) {
                 item = statement.items[pos];
-                setOperators.items!.push(item);
+                setBlock.items!.push(item);
                 pos++;
             }
 
-            if (setOperators.items && setOperators.items.length > 0) {
-                const lastItem = setOperators.items[setOperators.items.length - 1];
-                setOperators.close = this.findLastToken(lastItem);
+            if (setBlock.items && setBlock.items.length > 0) {
+                const lastItem = setBlock.items[setBlock.items.length - 1];
+                setBlock.close = this.findLastToken(lastItem);
             }
 
-            items.push(setOperators);
+            items.push(setBlock);
         } else {
             items.push(...statement.items);
         }
