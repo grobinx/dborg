@@ -1,6 +1,28 @@
 /** Structure describing multiple databases */
 export type DatabasesMetadata = Record<string, DatabaseMetadata>;
 
+export interface MetadataBase {
+    /** Unique identifier of the object */
+    id: string;
+    /** Object name */
+    name: string;
+    /** Unique object identity */
+    identity?: string | null;
+    /** Description of the object */
+    description?: string | null;
+    /** Custom data */
+    data?: Record<string, any>;
+}
+
+export interface OwnedMetadataBase extends MetadataBase {
+    /** Owner of the object */
+    owner?: string | null;
+    /** Creation timestamp */
+    created?: string | null;
+    /** Last modification timestamp */
+    modified?: string | null;
+}
+
 /** List of permissions? assigned to the database */
 export type DatabasePermissions = {
     /** User have permission for connect */
@@ -11,22 +33,7 @@ export type DatabasePermissions = {
 };
 
 /** Main structure describing the database */
-export interface DatabaseMetadata {
-    /** Unique identifier of the object */
-    id: string;
-
-    /** Database name */
-    name: string;
-
-    /** Unique object identity */
-    identity?: string | null;
-
-    /** Description of the database */
-    description?: string | null;
-
-    /** Owner of the database */
-    owner?: string | null;
-
+export interface DatabaseMetadata extends OwnedMetadataBase {
     /** To this database are you connected */
     connected?: boolean | null;
 
@@ -40,16 +47,13 @@ export interface DatabaseMetadata {
     schemas: Record<string, SchemaMetadata>;
 
     /** List of built-in tables in the database */
-    builtInRelations?: Record<string, Partial<RelationMetadata>>;
+    builtInRelations?: Record<string, RelationMetadata>;
 
     /** List of built-in types in the database */
-    builtInTypes?: Record<string, Partial<TypeMetadata>>;
+    builtInTypes?: Record<string, TypeMetadata>;
 
     /** List of built-in routines in the database */
-    builtInRoutines?: Record<string, Partial<RoutineMetadata>>;
-
-    /** Custom data */
-    data?: Record<string, any>;
+    builtInRoutines?: Record<string, RoutineMetadata>;
 }
 
 /** List of permissions? assigned to the schema */
@@ -62,27 +66,12 @@ export type SchemaPermissions = {
 }
 
 /** Structure describing a schema */
-export interface SchemaMetadata {
-    /** Unique identifier of the object */
-    id: string;
-
+export interface SchemaMetadata extends OwnedMetadataBase {
     /** Whether the schema is the default schema for logged user, can be more than one */
     default?: boolean | null;
 
     /** is database catalog schema */
     catalog?: boolean | null;
-
-    /** Schema name */
-    name: string;
-
-    /** Unique object identity */
-    identity?: string | null;
-
-    /** Description of the schema */
-    description?: string | null;
-
-    /** Owner of the schema */
-    owner?: string | null;
 
     /** Permissions assigned to the schema */
     permissions?: SchemaPermissions;
@@ -101,9 +90,6 @@ export interface SchemaMetadata {
 
     /** List of user-defined types in the schema */
     types?: Record<string, TypeMetadata>;
-
-    /** Custom data */
-    data?: Record<string, any>;
 }
 
 export interface RoutinePermissions {
@@ -112,22 +98,7 @@ export interface RoutinePermissions {
 }
 
 /** Structure describing a package */
-export interface PackageMetadata {
-    /** Unique identifier of the object */
-    id: string;
-
-    /** Package name */
-    name: string;
-
-    /** Unique object identity */
-    identity?: string | null;
-
-    /** Description of the package */
-    description?: string | null;
-
-    /** Owner of the package */
-    owner?: string | null;
-
+export interface PackageMetadata extends OwnedMetadataBase {
     /** Permissions assigned to the package */
     permissions?: RoutinePermissions;
 
@@ -136,36 +107,18 @@ export interface PackageMetadata {
 
     /** Map of types in the package, grouped by name */
     types?: Record<string, TypeMetadata>;
-
-    /** Custom data */
-    data?: Record<string, any>;
 }
 
 export type RoutineType = "function" | "procedure";
 export type RoutineKind = "regular" | "trigger" | "aggregate" | "window" | "set-returning";
 
 /** Structure describing a function overload */
-export interface RoutineMetadata {
-    /** Unique identifier of the object */
-    id: string;
-
-    /** Function name */
-    name: string;
-
-    /** Unique object identity */
-    identity?: string | null;
-
+export interface RoutineMetadata extends OwnedMetadataBase {
     /** Routine type */
     type: RoutineType;
 
     /** Routine kind */
     kind?: RoutineKind;
-
-    /** Description of the function */
-    description?: string | null;
-
-    /** Owner of the function */
-    owner?: string | null;
 
     /** Permissions assigned to the function */
     permissions?: RoutinePermissions;
@@ -178,26 +131,14 @@ export interface RoutineMetadata {
 
     /** List of identifiers for the routine code */
     identifiers?: string[] | null;
-
-    /** Custom data */
-    data?: Record<string, any>;
 }
 
 export type RoutineArgumentMode = "in" | "out" | "inout";
 
 /** Structure describing a routine argument */
-export interface RoutineArgumentMetadata {
-    /** Unique identifier of the object */
-    id: string;
-
+export interface RoutineArgumentMetadata extends MetadataBase {
     /** Argument number in the function/procedure */
     no: number;
-
-    /** Argument name */
-    name?: string | null;
-
-    /** Description of the argument */
-    description?: string | null;
 
     /** Data type of the argument */
     dataType: string;
@@ -207,9 +148,6 @@ export interface RoutineArgumentMetadata {
 
     /** Argument mode */
     mode?: RoutineArgumentMode | null;
-
-    /** Custom data */
-    data?: Record<string, any>;
 }
 
 export type RelationType = "table" | "view";
@@ -254,10 +192,10 @@ export interface RelationStatsMetadata {
 
     /** Number of inserts on the relation */
     inserts?: number | null;
-    
+
     /** Number of updates on the relation */
     updates?: number | null;
-    
+
     /** Number of deletes on the relation */
     deletes?: number | null;
 
@@ -268,27 +206,12 @@ export interface RelationStatsMetadata {
 }
 
 /** Structure describing a table */
-export interface RelationMetadata {
-    /** Unique identifier of the object */
-    id: string;
-
-    /** Table name */
-    name: string;
-
-    /** Unique object identity */
-    identity?: string | null;
-
+export interface RelationMetadata extends OwnedMetadataBase {
     /** Type of the relation */
     type: RelationType;
 
     /** Kind of the relation */
     kind?: RelationKind | null;
-
-    /** Description of the relation */
-    description?: string | null;
-
-    /** Owner of the relation */
-    owner?: string | null;
 
     /** Permissions assigned to the relation */
     permissions?: RelationPermissions;
@@ -310,9 +233,6 @@ export interface RelationMetadata {
 
     /** Stats of the relation */
     stats?: RelationStatsMetadata;
-
-    /** Custom data */
-    data?: Record<string, any>;
 
     /** List of identifiers (for views) */
     identifiers?: string[] | null;
@@ -349,21 +269,9 @@ export type ColumnStatsMetadata = {
 }
 
 /** Structure describing a column */
-export interface ColumnMetadata {
-    /** Unique identifier of the object */
-    id: string;
-
+export interface ColumnMetadata extends MetadataBase {
     /** Column number in the relation */
     no: number;
-
-    /** Column name */
-    name: string;
-
-    /** Unique object identity */
-    identity?: string | null;
-
-    /** Description of the column */
-    description?: string | null;
 
     /** Data type (e.g., VARCHAR, INT) */
     dataType: string;
@@ -390,29 +298,14 @@ export interface ColumnMetadata {
     unique?: boolean | null;
 
     stats?: ColumnStatsMetadata;
-
-    /** Custom data */
-    data?: Record<string, any>;
 }
 
-export type ForeignKeyAction = 'cascade' | 'set null' | 'set default' | 'no action' | 'restrict';
+export type ForeignKeyActionType = 'cascade' | 'set null' | 'set default' | 'no action' | 'restrict';
 
 /** Structure describing a foreign key */
-export interface ForeignKeyMetadata {
-    /** Unique identifier of the object */
-    id: string;
-
-    /** Foreign key name */
-    name: string;
-
-    /** Unique object identity */
-    identity?: string | null;
-
+export interface ForeignKeyMetadata extends MetadataBase {
     /** Column name in the relation */
     column: string[];
-
-    /** Description of the foreign key */
-    description?: string | null;
 
     /** Name of the referenced schema */
     referencedSchema: string;
@@ -424,13 +317,10 @@ export interface ForeignKeyMetadata {
     referencedColumn: string[];
 
     /** Action on update (e.g., CASCADE, SET NULL) */
-    onUpdate?: ForeignKeyAction;
+    onUpdate?: ForeignKeyActionType;
 
     /** Action on delete (e.g., CASCADE, SET NULL) */
-    onDelete?: ForeignKeyAction;
-
-    /** Custom data */
-    data?: Record<string, any>;
+    onDelete?: ForeignKeyActionType;
 }
 
 export type SortOrder = "asc" | "desc";
@@ -471,19 +361,7 @@ export interface IndexStatsMetadata {
 }
 
 /** Structure describing an index */
-export interface IndexMetadata {
-    /** Unique identifier of the object */
-    id: string;
-
-    /** Index name */
-    name: string;
-
-    /** Unique object identity */
-    identity?: string | null;
-
-    /** Description of the index */
-    description?: string | null;
-
+export interface IndexMetadata extends MetadataBase {
     /** List of columns in the index */
     columns: IndexColumnMetadata[];
 
@@ -495,54 +373,21 @@ export interface IndexMetadata {
 
     /** Stats of the index */
     stats?: IndexStatsMetadata;
-
-    /** Custom data */
-    data?: Record<string, any>;
 }
 
-export interface PrimaryKeyMetadata {
-    /** Unique identifier of the object */
-    id: string;
-
-    /** Primary key name */
-    name: string;
-
-    /** Unique object identity */
-    identity?: string | null;
-
+export interface PrimaryKeyMetadata extends MetadataBase {
     /** List of columns in the primary key */
     columns: string[];
-
-    /** Description of the primary key */
-    description?: string | null;
-
-    /** Custom data */
-    data?: Record<string, any>;
 }
 
 export type ConstraintType = "check" | "unique" | "primary key" | "foreign key" | "trigger" | "exclude" | "not null" | string;
 
-export interface ConstraintMetadata {
-    /** Unique identifier of the object */
-    id: string;
-
-    /** Constraint name */
-    name: string;
-
-    /** Unique object identity */
-    identity?: string | null;
-
-    /** Description of the constraint */
-    description?: string | null;
-
+export interface ConstraintMetadata extends MetadataBase {
     /** Type of the constraint (e.g., CHECK, UNIQUE) */
     type: ConstraintType;
 
     /** Expression defining the constraint */
     expression?: string | null;
-
-    /** Custom data */
-    data?: Record<string, any>;
 }
 
 /** Structure describing permissions? for the sequence */
@@ -558,22 +403,7 @@ export type SequencePermissions = {
 }
 
 /** Structure describing a sequence */
-export interface SequenceMetadata {
-    /** Unique identifier of the object */
-    id: string;
-
-    /** Sequence name */
-    name: string;
-
-    /** Unique object identity */
-    identity?: string | null;
-
-    /** Description of the sequence */
-    description?: string | null;
-
-    /** Owner of the sequence */
-    owner?: string | null;
-
+export interface SequenceMetadata extends OwnedMetadataBase {
     /** Permissions assigned to the sequence */
     permissions?: SequencePermissions;
 
@@ -594,9 +424,6 @@ export interface SequenceMetadata {
 
     /** Whether the sequence is cyclic */
     cycled?: boolean | null;
-
-    /** Custom data */
-    data?: Record<string, any>;
 }
 
 export type TypeKind = "enum" | "composite" | "base" | "domain" | "range" | "pseudo" | "xml" | "json" | "jsonb" | "hstore" | "array";
@@ -608,22 +435,7 @@ export type TypePermissions = {
 }
 
 /** Structure describing a user-defined type */
-export interface TypeMetadata {
-    /** Unique identifier of the object */
-    id: string;
-
-    /** Type name */
-    name: string;
-
-    /** Unique object identity */
-    identity?: string | null;
-
-    /** Description of the type */
-    description?: string | null;
-
-    /** Owner of the type */
-    owner?: string | null;
-
+export interface TypeMetadata extends OwnedMetadataBase {
     /** Permissions assigned to the type */
     permissions?: TypePermissions;
 
@@ -635,9 +447,6 @@ export interface TypeMetadata {
 
     /** Attributes (for composite types) */
     attributes?: ColumnMetadata[];
-
-    /** Custom data */
-    data?: Record<string, any> | null;
 }
 
 export interface IMetadataCollector {
