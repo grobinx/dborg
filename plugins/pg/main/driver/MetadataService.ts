@@ -685,10 +685,6 @@ export class MetadataCollector implements api.IMetadataCollector {
             : Object.values(database.schemas);
 
         for (const schema of schemasToProcess) {
-            if (!schema) {
-                continue; // Jeśli schemat nie istnieje, pomiń
-            }
-
             if (progress) {
                 progress(`columns on schema: ${schema.name}`);
             }
@@ -741,10 +737,19 @@ export class MetadataCollector implements api.IMetadataCollector {
 
     async updateColumnsStats(progress?: (current: string) => void, schemaName?: string, name?: string): Promise<void> {
         const database = this.connectedDatabase();
-        if (progress) progress('column statistics' + (schemaName ? (" of " + schemaName) : ""));
 
-        const { rows } = await this.client!.query(
-            `
+        // Pobierz schematy do przetworzenia
+        const schemasToProcess = schemaName
+            ? [database.schemas[schemaName]]
+            : Object.values(database.schemas);
+
+        for (const schema of schemasToProcess) {
+            if (progress) {
+                progress(`columns statistics on schema: ${schema.name}`);
+            }
+
+            const { rows } = await this.client!.query(
+                `
     SELECT st.schemaname AS schema_name,
            st.tablename AS relation_name,
            st.attname AS column_name,
@@ -759,26 +764,25 @@ export class MetadataCollector implements api.IMetadataCollector {
       AND ($2::text IS NULL OR st.tablename = $2)
     ORDER BY st.schemaname, st.tablename, st.attname
     `,
-            [schemaName ?? null, name ?? null]
-        );
+                [schema.name, name ?? null]
+            );
 
-        for (const row of rows as any[]) {
-            const schema = database.schemas[row.schema_name];
-            if (!schema) continue;
-            const rel = schema.relations[row.relation_name];
-            if (!rel) continue;
+            for (const row of rows as any[]) {
+                const rel = schema.relations[row.relation_name];
+                if (!rel) continue;
 
-            const col = rel.columns.find(c => c.name === row.column_name);
-            if (!col) continue;
+                const col = rel.columns.find(c => c.name === row.column_name);
+                if (!col) continue;
 
-            col.stats = Object.assign(col.stats || {}, {
-                nullFraction: row.null_frac != null ? Number(row.null_frac) : null,
-                avgWidth: row.avg_width != null ? Number(row.avg_width) : null,
-                nDistinct: row.n_distinct != null ? Number(row.n_distinct) : null,
-                mostCommonValues: row.most_common_vals ?? null,
-                mostCommonFreqs: row.most_common_freqs ?? null,
-                histogram: row.histogram ?? null
-            });
+                col.stats = Object.assign(col.stats || {}, {
+                    nullFraction: row.null_frac != null ? Number(row.null_frac) : null,
+                    avgWidth: row.avg_width != null ? Number(row.avg_width) : null,
+                    nDistinct: row.n_distinct != null ? Number(row.n_distinct) : null,
+                    mostCommonValues: row.most_common_vals ?? null,
+                    mostCommonFreqs: row.most_common_freqs ?? null,
+                    histogram: row.histogram ?? null
+                });
+            }
         }
     }
 
@@ -949,7 +953,7 @@ export class MetadataCollector implements api.IMetadataCollector {
 
             idx.stats = Object.assign(idx.stats || {}, {
                 rows: row.rows != null ? Number(row.rows) : null,
-                size: row.size != null ? Number(row.size) : null, 
+                size: row.size != null ? Number(row.size) : null,
                 pages: row.pages != null ? Number(row.pages) : null,
                 reads: row.reads != null ? Number(row.reads) : null,
                 hits: row.hits != null ? Number(row.hits) : null,
