@@ -1,4 +1,4 @@
-import { isIdentifier, isKeyword, isPunctuator, isToken, Tokenizer, type Token, type TokenizerOptions } from "./tokenizer";
+import { isIdentifier, isKeyword, isPunctuator, isToken, Tokenizer, TokenType, type Token, type TokenizerOptions } from "./tokenizer";
 
 /**
  * class: token | scope
@@ -276,16 +276,34 @@ export class Scoper {
         return root;
     }
 
-    private decomposeStatements(node: BlockNode): void {
-        if (!node.items) return;
+    private findStatemets(node: BlockNode): StatementResolved[] {
+        const statements: StatementResolved[] = [];
+        if (!node.items || node.items.length === 0) return statements;
 
-        for (let i = 0; i < node.items.length; i++) {
-            const item = node.items[i];
+        for (const item of node.items) {
             if (isStatementResolved(item)) {
-                if (item.type === "SELECT") {
-                    this.decomposeSelectStatement(item);
-                } else if (item.type === "INSERT") {
-                    this.decomposeInsertStatement(item);
+                statements.push(item);
+            }
+            if (isBlockNode(item)) {
+                statements.push(...this.findStatemets(item));
+            }
+        }
+
+        return statements;
+    }
+
+    private decomposeStatements(root: BlockNode): void {
+        if (!root.items || root.items.length === 0) return;
+
+        const statements = this.findStatemets(root);
+
+        for (let i = 0; i < statements.length; i++) {
+            const statement = statements[i];
+            if (isStatementResolved(statement)) {
+                if (statement.type === "SELECT") {
+                    this.decomposeSelectStatement(statement);
+                } else if (statement.type === "INSERT") {
+                    this.decomposeInsertStatement(statement);
                 }
             }
         }
@@ -329,34 +347,161 @@ export class Scoper {
             pos = endPos;
         }
 
-        item = statement.items[pos];
-        if (isKeyword(item, "SELECT")) {
-            const setBlock: SetBlock = {
-                class: "block",
-                block: "set",
-                open: this.findFirstToken(item),
-                close: null,
-                items: [],
-                operator: null,
-            };
-
-            while (pos < statement.items.length) {
-                item = statement.items[pos];
-                setBlock.items!.push(item);
+        while (pos < statement.items.length) {
+            item = statement.items[pos];
+            let operator: SetOperator | null = null;
+            if (isKeyword(item, "UNION", "INTERSECT", "EXCEPT", "MINUS")) {
+                operator = item.value.toUpperCase() as SetOperator;
                 pos++;
+                if (pos < statement.items.length && operator === "UNION" && isKeyword(statement.items[pos], "ALL")) {
+                    operator = "UNION ALL";
+                    pos++;
+                }
             }
+            if (isKeyword(item, "SELECT")) {
+                const setBlock: SetBlock = {
+                    class: "block",
+                    block: "set",
+                    open: this.findFirstToken(item),
+                    close: null,
+                    items: [],
+                    operator: operator,
+                };
 
-            if (setBlock.items && setBlock.items.length > 0) {
-                const lastItem = setBlock.items[setBlock.items.length - 1];
-                setBlock.close = this.findLastToken(lastItem);
+                while (pos < statement.items.length) {
+                    item = statement.items[pos];
+                    if (isKeyword(item, "SELECT")) {
+                        const { collected, endPos } = this.decomposeColumns(statement.items, pos);
+                        const selectClause: SelectClause = {
+                            class: "block",
+                            block: "clause",
+                            clause: "SELECT",
+                            items: collected,
+                            open: this.findFirstToken(item),
+                            close: collected.length > 0 ? this.findLastToken(collected[collected.length - 1]) : this.findLastToken(item),
+                        };
+                        setBlock.items!.push(selectClause);
+                        pos = endPos;
+                    } else {
+                        setBlock.items!.push(item);
+                    }
+                    pos++;
+                }
+
+                if (setBlock.items && setBlock.items.length > 0) {
+                    const lastItem = setBlock.items[setBlock.items.length - 1];
+                    setBlock.close = this.findLastToken(lastItem);
+                }
+
+                items.push(setBlock);
+            } else {
+                for (; pos < statement.items.length; pos++) {
+                    item = statement.items[pos];
+                    items.push(item);
+                }
             }
-
-            items.push(setBlock);
-        } else {
-            items.push(...statement.items);
         }
 
         statement.items = items;
+    }
+
+    private decomposeColumns(items: BlockItem[], startPos: number): { collected: ColumnBlock[]; endPos: number } {
+        const collected: ColumnBlock[] = [];
+        let pos = startPos;
+
+        // Skip SELECT keyword
+        if (pos < items.length && isKeyword(items[pos], "SELECT")) pos++;
+
+        // Skip optional DISTINCT / ALL quantifier
+        if (pos < items.length && isKeyword(items[pos], "DISTINCT", "ALL")) {
+            pos++;
+            // PostgreSQL: DISTINCT ON (expr)
+            if (pos < items.length && isKeyword(items[pos], "ON")) {
+                pos++;
+                if (pos < items.length && isBlockNode(items[pos]) && (items[pos] as BlockNode).block === "expression") {
+                    pos++;
+                }
+            }
+        }
+
+        while (pos < items.length) {
+            // Clause-starting keyword ends the column list
+            if (isKeyword(items[pos], "FROM", "WHERE", "HAVING", "ORDER", "GROUP",
+                "UNION", "INTERSECT", "EXCEPT", "MINUS", "INTO", "LIMIT", "OFFSET",
+                "FETCH", "RETURNING", "WINDOW", "QUALIFY")) {
+                break;
+            }
+
+            // Skip comma separating columns
+            if (isPunctuator(items[pos], ",")) {
+                pos++;
+                continue;
+            }
+
+            // Collect all items belonging to one column expression
+            const colItems: BlockItem[] = [];
+            while (pos < items.length) {
+                const cur = items[pos];
+
+                if (isPunctuator(cur, ",")) break;
+                if (isKeyword(cur, "FROM", "WHERE", "HAVING", "ORDER", "GROUP",
+                    "UNION", "INTERSECT", "EXCEPT", "MINUS", "INTO", "LIMIT", "OFFSET",
+                    "FETCH", "RETURNING", "WINDOW", "QUALIFY")) {
+                    break;
+                }
+
+                colItems.push(cur);
+                pos++;
+            }
+
+            if (colItems.length === 0) continue;
+
+            // Detect alias: last identifier token, optionally preceded by AS.
+            // Tokens that are expression-terminating keywords (END, NULL, TRUE, …)
+            // are excluded from implicit alias detection.
+            const NOT_ALIAS = ["END", "NULL", "TRUE", "FALSE", "UNKNOWN",
+                "ASC", "DESC", "NULLS", "FIRST", "LAST", "ALL", "DISTINCT",
+                "PRECEDING", "FOLLOWING", "UNBOUNDED", "CURRENT",
+                "ROWS", "RANGE", "GROUPS"] as const;
+
+            let alias: Token | null = null;
+            let exprItems: BlockItem[] = colItems;
+            const last = colItems[colItems.length - 1];
+
+            if (colItems.length >= 2 && isIdentifier(last)) {
+                const secondLast = colItems[colItems.length - 2];
+                if (isKeyword(secondLast, "AS")) {
+                    // Explicit: expr AS alias
+                    alias = last as Token;
+                    exprItems = colItems.slice(0, -2);
+                } else if (!isKeyword(last as Token, ...NOT_ALIAS)
+                    && !(isPunctuator(secondLast, "."))) {
+                    // Implicit: expr alias  (not preceded by dot, not a terminal SQL keyword)
+                    alias = last as Token;
+                    exprItems = colItems.slice(0, -1);
+                }
+            }
+
+            if (!alias && exprItems.length > 0) {
+                alias = this.findLastToken(exprItems[exprItems.length - 1], "identifier");
+            }
+
+            const colBlock: ColumnBlock = {
+                class: "block",
+                block: "column",
+                open: exprItems.length > 0 ? this.findFirstToken(exprItems[0]) : this.findFirstToken(last),
+                close: exprItems.length > 0 ? this.findLastToken(exprItems[exprItems.length - 1]) : this.findLastToken(last),
+                items: exprItems.length > 0 ? exprItems : null,
+                alias,
+            };
+
+            collected.push(colBlock);
+        }
+
+        // endPos points at the LAST consumed item so that the calling loop's
+        // `pos = endPos; pos++` lands on the clause keyword (e.g. FROM) rather
+        // than skipping it.
+        return { collected, endPos: pos - 1 };
     }
 
     private decomposeWithClasue(items: BlockItem[], startPos: number): { collected: CteBlock[]; endPos: number } {
@@ -387,10 +532,7 @@ export class Scoper {
                 }
             }
 
-            // optional AS
-            let hasAS = false;
             if (pos < items.length && isKeyword(items[pos], "AS")) {
-                hasAS = true;
                 pos++;
             }
 
@@ -440,9 +582,6 @@ export class Scoper {
                 };
 
                 collected.push(cte);
-
-                // recursively decompose inner statements
-                this.decomposeStatements(cte);
 
                 // if next token is a comma, consume it and continue to next CTE
                 if (pos < items.length && isPunctuator(items[pos], ",")) {
@@ -537,7 +676,7 @@ export class Scoper {
             const item = node.items[i];
 
             // 1. Rekurencja: Najpierw naprawiamy dzieci
-            if (typeof item === "object" && "block" in item) {
+            if (isBlockNode(item)) {
                 this.identifyBlocks(item);
 
                 // 2. Jeśli to surowy StatementBlock, spróbujmy go uszczegółowić
@@ -702,27 +841,34 @@ export class Scoper {
         return null;
     }
 
-    private findLastToken(node: BlockItem | null): Token | null {
-        if (!node) return null;
-        if (isToken(node)) return node;
+    private findTokens(node: BlockItem | null): Token[] {
+        if (!node) return [];
+
+        if (isToken(node)) return [node];
 
         if (isBlockNode(node)) {
-            if (node.close) {
-                return node.close;
+            const tokens: Token[] = [];
+            tokens.push(...(node.open ? [node.open] : []));
+            for (const item of node.items || []) {
+                tokens.push(...this.findTokens(item));
             }
-
-            for (let i = (node.items || []).length - 1; i >= 0; i--) {
-                const item = node.items![i];
-                if (isToken(item)) {
-                    return item;
-                }
-                const found = this.findLastToken(item);
-                if (found) {
-                    return found;
-                }
-            }
+            tokens.push(...(node.close ? [node.close] : []));
+            return tokens;
         }
 
-        return null;
+        return [];
+    }
+
+    private findLastToken(node: BlockItem | null, type: TokenType | null = null): Token | null {
+        const tokens = this.findTokens(node);
+        if (type) {
+            for (let i = tokens.length - 1; i >= 0; i--) {
+                if (tokens[i].type === type) {
+                    return tokens[i];
+                }
+            }
+            return null;
+        }
+        return tokens.length > 0 ? tokens[tokens.length - 1] : null;
     }
 }

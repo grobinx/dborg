@@ -105,7 +105,7 @@ export function isIdentifier(token: any): token is IdentifierToken {
     return isToken(token) && token.type === "identifier";
 }
 
-export function isKeyword(token: any, ...keywords: string[]): boolean {
+export function isKeyword(token: any, ...keywords: string[]): token is IdentifierToken {
     return isIdentifier(token) && !token.quote && keywords.some(kw => kw.toLowerCase() === token.value.toLowerCase());
 }
 
