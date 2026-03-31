@@ -412,12 +412,33 @@ export type ValueToStringAllOptions =
     & Partial<ValueToStringPercysionOptions>
     ;
 
-const cache = new LRUCache<string, string>({ max: 10000 }); // Cache dla sformatowanych wartości
+const cache = new LRUCache<string, string>({ max: 2000 }); // Cache dla sformatowanych wartości
 
 // Prostsza normalizacja opcji i generowanie klucza cache
 const DEFAULT_V2S_OPTIONS: Required<Pick<ValueToStringOptions, 'display' | 'thousandsSeparator'>> = {
     display: true,
     thousandsSeparator: true,
+};
+
+function safeStringify(value: any): string {
+    try {
+        return JSON.stringify(value);
+    } catch {
+        const seen = new WeakSet();
+        return JSON.stringify(value, (_k, v) => {
+            if (typeof v === 'object' && v !== null) {
+                if (seen.has(v)) return '[Circular]';
+                seen.add(v);
+            }
+            return v;
+        });
+    }
+}
+
+// Funkcja pomocnicza do generowania haszy
+export const generateHash = (value: any): string => {
+    const stringifiedValue = typeof value === 'string' ? value : safeStringify(value);
+    return SparkMD5.hash(stringifiedValue);
 };
 
 function makeCacheKey(value: any, dataType: UnionDataType, baseType: ColumnBaseType, thousandsSeparator: boolean): string {
@@ -533,21 +554,6 @@ function normalizeDuration(value: any): Duration {
     }
     if (value && typeof value === 'object') return Duration.fromObject(value);
     return Duration.invalid('Invalid');
-}
-
-function safeStringify(value: any): string {
-    try {
-        const seen = new WeakSet();
-        return JSON.stringify(value, (_k, v) => {
-            if (typeof v === 'object' && v !== null) {
-                if (seen.has(v)) return '[Circular]';
-                seen.add(v);
-            }
-            return v;
-        });
-    } catch {
-        return String(value);
-    }
 }
 
 function formatWithUnit(value: number | bigint, units: Record<string, number>, options: ValueToStringOptions): string {
@@ -999,12 +1005,6 @@ function formatIntWithThousandsSeparator(n: number | string | bigint): string {
     const s = typeof n === 'string' ? n : n.toString();
     return s.replace(/\B(?=(\d{3})+(?!\d))/g, thousandSeparator);
 }
-
-// Funkcja pomocnicza do generowania haszy
-export const generateHash = (value: any): string => {
-    const stringifiedValue = typeof value === 'string' ? value : safeStringify(value);
-    return SparkMD5.hash(stringifiedValue);
-};
 
 export const compareValuesByType = (value1: any, value2: any, dataType: ColumnDataType): number => {
     // Obsługa array (nawet jeśli nie powinny trafiać)
