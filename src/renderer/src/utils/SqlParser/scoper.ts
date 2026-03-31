@@ -201,6 +201,8 @@ export interface ColumnBlock extends BlockBase {
 export interface SourceBlock extends BlockBase {
     block: "source";
     alias: Token | null;
+    options: BlockItem[] | null;
+    columns: BlockItem[] | null;
 }
 
 export type Statement =
@@ -353,10 +355,11 @@ export class Scoper {
             if (isKeyword(item, "UNION", "INTERSECT", "EXCEPT", "MINUS")) {
                 operator = item.value.toUpperCase() as SetOperator;
                 pos++;
-                if (pos < statement.items.length && operator === "UNION" && isKeyword(statement.items[pos], "ALL")) {
+                if (pos < statement.items.length && isKeyword(item, "UNION") && isKeyword(statement.items[pos], "ALL")) {
                     operator = "UNION ALL";
                     pos++;
                 }
+                item = statement.items[pos];
             }
             if (isKeyword(item, "SELECT")) {
                 const setBlock: SetBlock = {
@@ -382,7 +385,22 @@ export class Scoper {
                         };
                         setBlock.items!.push(selectClause);
                         pos = endPos;
+                    } else if (isKeyword(item, "FROM")) {
+                        const { collected, endPos } = this.decomposeSources(statement.items, pos);
+                        const fromClause: FromClause = {
+                            class: "block",
+                            block: "clause",
+                            clause: "FROM",
+                            items: collected,
+                            open: this.findFirstToken(item),
+                            close: collected.length > 0 ? this.findLastToken(collected[collected.length - 1]) : this.findLastToken(item),
+                        };
+                        setBlock.items!.push(fromClause);
+                        pos = endPos;
                     } else {
+                        if (isKeyword(item, "UNION", "INTERSECT", "EXCEPT", "MINUS")) {
+                            break;
+                        }
                         setBlock.items!.push(item);
                     }
                     pos++;
@@ -403,6 +421,330 @@ export class Scoper {
         }
 
         statement.items = items;
+    }
+
+    private decomposeSources(items: BlockItem[], startPos: number): { collected: SourceBlock[]; endPos: number } {
+        const collected: SourceBlock[] = [];
+        let pos = startPos;
+
+        if (pos < items.length && isKeyword(items[pos], "FROM")) pos++;
+
+        const SPLIT_KEYWORDS = [
+            "JOIN", "INNER", "LEFT", "RIGHT", "FULL", "CROSS", "NATURAL",
+            "ON", "USING", "LATERAL", "WITH"
+        ];
+        const NOT_ALIAS = [
+            "END", "NULL", "TRUE", "FALSE", "UNKNOWN",
+            "ASC", "DESC", "NULLS", "FIRST", "LAST", "ALL", "DISTINCT",
+            "PRECEDING", "FOLLOWING", "UNBOUNDED", "CURRENT",
+            "ROWS", "RANGE", "GROUPS",
+            "ON", "USING", "JOIN", "INNER", "LEFT", "RIGHT", "FULL", "CROSS", "NATURAL", "LATERAL",
+            "WHERE", "GROUP", "ORDER", "HAVING", "LIMIT", "OFFSET", "FETCH", "RETURNING", "WINDOW", "QUALIFY"
+        ];
+
+        // helper: find top-level index matching predicate (skip nested block nodes)
+        const findTopLevelIndex = (arr: BlockItem[], start: number, predicate: (it: BlockItem) => boolean): number => {
+            for (let i = start; i < arr.length; i++) {
+                const it = arr[i];
+                if (isBlockNode(it)) continue;
+                if (predicate(it)) return i;
+            }
+            return -1;
+        };
+
+        while (pos < items.length) {
+            if (this.isStopKeyword(items[pos])) break;
+
+            while (pos < items.length && isPunctuator(items[pos], ",")) pos++;
+            if (pos >= items.length) break;
+            if (this.isStopKeyword(items[pos])) break;
+
+            const segmentStart = pos;
+            const segment: BlockItem[] = [];
+            while (pos < items.length) {
+                if (this.isStopKeyword(items[pos])) break;
+                if (isPunctuator(items[pos], ",")) break;
+                segment.push(items[pos]);
+                pos++;
+            }
+            if (segment.length === 0) continue;
+
+            // find first top-level split keyword inside segment
+            let splitIndex = -1;
+            for (let i = 0; i < segment.length; i++) {
+                if (isBlockNode(segment[i])) continue;
+                if (isKeyword(segment[i], ...SPLIT_KEYWORDS)) {
+                    splitIndex = i;
+                    break;
+                }
+            }
+
+            // alias-candidate scan restricted to tokens before the initial split
+            let aliasCandidateIndex = -1;
+            const aliasScanEnd = splitIndex === -1 ? segment.length - 1 : (splitIndex - 1);
+            for (let i = aliasScanEnd; i >= 0; i--) {
+                const it = segment[i];
+                if (isBlockNode(it)) continue;
+                if (isIdentifier(it)) {
+                    const prev = i > 0 ? segment[i - 1] : null;
+                    if (!prev || !isPunctuator(prev, ".")) {
+                        aliasCandidateIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            // if split occurs before alias candidate, try to move split after alias
+            if (splitIndex !== -1 && aliasCandidateIndex !== -1 && splitIndex <= aliasCandidateIndex) {
+                let newSplit = -1;
+                for (let j = aliasCandidateIndex + 1; j < segment.length; j++) {
+                    if (isKeyword(segment[j], ...SPLIT_KEYWORDS)) {
+                        newSplit = j;
+                        break;
+                    }
+                }
+                splitIndex = newSplit;
+            }
+
+            // If split is at 0, treat as continuation of previous source's options
+            if (splitIndex === 0 && collected.length > 0) {
+                const continuation = segment.slice(0);
+                const last = collected[collected.length - 1];
+                last.options = last.options ? [...last.options, ...continuation] : continuation;
+                continue;
+            }
+
+            const mainPart = splitIndex === -1 ? segment.slice() : segment.slice(0, splitIndex);
+            let optionsPart = splitIndex === -1 ? null : segment.slice(splitIndex);
+
+            // analyse mainPart for alias / column-list
+            let alias: Token | null = null;
+            let columns: BlockItem[] | null = null;
+            let exprItems: BlockItem[] = mainPart.slice();
+
+            if (exprItems.length >= 2) {
+                const lastItem = exprItems[exprItems.length - 1];
+                const secondLast = exprItems[exprItems.length - 2];
+                if (isBlockNode(lastItem) && (lastItem as BlockNode).block === "expression" && isIdentifier(secondLast)) {
+                    alias = secondLast as Token;
+                    columns = (lastItem as ExpressionBlock).items ? (lastItem as ExpressionBlock).items!.filter(it => !isPunctuator(it, ",")) : null;
+                    exprItems = exprItems.slice(0, -2);
+                }
+            }
+
+            if (!alias && exprItems.length >= 2) {
+                for (let i = 0; i < exprItems.length - 1; i++) {
+                    if (isKeyword(exprItems[i], "AS") && isIdentifier(exprItems[i + 1])) {
+                        alias = exprItems[i + 1] as Token;
+                        const extraOptions = exprItems.slice(i + 2);
+                        exprItems = exprItems.slice(0, i);
+                        if (extraOptions.length > 0) {
+                            if (optionsPart && optionsPart.length > 0) {
+                                optionsPart.unshift(...extraOptions);
+                            } else {
+                                optionsPart = extraOptions.slice();
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+
+            if (!alias && exprItems.length >= 2) {
+                const last = exprItems[exprItems.length - 1];
+                const secondLast = exprItems[exprItems.length - 2];
+                if (isIdentifier(last)
+                    && !isPunctuator(secondLast, ".")
+                    && !isKeyword(last as Token, ...NOT_ALIAS)
+                    && !isKeyword(secondLast as Token, ...SPLIT_KEYWORDS)) {
+                    alias = last as Token;
+                    exprItems = exprItems.slice(0, -1);
+                }
+            }
+
+            if (exprItems.length === 0 && segment.length > 0) {
+                exprItems = [segment[0]];
+            }
+
+            const openToken = this.findFirstToken(exprItems[0] || segment[0]);
+            let closeItem: BlockItem | null = null;
+            if (columns && columns.length > 0) {
+                closeItem = columns[columns.length - 1];
+            } else if (exprItems.length > 0) {
+                closeItem = exprItems[exprItems.length - 1];
+            } else if (alias) {
+                closeItem = alias;
+            } else {
+                closeItem = segment[segment.length - 1];
+            }
+            const closeToken = this.findLastToken(closeItem);
+
+            const baseSrc: SourceBlock = {
+                class: "block",
+                block: "source",
+                open: openToken,
+                close: closeToken,
+                items: exprItems.length > 0 ? exprItems : null,
+                alias,
+                options: null,
+                columns: columns && columns.length > 0 ? columns : null,
+            };
+
+            // If no options (no joins etc), just push base source
+            if (!optionsPart || optionsPart.length === 0) {
+                collected.push(baseSrc);
+                continue;
+            }
+
+            // If options exist, check whether they contain top-level JOIN clauses.
+            const firstJoinIndex = findTopLevelIndex(optionsPart, 0, (it) => isKeyword(it, "JOIN"));
+            if (firstJoinIndex === -1) {
+                // no joins -> assign whole optionsPart to base source
+                baseSrc.options = optionsPart;
+                collected.push(baseSrc);
+                continue;
+            }
+
+            // tokens before first JOIN remain as options of the base source
+            if (firstJoinIndex > 0) {
+                baseSrc.options = optionsPart.slice(0, firstJoinIndex);
+            }
+            collected.push(baseSrc);
+
+            // parse successive top-level JOIN clauses and emit new SourceBlocks
+            let off = firstJoinIndex;
+            const JOIN_PREFIX = ["LEFT", "RIGHT", "FULL", "INNER", "OUTER", "CROSS", "NATURAL"];
+
+            while (off < optionsPart.length) {
+                const joinIdx = findTopLevelIndex(optionsPart, off, (it) => isKeyword(it, "JOIN"));
+                if (joinIdx === -1) break;
+
+                // include preceding JOIN prefix tokens (LEFT, RIGHT, OUTER, ...)
+                let jtStart = joinIdx;
+                while (jtStart > off && !isBlockNode(optionsPart[jtStart - 1]) && isKeyword(optionsPart[jtStart - 1], ...JOIN_PREFIX)) jtStart--;
+
+                const joinPrefixTokens = optionsPart.slice(jtStart, joinIdx + 1); // includes 'JOIN'
+
+                const joinTargetStart = joinIdx + 1;
+                if (joinTargetStart >= optionsPart.length) break;
+
+                // find ON/USING that belongs to this join and next JOIN
+                const conditionIndex = findTopLevelIndex(optionsPart, joinTargetStart, (it) => isKeyword(it, "ON", "USING"));
+                const nextJoinIndex = findTopLevelIndex(optionsPart, joinTargetStart, (it) => isKeyword(it, "JOIN"));
+
+                const joinTargetEnd = conditionIndex !== -1 ? conditionIndex : (nextJoinIndex !== -1 ? nextJoinIndex : optionsPart.length);
+                const joinTargetTokens = optionsPart.slice(joinTargetStart, joinTargetEnd);
+                if (joinTargetTokens.length === 0) break;
+
+                const conditionEnd = nextJoinIndex !== -1 ? nextJoinIndex : optionsPart.length;
+                let joinConditionTokens: BlockItem[] = conditionIndex !== -1 ? optionsPart.slice(conditionIndex, conditionEnd) : [];
+
+                // analyze joinTargetTokens for alias/columns (reuse heuristics)
+                let jAlias: Token | null = null;
+                let jColumns: BlockItem[] | null = null;
+                let jExprItems: BlockItem[] = joinTargetTokens.slice();
+
+                if (jExprItems.length >= 2) {
+                    const lastItem = jExprItems[jExprItems.length - 1];
+                    const secondLast = jExprItems[jExprItems.length - 2];
+                    if (isBlockNode(lastItem) && (lastItem as BlockNode).block === "expression" && isIdentifier(secondLast)) {
+                        jAlias = secondLast as Token;
+                        jColumns = (lastItem as ExpressionBlock).items ? (lastItem as ExpressionBlock).items!.filter(it => !isPunctuator(it, ",")) : null;
+                        jExprItems = jExprItems.slice(0, -2);
+                    }
+                }
+
+                let jExtraOptions: BlockItem[] | null = null;
+
+                if (!jAlias && jExprItems.length >= 2) {
+                    for (let i = 0; i < jExprItems.length - 1; i++) {
+                        if (isKeyword(jExprItems[i], "AS") && isIdentifier(jExprItems[i + 1])) {
+                            jAlias = jExprItems[i + 1] as Token;
+                            const extraOptions = jExprItems.slice(i + 2);
+                            jExprItems = jExprItems.slice(0, i);
+                            if (extraOptions.length > 0) {
+                                if (joinConditionTokens.length > 0) {
+                                    // these tokens belong before the ON/USING expression
+                                    joinConditionTokens = [...extraOptions, ...joinConditionTokens];
+                                } else {
+                                    // no ON/USING -> treat them as join-level options
+                                    jExtraOptions = extraOptions.slice();
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                if (!jAlias && jExprItems.length >= 2) {
+                    const last = jExprItems[jExprItems.length - 1];
+                    const secondLast = jExprItems[jExprItems.length - 2];
+                    if (isIdentifier(last)
+                        && !isPunctuator(secondLast, ".")
+                        && !isKeyword(last as Token, ...NOT_ALIAS)
+                        && !isKeyword(secondLast as Token, ...SPLIT_KEYWORDS)) {
+                        jAlias = last as Token;
+                        jExprItems = jExprItems.slice(0, -1);
+                    }
+                }
+
+                if (jExprItems.length === 0 && joinTargetTokens.length > 0) {
+                    jExprItems = [joinTargetTokens[0]];
+                }
+
+                const jOpen = this.findFirstToken(jExprItems[0] || joinTargetTokens[0]);
+
+                // Build items: target expression(s) + (if present) ON/USING as an expression block
+                const jItems: BlockItem[] = jExprItems.length > 0 ? [...jExprItems] : [];
+
+                if (joinConditionTokens.length > 0) {
+                    const condBlock: ExpressionBlock = {
+                        class: "block",
+                        block: "expression",
+                        open: this.findFirstToken(joinConditionTokens[0]),
+                        close: this.findLastToken(joinConditionTokens[joinConditionTokens.length - 1]),
+                        items: joinConditionTokens.slice(),
+                    };
+                    jItems.push(condBlock);
+                }
+
+                // Prepare options: join prefix (e.g. LEFT) plus any extraOptions detected
+                const joinedOptions: BlockItem[] = [];
+                if (joinPrefixTokens.length > 0) joinedOptions.push(...joinPrefixTokens);
+                if (jExtraOptions && jExtraOptions.length > 0) joinedOptions.push(...jExtraOptions);
+
+                // determine close token now that we may have appended condition expression
+                let jCloseItem: BlockItem | null = null;
+                if (jColumns && jColumns.length > 0) {
+                    jCloseItem = jColumns[jColumns.length - 1];
+                } else if (jItems.length > 0) {
+                    jCloseItem = jItems[jItems.length - 1];
+                } else if (jAlias) {
+                    jCloseItem = jAlias;
+                } else {
+                    jCloseItem = joinTargetTokens[joinTargetTokens.length - 1];
+                }
+                const jClose = this.findLastToken(jCloseItem);
+
+                const joinSrc: SourceBlock = {
+                    class: "block",
+                    block: "source",
+                    open: jOpen,
+                    close: jClose,
+                    items: jItems.length > 0 ? jItems : null,
+                    alias: jAlias,
+                    options: joinedOptions.length > 0 ? joinedOptions : null,
+                    columns: jColumns && jColumns.length > 0 ? jColumns : null,
+                };
+
+                collected.push(joinSrc);
+
+                // advance to the token after processed condition / join clause
+                off = conditionEnd;
+            }
+        }
+
+        return { collected, endPos: pos - 1 };
     }
 
     private decomposeColumns(items: BlockItem[], startPos: number): { collected: ColumnBlock[]; endPos: number } {
@@ -426,9 +768,7 @@ export class Scoper {
 
         while (pos < items.length) {
             // Clause-starting keyword ends the column list
-            if (isKeyword(items[pos], "FROM", "WHERE", "HAVING", "ORDER", "GROUP",
-                "UNION", "INTERSECT", "EXCEPT", "MINUS", "INTO", "LIMIT", "OFFSET",
-                "FETCH", "RETURNING", "WINDOW", "QUALIFY")) {
+            if (this.isStopKeyword(items[pos])) {
                 break;
             }
 
@@ -444,9 +784,7 @@ export class Scoper {
                 const cur = items[pos];
 
                 if (isPunctuator(cur, ",")) break;
-                if (isKeyword(cur, "FROM", "WHERE", "HAVING", "ORDER", "GROUP",
-                    "UNION", "INTERSECT", "EXCEPT", "MINUS", "INTO", "LIMIT", "OFFSET",
-                    "FETCH", "RETURNING", "WINDOW", "QUALIFY")) {
+                if (this.isStopKeyword(cur)) {
                     break;
                 }
 
@@ -667,6 +1005,12 @@ export class Scoper {
         }
 
         root.items = statements;
+    }
+
+    private isStopKeyword(token: any): boolean {
+        return isKeyword(token, "SELECT", "FROM", "WHERE", "GROUP", "ORDER",
+            "UNION", "INTERSECT", "EXCEPT", "MINUS", "INTO", "LIMIT", "OFFSET",
+            "FETCH", "RETURNING", "WINDOW", "QUALIFY");
     }
 
     private identifyBlocks(node: BlockNode): void {

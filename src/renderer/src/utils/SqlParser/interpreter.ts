@@ -105,7 +105,7 @@ export interface NumberMatch extends MatchBase {
 /**
  * Dopasowanie dla powtarzającej się sekwencji tokenów (np. lista kolumn w instrukcji SELECT). Wzorzec będzie pasował, jeśli sekwencja tokenów zawiera zero lub więcej wystąpień określonej sekwencji tokenów, opcjonalnie otoczonej określającymi znakami (np. nawiasami) i oddzielonej określającym separatorem (np. przecinkiem).
  */
-export type RepeatMatch = {
+export interface RepeatMatch extends MatchBase {
     type: "repeat";
     /**
      * Opcjonalne otwierający znak powtarzającej się sekwencji (np. "(" dla listy kolumn)
@@ -178,7 +178,7 @@ export type MatchDefinition = {
     /**
      * Opcjonalna składnia lub format
      */
-    syntax?: string; 
+    syntax?: string;
     /**
      * Opis wzorca (np. "Wzorzec dla instrukcji SELECT")
      */

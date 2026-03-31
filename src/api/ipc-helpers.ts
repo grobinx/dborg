@@ -2,6 +2,7 @@ import { gzipSync, gunzipSync } from "zlib";
 
 export interface InvokeResult {
     type: "result" | "error",
+    timestamp: number,
 }
 
 export interface ResolveResult extends InvokeResult {
@@ -42,12 +43,14 @@ export async function handleResult<T>(arg: Promise<T> | HandleResultCallback<T>)
     return await promise.then((result) => {
         return {
             type: "result",
-            result: result
+            result: result,
+            timestamp: Date.now()
         } as ResolveResult;
     }).catch((error) => {
         return {
             type: "error",
-            error: Object.assign({ message: error["message"], stack: error["stack"] }, error)
+            error: Object.assign({ message: error["message"], stack: error["stack"] }, error),
+            timestamp: Date.now()
         } as RejectResult;
     })
 }
