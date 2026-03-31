@@ -613,7 +613,7 @@ export class Scoper {
 
             // parse successive top-level JOIN clauses and emit new SourceBlocks
             let off = firstJoinIndex;
-            const JOIN_PREFIX = ["LEFT", "RIGHT", "FULL", "INNER", "OUTER", "CROSS", "NATURAL"];
+            const JOIN_PREFIX = ["LEFT", "RIGHT", "FULL", "INNER", "OUTER", "CROSS", "NATURAL", "LATERAL"];
 
             while (off < optionsPart.length) {
                 const joinIdx = findTopLevelIndex(optionsPart, off, (it) => isKeyword(it, "JOIN"));
@@ -621,7 +621,9 @@ export class Scoper {
 
                 // include preceding JOIN prefix tokens (LEFT, RIGHT, OUTER, ...)
                 let jtStart = joinIdx;
-                while (jtStart > off && !isBlockNode(optionsPart[jtStart - 1]) && isKeyword(optionsPart[jtStart - 1], ...JOIN_PREFIX)) jtStart--;
+                while (jtStart > off && !isBlockNode(optionsPart[jtStart - 1]) && isKeyword(optionsPart[jtStart - 1], ...JOIN_PREFIX)) {
+                    jtStart--;
+                }
 
                 const joinPrefixTokens = optionsPart.slice(jtStart, joinIdx + 1); // includes 'JOIN'
 
@@ -703,7 +705,7 @@ export class Scoper {
                         block: "expression",
                         open: this.findFirstToken(joinConditionTokens[0]),
                         close: this.findLastToken(joinConditionTokens[joinConditionTokens.length - 1]),
-                        items: joinConditionTokens.slice(),
+                        items: joinConditionTokens.slice(1),
                     };
                     jItems.push(condBlock);
                 }
