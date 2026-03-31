@@ -26,7 +26,7 @@ export type HandleResultCallback<T> = () => Promise<T>;
  * Change result of callback function with/or error to result for send ipc message
  * @param callback callback function
  */
-function handleResult<T>(callback: HandleResultCallback<T>): Promise<InvokeResult>;
+export function handleResult<T>(callback: HandleResultCallback<T>): Promise<InvokeResult>;
 
 /**
  * Change promise result with catch handle to result for send ipc message
@@ -35,9 +35,9 @@ function handleResult<T>(callback: HandleResultCallback<T>): Promise<InvokeResul
  * @example
  * ipcMain.handle(EVENT_INTERNAL_QUERY, ..., () => handleResult(internal!.query(sql, values)))
  */
-function handleResult<T>(promise: Promise<T>): Promise<InvokeResult>;
+export function handleResult<T>(promise: Promise<T>): Promise<InvokeResult>;
 
-async function handleResult<T>(arg: Promise<T> | HandleResultCallback<T>): Promise<InvokeResult> {
+export async function handleResult<T>(arg: Promise<T> | HandleResultCallback<T>): Promise<InvokeResult> {
     const promise = (arg instanceof Promise) ? arg : (arg as HandleResultCallback<T>)();
     return await promise.then((result) => {
         return {
@@ -51,8 +51,6 @@ async function handleResult<T>(arg: Promise<T> | HandleResultCallback<T>): Promi
         } as RejectResult;
     })
 }
-
-export { handleResult };
 
 // Krótka pauza, by oddać sterowanie pętli zdarzeń renderera
 const YIELD_MS = 0;
