@@ -31,8 +31,21 @@ export type DataGridMode = "defined" | "data";
 export type DataGridRowType = "regular" | "group" | "update" | "add" | "remove";
 
 interface DataGridRowBase<T> {
+    /**
+     * Wersja rekordu, używana do optymalizacji renderowania. Jeśli rekord o danym uniqueId pojawi się ponownie z tą samą wersją, DataGrid może założyć, że nic się nie zmieniło i nie będzie go ponownie renderować.
+     */
+    version?: number;
+    /**
+     * Unikalna wartość identyfikująca rekord. Powinna być taka sama dla tego samego rekordu, nawet jeśli jego dane się zmienią. Jest używana do śledzenia zmian w rekordach (update, remove) oraz do optymalizacji renderowania.
+     */
     uniqueId: any;
+    /**
+     * Typ rekordu, który może być użyty do specjalnego renderowania grup, podsumowań, itp. Rekordy typu "update", "add" i "remove" są używane do oznaczania zmian w danych.
+     */
     type: DataGridRowType;
+    /**
+     * Dane rekordu. Dla rekordów typu "update", "add" i "remove" zawiera tylko zmienione pola (dla "update") lub wszystkie pola (dla "add"). Dla "remove" może być puste lub zawierać dane przed usunięciem, w zależności od implementacji.
+     */
     data: T;
     /**
      * Dodatkowe dane związane z rekordem, które mogą być użyte w callbackach, np. w onRowSelect. Nie są używane bezpośrednio przez DataGrid, więc można tam przechowywać dowolne dane pomocnicze.
@@ -605,17 +618,17 @@ export const DataGrid = <T extends object>({
     const [pivot, setPivot] = useState(initialPivot);
     const prevUniqueValueRef = useRef<any>(null);
 
-    const hasChanges = (changes && changes.length > 0) ? JSON.stringify(changes) : null;
+    const hasChanges = changes?.length ? changes.reduce((h, c, i) => Math.imul((h ^ (((c.version ?? 0) + i * 31) >>> 0)) >>> 0, 16777619) >>> 0, 2166136261 >>> 0) : 0;
 
-    const onSaveColumnsState = () => {
+    const onSaveColumnsState = React.useCallback(() => {
         return {
             filters: filterColumns.filters,
             grouping: groupingColumns.columns,
             pivot: pivot
         };
-    };
+    }, [filterColumns.filters, groupingColumns.columns, pivot]);
 
-    const onRestoreColumnsState = (data: Record<string, any> | null) => {
+    const onRestoreColumnsState = React.useCallback((data: Record<string, any> | null) => {
         filterColumns.clearFilters();
         if (data?.filters) {
             Object.entries(data.filters).forEach(([key, filter]) => {
@@ -639,7 +652,7 @@ export const DataGrid = <T extends object>({
         if (data?.pivot) {
             setPivot(data?.pivot);
         }
-    };
+    }, [filterColumns, groupingColumns, pivot]);
 
     // Mapa zmian dla szybkiego dostępu: uniqueValue → DataGridChange<T>
     const changesMap = React.useMemo(() => {
@@ -916,7 +929,7 @@ export const DataGrid = <T extends object>({
         if (onChange) {
             const timeoutRef = setTimeout(() => {
                 const value = selectedCell?.row !== undefined && selectedCell.column !== undefined
-                    ? displayData[selectedCell.row]?.data?.[columnsState.current[selectedCell.column]?.key]
+                    ? displayDataRef.current[selectedCell.row]?.data?.[columnsState.current[selectedCell.column]?.key]
                     : null;
 
                 const newStatus: DataGridStatus = {
@@ -925,7 +938,7 @@ export const DataGrid = <T extends object>({
                     isSummaryVisible: columnsState.anySummarized,
                     isRowNumberVisible: showRowNumberColumn,
                     columnCount: columnsState.current.length,
-                    rowCount: displayData.length,
+                    rowCount: displayDataRef.current.length,
                     position: selectedCell,
                     dataRowCount: data?.length || 0,
                     selectedRowCount: selectedRows.length,
@@ -951,7 +964,6 @@ export const DataGrid = <T extends object>({
         }
         return;
     }, [
-        displayData,
         selectedCell?.row,
         selectedCell?.column,
         loading,
@@ -976,7 +988,7 @@ export const DataGrid = <T extends object>({
             }
             return;
         }
-        const maxRow = displayData.length - 1;
+        const maxRow = displayDataRef.current.length - 1;
         const maxCol = columnsState.current.length - 1;
         if (maxRow < 0 || maxCol < 0) {
             if (selectedCellRef.current !== null) {
@@ -995,7 +1007,7 @@ export const DataGrid = <T extends object>({
         }
         requestAnimationFrame(() => {
             setSelectedCell(next);
-            prevUniqueValueRef.current = uniqueField ? displayData[next.row]?.data?.[uniqueField] : null;
+            prevUniqueValueRef.current = uniqueField ? displayDataRef.current[next.row]?.data?.[uniqueField] : null;
             selectedCellRef.current = next;
             requestAnimationFrame(() => {
                 if (containerRef.current) {
@@ -1012,16 +1024,21 @@ export const DataGrid = <T extends object>({
                 }
             });
         });
-    }, [displayData.length, columnsState.columnLeft, rowHeight, columnsState.current.length]);
+    }, [columnsState.columnLeft, rowHeight, columnsState.current.length]);
 
-    const totalHeight = displayData.length * rowHeight;
-    const { startRow, endRow } = calculateVisibleRows(displayData.length, rowHeight, containerHeight, scrollTop, containerRef);
+    const totalHeight = displayDataRef.current.length * rowHeight;
+    const { startRow, endRow } = calculateVisibleRows(displayDataRef.current.length, rowHeight, containerHeight, scrollTop, containerRef);
     const { startColumn, endColumn } = calculateVisibleColumns(scrollLeft, containerWidth, columnsState.current);
     const overscanFrom = Math.max(startRow - overscanRowCount, 0);
-    const overscanTo = Math.min(endRow + overscanRowCount, displayData.length);
+    const overscanTo = Math.min(endRow + overscanRowCount, displayDataRef.current.length);
     const visibleStateRef = useRef({ startRow, endRow, startColumn, endColumn, totalHeight });
 
-    visibleStateRef.current = { startRow, endRow, startColumn, endColumn, totalHeight };
+    const v = visibleStateRef.current;
+    v.startRow = startRow;
+    v.endRow = endRow;
+    v.startColumn = startColumn;
+    v.endColumn = endColumn;
+    v.totalHeight = totalHeight;
 
     useEffect(() => {
         console.debug("DataGrid row click");
@@ -1364,7 +1381,6 @@ export const DataGrid = <T extends object>({
         isFocused,
         fontSize,
         columnsState,
-        displayData,
         rowHeight,
         rowNumberColumnWidth,
         changeRowColumnWidth,
@@ -1482,11 +1498,11 @@ export const DataGrid = <T extends object>({
         };
     }, []);
 
-    const handleCellClick = (rowIndex: number, columnIndex: number) => {
+    const handleCellClick = React.useCallback((rowIndex: number, columnIndex: number) => {
         updateSelectedCell({ row: rowIndex, column: columnIndex });
-    };
+    }, [updateSelectedCell]);
 
-    const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    const handleKeyDown = React.useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
         if (loading) return; // Ignoruj zdarzenia klawiatury, gdy loading jest aktywne
 
         if (document.activeElement !== containerRef.current) return;
@@ -1499,7 +1515,7 @@ export const DataGrid = <T extends object>({
             event.preventDefault();
             return;
         }
-    };
+    }, [loading, containerRef, commandManager, actionManager, dataGridActionContext]);
 
     const handleMouseDown = (colIndex: number, event: React.MouseEvent) => {
         event.preventDefault();
@@ -1623,17 +1639,17 @@ export const DataGrid = <T extends object>({
             if (!el) return;
             const r = Number(el.dataset.r);
             const c = Number(el.dataset.c);
-            onRowDoubleClick(displayData[r]?.data);
+            onRowDoubleClick(displayDataRef.current[r]?.data);
         }
-    }, [onRowDoubleClick, displayData]);
+    }, [onRowDoubleClick]);
 
-    function focusHandler(): void {
+    const focusHandler = React.useCallback(() => {
         setTimeout(() => {
-            if (!selectedCellRef.current && displayData.length > 0) {
+            if (!selectedCellRef.current && displayDataRef.current.length > 0) {
                 updateSelectedCell({ row: 0, column: 0 });
             }
         }, 10);
-    }
+    }, [updateSelectedCell]);
 
     React.useEffect(() => {
         console.debug("DataGrid mounted");
@@ -1643,12 +1659,12 @@ export const DataGrid = <T extends object>({
     return (
         <StyledTable
             className={clsx("DataGrid-table", classes, isFocused && 'focused')}
-            style={{
+            style={React.useMemo(() => ({
                 ['--dg-cell-px' as any]: `${cellPaddingX}px`,
                 ['--dg-cell-py' as any]: `${cellPaddingY}px`,
                 fontFamily: fontFamily,
                 fontSize: fontSize,
-            }}
+            }), [cellPaddingX, cellPaddingY, fontFamily, fontSize])}
         >
 
             {loading && (
@@ -1666,10 +1682,10 @@ export const DataGrid = <T extends object>({
                 onKeyDown={!loading ? handleKeyDown : undefined}
                 onScroll={!loading ? onScroll : undefined}
                 onFocus={focusHandler}
-                style={{
+                style={React.useMemo(() => ({
                     pointerEvents: loading ? "none" : "auto", // Zablokuj interakcje, gdy loading jest aktywne
 
-                }}
+                }), [loading])}
             >
                 <CommandPalette
                     manager={actionManager.current!}
@@ -1682,10 +1698,10 @@ export const DataGrid = <T extends object>({
                 />
                 <StyledHeader
                     className={clsx("DataGrid-header", classes)}
-                    style={{
+                    style={React.useMemo(() => ({
                         width: columnsState.totalWidth,
                         height: rowHeight
-                    }}
+                    }), [columnsState.totalWidth, rowHeight])}
                 >
                     {showRowNumberColumn && (
                         <StyledHeaderCell
@@ -1709,7 +1725,7 @@ export const DataGrid = <T extends object>({
                             #
                         </StyledHeaderCell>
                     )}
-                    {hasChanges && uniqueField && (
+                    {(hasChanges > 0) && uniqueField && (
                         <StyledHeaderCell
                             key="row-change-cell"
                             className={clsx(
@@ -1853,10 +1869,10 @@ export const DataGrid = <T extends object>({
                     </StyledNoRowsInfo>
                 )}
                 <StyledRowsContainer
-                    style={{
+                    style={React.useMemo(() => ({
                         height: totalHeight,
                         width: columnsState.totalWidth,
-                    }}
+                    }), [totalHeight, columnsState.totalWidth])}
                     className={clsx("DataGrid-rowsContainer", classes)}
                     onMouseDown={onRowsContainerMouseDown} // delegacja
                     onDoubleClick={handleRowDoubleClick}
@@ -1933,7 +1949,7 @@ export const DataGrid = <T extends object>({
                                         {absoluteRowIndex + 1}
                                     </StyledCell>
                                 )}
-                                {hasChanges && uniqueField && (
+                                {(hasChanges > 0) && uniqueField && (
                                     <StyledCell
                                         key="row-change-cell"
                                         className={clsx(
@@ -2117,7 +2133,7 @@ export const DataGrid = <T extends object>({
                                 }}
                             />
                         )}
-                        {hasChanges && uniqueField && (
+                        {(hasChanges > 0) && uniqueField && (
                             <StyledFooterCell
                                 key="row-change-cell"
                                 className={clsx(

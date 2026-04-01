@@ -155,6 +155,7 @@ export class DataGridChangesManager<T extends Record<string, any>> {
 
         // Jeśli istnieje wpis, aktualizuj
         if (existing) {
+            existing.version = (existing.version || 1) + 1;
             existing.data = { ...existing.data, ...changedFields };
             existing.userData = options?.userData;
             existing.icon = options?.icon;
@@ -164,6 +165,7 @@ export class DataGridChangesManager<T extends Record<string, any>> {
 
         // Dodaj nowy wpis
         const newChange: DataGridChangeRow<Partial<T>> = {
+            version: 1,
             uniqueId,
             type: "update",
             data: changedFields,
@@ -183,6 +185,7 @@ export class DataGridChangesManager<T extends Record<string, any>> {
         const uniqueId = this.options.getUniqueId(record as T);
 
         const newChange: DataGridChangeRow<Partial<T>> = {
+            version: 1,
             uniqueId,
             type: "add",
             data: this.filledFields(record),
@@ -220,6 +223,7 @@ export class DataGridChangesManager<T extends Record<string, any>> {
         if (existing?.type === "update") {
             existing.type = "remove";
             existing.data = {};
+            existing.version = (existing.version || 1) + 1;
             existing.userData = options?.userData;
             existing.icon = options?.icon;
             this.emit('remove', { change: existing, uniqueId });
@@ -228,6 +232,7 @@ export class DataGridChangesManager<T extends Record<string, any>> {
 
         // Dodaj nowy wpis typu "remove"
         const newChange: DataGridChangeRow<Partial<T>> = {
+            version: 1,
             uniqueId,
             type: "remove",
             data: {},
