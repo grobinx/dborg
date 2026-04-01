@@ -770,7 +770,6 @@ export const DataGrid = <T extends object>({
 
     useEffect(() => {
         // Sprawdź, czy zmieniły się kolumny
-        console.debug("Columns changed");
         if (!isSameColumnsSet(
             columns.map(col => ({ key: col.key, dataType: col.dataType })),
             columnsRef.current.map(col => ({ key: col.key, dataType: col.dataType }))
@@ -791,7 +790,6 @@ export const DataGrid = <T extends object>({
 
     const displayDataRef = useRef<DataGridRow<T>[]>([]);
     const displayData = React.useMemo<DataGridRow<T>[]>(() => {
-        console.debug("DataGrid derive filteredDataState (memo)");
         let resultSet = [...(data || [])];
 
         if (hasChanges && uniqueField) {
@@ -874,7 +872,6 @@ export const DataGrid = <T extends object>({
     ]);
 
     useEffect(() => {
-        console.debug("DataGrid row correction");
         // Upewnij się, że zaznaczony wiersz nie wykracza poza odfiltrowane rekordy
         if (selectedCellRef.current && selectedCellRef.current.row !== undefined && selectedCellRef.current.row >= displayData.length) {
             updateSelectedCell(displayData.length > 0 ? { row: displayData.length - 1, column: selectedCellRef.current.column ?? 0 } : null);
@@ -906,7 +903,6 @@ export const DataGrid = <T extends object>({
 
     const summaryRow = React.useMemo<Record<string, any>>(() => {
         if (!columnsState.anySummarized) return {};
-        console.debug("DataGrid derive summaryRow (memo)");
         const dataForSummary = selectedRows.length > 0
             ? selectedRows.map(i => displayData[i]).filter(Boolean)
             : displayData;
@@ -919,12 +915,10 @@ export const DataGrid = <T extends object>({
     ]);
 
     useEffect(() => {
-        console.debug("DataGrid save columns layout");
         columnsState.saveColumnsLayout();
     }, [filterColumns.filters, groupingColumns.columns]);
 
     useEffect(() => {
-        console.debug("DataGrid update status bar");
         onCell?.(selectedCell);
         if (onChange) {
             const timeoutRef = setTimeout(() => {
@@ -979,7 +973,6 @@ export const DataGrid = <T extends object>({
     ]);
 
     const updateSelectedCell = React.useCallback((cell: TableCellPosition | null) => {
-        console.debug("DataGrid update selected cell", cell);
         if (!cell) {
             if (selectedCellRef.current !== null) {
                 setSelectedCell(null);
@@ -1041,7 +1034,6 @@ export const DataGrid = <T extends object>({
     v.totalHeight = totalHeight;
 
     useEffect(() => {
-        console.debug("DataGrid row click");
         if (onRowSelect) {
             if (selectedCell?.row !== undefined) {
                 onRowSelect(displayData?.[selectedCell.row]?.data);
@@ -1054,7 +1046,6 @@ export const DataGrid = <T extends object>({
 
     useEffect(() => {
         if (showRowNumberColumn) {
-            console.debug("DataGrid adjust row number column width");
             if (containerRef.current) {
                 const maxRowNumber = displayData.length; // Maksymalny numer wiersza
                 const text = maxRowNumber.toString(); // Tekst do obliczenia szerokości
@@ -1396,7 +1387,6 @@ export const DataGrid = <T extends object>({
 
     useEffect(() => {
         if (mode === "data" && adjustWidthExecuted && actionManager.current && displayData.length > 0 && startRow >= 0) {
-            console.debug("DataGrid adjust width to data");
             let canceled = false;
             requestAnimationFrame(() => {
                 if (canceled) return;
@@ -1409,7 +1399,6 @@ export const DataGrid = <T extends object>({
     }, [adjustWidthExecuted, actionManager.current, displayData.length, mode, startRow]);
 
     useEffect(() => {
-        console.debug("DataGrid mount effect");
         const container = containerRef.current;
 
         // Obserwator rozmiaru kontenera
@@ -1650,11 +1639,6 @@ export const DataGrid = <T extends object>({
             }
         }, 10);
     }, [updateSelectedCell]);
-
-    React.useEffect(() => {
-        console.debug("DataGrid mounted");
-        return () => console.debug("DataGrid unmounted");
-    }, []);
 
     const valueToStringOptions: ValueToStringOptions = React.useMemo(() => ({
         display: true,
@@ -1999,7 +1983,6 @@ export const DataGrid = <T extends object>({
                                         let isChanged: DataGridRowType | null = null;
 
                                         if (changesMap && uniqueField && changeRecord) {
-                                            console.debug("Change record for row", absoluteRowIndex, changeRecord);
                                             if (changeRecord.type === "update" && col.key in changeRecord.data) {
                                                 oldValue = cellValue;
                                                 cellValue = changeRecord.data[col.key];
