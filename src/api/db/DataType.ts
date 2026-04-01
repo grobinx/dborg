@@ -993,10 +993,13 @@ const match = sample.match(/1(.?)000(.?)000(.?)1/);
 const thousandSeparator = match ? match[1] : ",";
 const decimalSeparator = match ? match[3] : ".";
 
+const withNumThousandsRegex = /(\d)(?=(\d{3})+(?!\d))/g;
+const withIntThousandsRegex = /\B(?=(\d{3})+(?!\d))/g;
+
 // Funkcja pomocnicza do formatowania liczb z separatorami
 function formatDecimalWithThousandsSeparator(value: Decimal): string {
     const [intPart, fracPart] = value.toString().split(".");
-    const intWithSep = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, thousandSeparator);
+    const intWithSep = intPart.replace(withNumThousandsRegex, thousandSeparator);
     return fracPart !== undefined ? `${intWithSep}${decimalSeparator}${fracPart}` : intWithSep;
 }
 
@@ -1007,7 +1010,7 @@ function formatDecimal(value: Decimal): string {
 
 function formatIntWithThousandsSeparator(n: number | string | bigint): string {
     const s = typeof n === 'string' ? n : n.toString();
-    return s.replace(/\B(?=(\d{3})+(?!\d))/g, thousandSeparator);
+    return s.replace(withIntThousandsRegex, thousandSeparator);
 }
 
 export const compareValuesByType = (value1: any, value2: any, dataType: ColumnDataType): number => {
