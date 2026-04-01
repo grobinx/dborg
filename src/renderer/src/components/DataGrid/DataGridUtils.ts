@@ -8,6 +8,22 @@ import { DataGridChangeRow } from "./DataGrid";
 export const footerCaptionHeightFactor = 0.7;
 export const displayMaxLengh = 300;
 
+const eolRegex = /[\r\n]+/g;
+
+const nullFormatter = (dataType: api.ColumnDataType, nullValue: string, value: any, options?: api.ValueToStringOptions) => {
+    if (value === null || value === undefined) {
+        return nullValue || "NULL";
+    }
+    if (React.isValidElement(value)) {
+        return value;
+    }
+    let str = api.valueToString(value, dataType ?? 'string', options);
+    if (typeof str === 'string' && eolRegex.test(str)) {
+        str = str.replace(eolRegex, " ");
+    }
+    return str;
+};
+
 export const columnDataFormatter = (
     value: any,
     dataType: api.ColumnDataType,
@@ -17,26 +33,11 @@ export const columnDataFormatter = (
     fieldName: string,
     options?: api.ValueToStringOptions,
 ) => {
-    const nullFormatter = (value: any) => {
-        if (value === null || value === undefined) {
-            return nullValue || "NULL";
-        }
-        if (React.isValidElement(value)) {
-            return value;
-        }
-        let str = api.valueToString(value, dataType ?? 'string', options);
-        if (typeof str === 'string' && /[\r\n]/.test(str)) {
-            str = str.replace(/[\r\n]+/g, " ");
-        }
-        return str;
-    };
-
     if (formatter) {
-        const formattedValue = formatter(value, row, fieldName);
-        return nullFormatter(formattedValue);
+        return nullFormatter(dataType, nullValue, formatter(value, row, fieldName), options);
     }
 
-    return nullFormatter(value);
+    return nullFormatter(dataType, nullValue, value, options);
 };
 
 export const calculateVisibleColumns = (

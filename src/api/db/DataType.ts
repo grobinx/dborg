@@ -461,11 +461,17 @@ export function valueToString(value: any, dataType: ColumnDataType | null, opts?
     const options: ValueToStringOptions = { ...DEFAULT_V2S_OPTIONS, ...opts };
     const { maxLength = Infinity, display, thousandsSeparator = true } = options;
 
-    if (typeof value === 'string' && value.length > maxLength) {
-        value = value.substring(0, maxLength);
-    }
-
     const resolvedType = Array.isArray(dataType) ? dataType[0] : dataType;
+    const baseType = toBaseType(resolvedType);
+
+    if (typeof value === 'string') {
+        if (value.length > maxLength) {
+            value = value.substring(0, maxLength);
+        }
+        if (baseType === 'string') {
+            return value;
+        }
+    }
 
     if (Array.isArray(value)) {
         const out: string[] = [];
@@ -483,8 +489,6 @@ export function valueToString(value: any, dataType: ColumnDataType | null, opts?
         }
         return `[${out.join(', ')}]`;
     }
-
-    const baseType = toBaseType(resolvedType);
 
     // Cache tylko dla trybu display
     let cacheKey: string | undefined;

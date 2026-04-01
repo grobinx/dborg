@@ -7,7 +7,7 @@ import calculateTextWidth from "@renderer/utils/canvas";
 import clsx from "@renderer/utils/clsx";
 import React, { useEffect, useImperativeHandle, useMemo, useRef, useState } from "react"; // Dodaj import useMemo
 import { useTranslation } from "react-i18next";
-import { ColumnBaseType, columnBaseTypes, ColumnDataType, compareValuesByType, resolvePrimitiveType, toBaseType, valueToString } from "../../../../../src/api/db";
+import { ColumnBaseType, columnBaseTypes, ColumnDataType, compareValuesByType, resolvePrimitiveType, toBaseType, valueToString, ValueToStringOptions } from "../../../../../src/api/db";
 import { ActionManager, IActionManager } from "../CommandPalette/ActionManager";
 import { CommandManager } from "../CommandPalette/CommandManager";
 import CommandPalette from "../CommandPalette/CommandPalette";
@@ -1656,6 +1656,12 @@ export const DataGrid = <T extends object>({
         return () => console.debug("DataGrid unmounted");
     }, []);
 
+    const valueToStringOptions: ValueToStringOptions = React.useMemo(() => ({
+        display: true,
+        thousandsSeparator: true,
+        maxLength: displayMaxLengh
+    }), [displayMaxLengh]);
+
     return (
         <StyledTable
             className={clsx("DataGrid-table", classes, isFocused && 'focused')}
@@ -2025,7 +2031,7 @@ export const DataGrid = <T extends object>({
                                                 null_value,
                                                 row.data,
                                                 col.key,
-                                                { maxLength: displayMaxLengh }
+                                                valueToStringOptions
                                             );
                                             const searchText = searchState.current.text?.trim();
                                             if (typeof formattedValue === "string" && searchText) {
@@ -2214,7 +2220,7 @@ export const DataGrid = <T extends object>({
                                                 active_highlight && startColumn + localColIndex === selectedCell?.column && 'active-column',
                                             )}
                                         >
-                                            {valueToString(summaryRow[col.key], (col.summary ? summaryOperationToBaseTypeMap[col.summary] : undefined) ?? col.dataType, { display: true, maxLength: displayMaxLengh })}
+                                            {valueToString(summaryRow[col.key], (col.summary ? summaryOperationToBaseTypeMap[col.summary] : undefined) ?? col.dataType, valueToStringOptions)}
                                         </StyledFooterCellContent>
                                     ]}
                                 </StyledFooterCell>
