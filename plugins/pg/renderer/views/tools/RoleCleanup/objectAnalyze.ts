@@ -345,7 +345,7 @@ export class ObjectSafetyAnalyzer {
     /**
      * Ocenia bezpieczeństwo zmiany właściciela
      */
-    assessChangeOwner(relation: RelationMetadata, currentOwner?: string): OperationRisk {
+    assessChangeOwner(relation: RelationMetadata, currentOwner?: string | null): OperationRisk {
         const details: string[] = [];
         let level: RiskLevel = "low";
 
