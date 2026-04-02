@@ -567,17 +567,23 @@ function normalizeDuration(value: any): Duration {
     return Duration.invalid('Invalid');
 }
 
+/**
+ * Formatowanie z jednostkami, np. dla size/quantity. Wartość jest skalowana do największej pasującej jednostki.
+ * @param value 
+ * @param units Muszą być posortowane od największego
+ * @param options 
+ * @returns 
+ */
 function formatWithUnit(value: number | bigint, units: Record<string, number>, options: ValueToStringOptions): string {
     const dec = new Decimal(value.toString());
     const abs = dec.abs();
 
     if (abs.isZero()) return "0";
 
-    const sortedUnits = Object.entries(units).sort((a, b) => b[1] - a[1]); // od największej
     let selectedUnit: string | null = null;
     let selectedMultiplier = 1;
 
-    for (const [unit, multiplier] of sortedUnits) {
+    for (const [unit, multiplier] of Object.entries(units)) {
         if (abs.greaterThanOrEqualTo(multiplier)) {
             selectedUnit = unit;
             selectedMultiplier = multiplier;
@@ -768,21 +774,21 @@ const sizeUnits: Record<string, number> = {
 };
 
 const defaultSizeUnits = {
-    k: 1024,
-    m: 1024 ** 2,
-    g: 1024 ** 3,
-    t: 1024 ** 4,
-    p: 1024 ** 5,
     e: 1024 ** 6,
+    p: 1024 ** 5,
+    t: 1024 ** 4,
+    g: 1024 ** 3,
+    m: 1024 ** 2,
+    k: 1024,
 };
 
 const defaultQuantityUnits = {
-    k: 1000,
-    m: 1000 ** 2,
-    g: 1000 ** 3,
-    t: 1000 ** 4,
-    p: 1000 ** 5,
     e: 1000 ** 6,
+    p: 1000 ** 5,
+    t: 1000 ** 4,
+    g: 1000 ** 3,
+    m: 1000 ** 2,
+    k: 1000,
 };
 
 const quantityUnits: Record<string, number> = {
