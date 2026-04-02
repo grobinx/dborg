@@ -258,6 +258,74 @@ export type BlockNode =
 
 export type BlockItem = BlockNode | Token;
 
+const SQL_JOIN_TREE: Record<string, any> = {
+    // --- STANDARD & OUTER JOINS ---
+    "JOIN": "INNER",
+    "INNER": {
+        "JOIN": "INNER",
+        "LATERAL": { "JOIN": "LATERAL" }
+    },
+    "LEFT": {
+        "JOIN": "LEFT",
+        "OUTER": { "JOIN": "LEFT" },
+        "SEMI": { "JOIN": "LEFT SEMI" },
+        "ANTI": { "JOIN": "LEFT ANTI" },
+        "ASOF": { "JOIN": "LEFT ASOF" },
+        "LATERAL": { "JOIN": "LEFT LATERAL" }
+    },
+    "RIGHT": {
+        "JOIN": "RIGHT",
+        "OUTER": { "JOIN": "RIGHT" },
+        "SEMI": { "JOIN": "RIGHT SEMI" },
+        "ANTI": { "JOIN": "RIGHT ANTI" },
+        "ASOF": { "JOIN": "RIGHT ASOF" },
+        "LATERAL": { "JOIN": "RIGHT LATERAL" }
+    },
+    "FULL": {
+        "JOIN": "FULL",
+        "OUTER": { "JOIN": "FULL" }
+    },
+
+    // --- CROSS & APPLY (T-SQL / Oracle / Postgres) ---
+    "CROSS": {
+        "JOIN": { 
+            "LATERAL": "CROSS LATERAL"
+        },
+        "APPLY": "CROSS APPLY"
+    },
+    "OUTER": {
+        "APPLY": "OUTER APPLY"
+    },
+
+    // --- NATURAL JOINS ---
+    "NATURAL": {
+        "JOIN": "NATURAL INNER",
+        "INNER": { "JOIN": "NATURAL INNER" },
+        "LEFT": {
+            "JOIN": "NATURAL LEFT",
+            "OUTER": { "JOIN": "NATURAL LEFT" }
+        },
+        "RIGHT": {
+            "JOIN": "NATURAL RIGHT",
+            "OUTER": { "JOIN": "NATURAL RIGHT" }
+        },
+        "FULL": {
+            "JOIN": "NATURAL FULL",
+            "OUTER": { "JOIN": "NATURAL FULL" }
+        }
+    },
+
+    // --- SPECIALIZED (ClickHouse / Spark / MySQL) ---
+    "ASOF": { "JOIN": "ASOF" },
+    "ANY": { "JOIN": "ANY" },
+    "STRAIGHT_JOIN": "STRAIGHT_JOIN",
+    "GLOBAL": {
+        "INNER": { "JOIN": "GLOBAL INNER" },
+        "LEFT": { "JOIN": "GLOBAL LEFT" }
+    },
+    "LATERAL": { "JOIN": "LATERAL" }
+};
+
 export class Scoper {
     private openBrackets: string[] = ['(', '[', '{'];
     private closeBrackets: string[] = [')', ']', '}'];
@@ -811,69 +879,30 @@ export class Scoper {
         // Skip SELECT keyword
         if (pos < items.length && isKeyword(items[pos], "SELECT")) pos++;
 
-        // Skip optional DISTINCT / ALL quantifier
-        if (pos < items.length && isKeyword(items[pos], "DISTINCT", "ALL")) {
-            pos++;
-            // PostgreSQL: DISTINCT ON (expr)
-            if (pos < items.length && isKeyword(items[pos], "ON")) {
-                pos++;
-                if (pos < items.length && isBlockNode(items[pos]) && (items[pos] as BlockNode).block === "expression") {
-                    pos++;
-                }
-            }
-        }
+        const NOT_ALIAS = ["END", "NULL", "TRUE", "FALSE", "UNKNOWN",
+            "ASC", "DESC", "NULLS", "FIRST", "LAST", "ALL", "DISTINCT",
+            "PRECEDING", "FOLLOWING", "UNBOUNDED", "CURRENT",
+            "ROWS", "RANGE", "GROUPS"] as const;
 
-        while (pos < items.length) {
-            // Clause-starting keyword ends the column list
-            if (this.isStopKeyword(items[pos])) {
-                break;
-            }
+        const { segments, endPos } = this.segmentateItems(items, pos);
 
-            // Skip comma separating columns
-            if (isPunctuator(items[pos], ",")) {
-                pos++;
-                continue;
-            }
-
-            // Collect all items belonging to one column expression
-            const colItems: BlockItem[] = [];
-            while (pos < items.length) {
-                const cur = items[pos];
-
-                if (isPunctuator(cur, ",")) break;
-                if (this.isStopKeyword(cur)) {
-                    break;
-                }
-
-                colItems.push(cur);
-                pos++;
-            }
-
-            if (colItems.length === 0) continue;
-
-            // Detect alias: last identifier token, optionally preceded by AS.
-            // Tokens that are expression-terminating keywords (END, NULL, TRUE, …)
-            // are excluded from implicit alias detection.
-            const NOT_ALIAS = ["END", "NULL", "TRUE", "FALSE", "UNKNOWN",
-                "ASC", "DESC", "NULLS", "FIRST", "LAST", "ALL", "DISTINCT",
-                "PRECEDING", "FOLLOWING", "UNBOUNDED", "CURRENT",
-                "ROWS", "RANGE", "GROUPS"] as const;
+        for (const segment of segments) {
+            if (segment.length === 0) continue;
 
             let alias: Token | null = null;
-            let exprItems: BlockItem[] = colItems;
-            const last = colItems[colItems.length - 1];
+            let exprItems: BlockItem[] = segment.slice();
+            const last = segment[segment.length - 1];
 
-            if (colItems.length >= 2 && isIdentifier(last)) {
-                const secondLast = colItems[colItems.length - 2];
+            if (segment.length >= 2 && isIdentifier(last)) {
+                const secondLast = segment[segment.length - 2];
                 if (isKeyword(secondLast, "AS")) {
-                    // Explicit: expr AS alias
+                    // explicit: expr AS alias
                     alias = last as Token;
-                    exprItems = colItems.slice(0, -2);
-                } else if (!isKeyword(last as Token, ...NOT_ALIAS)
-                    && !(isPunctuator(secondLast, "."))) {
-                    // Implicit: expr alias  (not preceded by dot, not a terminal SQL keyword)
+                    exprItems = segment.slice(0, -2);
+                } else if (!isKeyword(last as Token, ...NOT_ALIAS) && !isPunctuator(secondLast, ".")) {
+                    // implicit: expr alias
                     alias = last as Token;
-                    exprItems = colItems.slice(0, -1);
+                    exprItems = segment.slice(0, -1);
                 }
             }
 
@@ -894,78 +923,56 @@ export class Scoper {
             collected.push(colBlock);
         }
 
-        // endPos points at the LAST consumed item so that the calling loop's
-        // `pos = endPos; pos++` lands on the clause keyword (e.g. FROM) rather
-        // than skipping it.
-        return { collected, endPos: pos - 1 };
+        // segmentateItems.endPos points at the first stop keyword (or items.length)
+        // keep caller convention: return index of LAST consumed item
+        return { collected, endPos: endPos - 1 };
     }
 
     private decomposeWithClasue(items: BlockItem[], startPos: number): { collected: CteBlock[]; endPos: number } {
         const collected: CteBlock[] = [];
-        let pos = startPos;
 
-        while (pos < items.length) {
-            // skip any leading commas
-            while (pos < items.length && isPunctuator(items[pos], ",")) pos++;
-            if (pos >= items.length) break;
+        const { segments, endPos } = this.segmentateItems(items, startPos);
 
-            const segmentStart = pos;
+        for (const segment of segments) {
+            if (segment.length === 0) continue;
 
-            // collect identifier-like tokens (includes keywords but stop at AS)
+            // collect identifier-like name tokens (stop at AS)
             const nameTokens: Token[] = [];
-            while (pos < items.length && isIdentifier(items[pos]) && !isKeyword(items[pos], "AS")) {
-                nameTokens.push(items[pos] as Token);
-                pos++;
+            let i = 0;
+            while (i < segment.length && isIdentifier(segment[i]) && !isKeyword(segment[i], "AS")) {
+                nameTokens.push(segment[i] as Token);
+                i++;
             }
 
-            // optional column-list expression: "(...)" -> expression block
+            // optional column-list expression: next item may be an expression block "(...)" 
             let columnsExpression: ExpressionBlock | null = null;
-            if (pos < items.length) {
-                const maybeCols = items[pos];
-                if (isBlockNode(maybeCols) && maybeCols.block === "expression") {
+            if (i < segment.length) {
+                const maybeCols = segment[i];
+                if (isBlockNode(maybeCols) && (maybeCols as BlockNode).block === "expression") {
                     columnsExpression = maybeCols as ExpressionBlock;
-                    pos++;
+                    i++;
                 }
             }
 
-            if (pos < items.length && isKeyword(items[pos], "AS")) {
-                pos++;
+            // optional AS token
+            if (i < segment.length && isKeyword(segment[i], "AS")) {
+                i++;
             }
 
-            // next should be a statement block "(SELECT ...)"
+            // find a statement block anywhere in the remaining segment
             let cteStatement: StatementBlock | null = null;
-            if (pos < items.length) {
-                const maybeStmt = items[pos];
-                if (isBlockNode(maybeStmt) && maybeStmt.block === "statement") {
-                    cteStatement = maybeStmt as StatementBlock;
-                    pos++;
+            for (let j = i; j < segment.length; j++) {
+                const maybe = segment[j];
+                if (isBlockNode(maybe) && (maybe as BlockNode).block === "statement") {
+                    cteStatement = maybe as StatementBlock;
+                    break;
                 }
-            }
-
-            // If we have no name tokens and no statement yet, try to look ahead for a statement up to next comma
-            if (nameTokens.length === 0 && !cteStatement) {
-                let look = pos;
-                while (look < items.length && !isPunctuator(items[look], ",")) {
-                    const maybe = items[look];
-                    if (isBlockNode(maybe) && maybe.block === "statement") {
-                        cteStatement = maybe as StatementBlock;
-                        pos = look + 1;
-                        break;
-                    }
-                    look++;
-                }
-            }
-
-            // If still nothing meaningful parsed for this segment, bail out (leave caller to handle remaining tokens)
-            if (nameTokens.length === 0 && !cteStatement) {
-                break;
             }
 
             const cteName = nameTokens.length > 0 ? nameTokens[nameTokens.length - 1] : null;
             const options = nameTokens.length > 1 ? nameTokens.slice(0, -1) : null;
 
             if (cteStatement) {
-                // Normal (or tolerant) CTE: we have a statement block (AS optional)
                 const cte: CteBlock = {
                     class: "block",
                     block: "cte",
@@ -976,22 +983,10 @@ export class Scoper {
                     options,
                     columns: columnsExpression ? this.splitColumnDefinitions(columnsExpression) : null,
                 };
-
                 collected.push(cte);
-
-                // if next token is a comma, consume it and continue to next CTE
-                if (pos < items.length && isPunctuator(items[pos], ",")) {
-                    pos++;
-                    continue;
-                } else {
-                    break;
-                }
             } else {
-                // Fallback: we couldn't find a statement block; collect raw tokens up to next comma
-                let scan = segmentStart;
-                while (scan < items.length && !isPunctuator(items[scan], ",")) scan++;
-                const rawPart = items.slice(segmentStart, scan);
-
+                // Fallback: no statement found — keep raw tokens of the segment
+                const rawPart = segment.slice();
                 const last = rawPart.length > 0 ? rawPart[rawPart.length - 1] : null;
 
                 const cte: CteBlock = {
@@ -1006,19 +1001,43 @@ export class Scoper {
                 };
 
                 collected.push(cte);
-
-                // advance pos to the token after the raw segment; skip comma if present
-                pos = scan;
-                if (pos < items.length && isPunctuator(items[pos], ",")) {
-                    pos++;
-                    continue;
-                } else {
-                    break;
-                }
             }
         }
 
-        return { collected, endPos: pos };
+        // segmentateItems.endPos points at the first stop keyword (or items.length)
+        // return convention: index of LAST consumed item
+        return { collected, endPos };
+    }
+
+    private segmentateItems(
+        items: BlockItem[] | null,
+        startPos: number
+    ): { segments: BlockItem[][], endPos: number } {
+        if (!items || items.length === 0) return { segments: [], endPos: startPos };
+
+        const segments: BlockItem[][] = [];
+        let current: BlockItem[] = [];
+
+        while (startPos < items.length) {
+            const item = items[startPos];
+            if (this.isStopKeyword(item)) {
+                break;
+            }
+            if (isPunctuator(item, ",")) {
+                if (current.length > 0) {
+                    segments.push(current);
+                    current = [];
+                }
+                startPos++;
+                continue;
+            }
+            current.push(item);
+            startPos++;
+        }
+        if (current.length > 0) {
+            segments.push(current);
+        }
+        return { segments, endPos: startPos };
     }
 
     private splitColumnDefinitions(node: BlockNode): BlockNode[] {
@@ -1035,23 +1054,7 @@ export class Scoper {
             "KEY",
         ] as const;
 
-        // 1) Podział node.items po przecinkach na segmenty
-        const segments: BlockItem[][] = [];
-        let current: BlockItem[] = [];
-
-        for (const it of node.items) {
-            if (isPunctuator(it, ",")) {
-                if (current.length > 0) {
-                    segments.push(current);
-                    current = [];
-                }
-                continue;
-            }
-            current.push(it);
-        }
-        if (current.length > 0) {
-            segments.push(current);
-        }
+        const { segments } = this.segmentateItems(node.items, 0);
 
         // 2) Konwersja segmentów do DefinitionColumn albo ExpressionBlock
         const converted: BlockNode[] = [];
@@ -1144,9 +1147,12 @@ export class Scoper {
     }
 
     private isStopKeyword(token: any): boolean {
-        return isKeyword(token, "SELECT", "FROM", "WHERE", "GROUP", "ORDER",
+        return isKeyword(token,
+            "SELECT", "FROM", "WHERE", "GROUP", "ORDER",
             "UNION", "INTERSECT", "EXCEPT", "MINUS", "INTO", "LIMIT", "OFFSET",
-            "FETCH", "RETURNING", "WINDOW", "QUALIFY");
+            "FETCH", "RETURNING", "WINDOW", "QUALIFY", "HAVING", "WITH",
+            "FOR"
+        );
     }
 
     private identifyBlocks(node: BlockNode): void {
