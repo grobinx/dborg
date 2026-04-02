@@ -69,6 +69,8 @@ export enum pgTypes {
     ANY_ARRAY = 2277,
 }
 
+const arrayRegex = /^\{|\}$/g;
+
 pg.types.setTypeParser(pg.types.builtins.INT8, function (val) {
     return val;
 });
@@ -79,13 +81,13 @@ pg.types.setTypeParser(pg.types.builtins.MONEY, function (val) {
     return val;
 });
 pg.types.setTypeParser(pgTypes.NUMERIC_ARRAY as unknown as number, function (val: string) {
-    return val.replace(/^\{|\}$/g, '').split(',').map(item => item.trim());
+    return val.replace(arrayRegex, '').split(',').map(item => item.trim());
 });
 pg.types.setTypeParser(pgTypes.INT8_ARRAY as unknown as number, function (val: string) {
-    return val.replace(/^\{|\}$/g, '').split(',').map(item => item.trim());
+    return val.replace(arrayRegex, '').split(',').map(item => item.trim());
 });
 pg.types.setTypeParser(pgTypes.MONEY_ARRAY as unknown as number, function (val: string) {
-    return val.replace(/^\{|\}$/g, '').split(',').map(item => item.trim());
+    return val.replace(arrayRegex, '').split(',').map(item => item.trim());
 });
 
 // Prosta obsługa błędów z pg, żeby nie wywalały procesu gdy backend zostanie ubity

@@ -31,12 +31,12 @@ export interface Rgba {
     a: number;
 }
 
+// rgb/rgba
+const rgbRegex = /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/i;
+const rgbaRegex = /^rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d*\.?\d+)\s*\)$/i;
+
 export function colorToRgba(color: string, alpha?: number): Rgba | null {
     if (!color) return null;
-
-    // rgb/rgba
-    const rgbRegex = /^rgb\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*\)$/i;
-    const rgbaRegex = /^rgba\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d*\.?\d+)\s*\)$/i;
 
     let match = color.match(rgbaRegex);
     if (match) {

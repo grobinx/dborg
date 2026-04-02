@@ -248,6 +248,29 @@ export const typeToString = (dataType: ColumnDataType): string => {
     return dataType;
 }
 
+const typicalSizeRegex = /^\s*([\d.,]+)\s*(bytes?|[KMGT]i?B|B)\s*$/i;
+const intRegex = /^-?\d+$/;
+const floatRegex = /^-?\d+\.\d+(e[+-]?\d+)?$/i;
+const booleanRegex = /^(true|false)$/i;
+const bitRegex = /^(0|1)$/i;
+const dateTimeRegex = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}([\. ]\d{3})?\s*(?:Z|[+-]\d{2}:\d{2})?$/;
+const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+const timeRegex = /^\d{2}:\d{2}:\d{2}$/;
+const isoDurationRegex = /^P(?!$)(\d+Y)?(\d+M)?(\d+D)?(T(\d+H)?(\d+M)?(\d+S)?)?$/;
+const verboseDurationRegex = /^(\d+\s*(year|mon|month|day|hour|min|minute|sec|second)s?\s*)+(\d{2}:\d{2}:\d{2}(\.\d+)?)?$/i;
+const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const emailRegex = /^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[\w-]{2,}$/;
+const urlRegex = /^([a-zA-Z]+):\/\/[^\s\/$.?#].[^\s]*$/;
+const fileRegex = /^([a-zA-Z]:|\/|\\|~|\.\/|\.\.\/)[^\s]*$/;
+const phoneRegex = /^\+?[0-9\s\-\(\)]+$/;
+const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
+const jsonRegex = /^(\{.*\}|\[.*\])$/;
+const xmlRegex = /^<\?xml.*\?>.*<\/.*>$/;
+const wktGeometryRegex = /^(SRID=\d+;)?\s*(POINT|LINESTRING|POLYGON|MULTIPOINT|MULTILINESTRING|MULTIPOLYGON|GEOMETRYCOLLECTION)\s*\(.*\)$/i;
+const geoJsonTypeRegex = /^\s*\{\s*"type"\s*:\s*"(Point|LineString|Polygon|MultiPoint|MultiLineString|MultiPolygon|GeometryCollection)"/i;
+const colorRegex = /^(\#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$|rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)$|rgba\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*(0|1|0?\.\d+)\s*\)$|hsl\(\s*\d{1,3}\s*,\s*\d{1,3}%\s*,\s*\d{1,3}%\s*\)$|hsla\(\s*\d{1,3}\s*,\s*\d{1,3}%\s*,\s*\d{1,3}%\s*,\s*(0|1|0?\.\d+)\s*\)$|transparent$|currentColor$|inherit$|$)/i;
+
 /**
  * Funkcję można wykorzystać do
  * - sprawdzania typu dla baz danych zwracających ciągi znaków, np. sqlite
@@ -259,19 +282,16 @@ export const resolveDataTypeFromString = (value: string | null | undefined): Col
     if (value === null || value === undefined) {
         return null;
     }
-    // size/quantity – liczba + jednostka (np. "8192 bytes", "32 kB", "$100", "5 kg")
-    if (/^[\d.,]+\s*[a-zA-Z]+$/.test(value) || /^[a-zA-Z$€£¥]+\s*[\d.,]+$/.test(value)) {
-        // sprawdź, czy to typowa jednostka rozmiaru danych
-        if (/\d+\s*(bytes?|[KMGT]i?B|B)$/i.test(value)) {
+    if (sizeRegexEnd.test(value) || sizeRegexStart.test(value)) {
+        if (typicalSizeRegex.test(value)) {
             return 'size';
         }
         return 'quantity';
     }
-    if (/^\s*[\d.,]+\s*%$/.test(value)) {
+    if (percentageRegex.test(value)) {
         return 'percentage';
     }
-    // liczby całkowite i zmiennoprzecinkowe
-    if (/^-?\d+$/.test(value)) {
+    if (intRegex.test(value)) {
         const num = Number(value);
         if (!Number.isNaN(num) && Number.isSafeInteger(num)) {
             return 'int';
@@ -281,84 +301,71 @@ export const resolveDataTypeFromString = (value: string | null | undefined): Col
             return 'bigint';
         } catch { }
     }
-    if (/^-?\d+\.\d+(e[+-]?\d+)?$/i.test(value)) {
+    if (floatRegex.test(value)) {
         const num = Number(value);
         if (!Number.isNaN(num) && Number.isFinite(num)) {
             return 'number';
         }
         return 'decimal';
     }
-    // boolean/bit
-    if (/^(true|false)$/i.test(value)) {
+    if (booleanRegex.test(value)) {
         return 'boolean';
     }
-    if (/^(0|1)$/i.test(value)) {
+    if (bitRegex.test(value)) {
         return 'bit';
     }
-    // daty/czas
-    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}([\. ]\d{3})?\s*(?:Z|[+-]\d{2}:\d{2})?$/.test(value)) {
+    if (dateTimeRegex.test(value)) {
         return 'datetime';
     }
-    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    if (dateRegex.test(value)) {
         return 'date';
     }
-    if (/^\d{2}:\d{2}:\d{2}$/.test(value)) {
+    if (timeRegex.test(value)) {
         return 'time';
     }
-    if (/^P(?!$)(\d+Y)?(\d+M)?(\d+D)?(T(\d+H)?(\d+M)?(\d+S)?)?$/.test(value)) {
+    if (isoDurationRegex.test(value)) {
         return 'duration';
     }
-    if (/^(\d+\s*(year|mon|month|day|hour|min|minute|sec|second)s?\s*)+(\d{2}:\d{2}:\d{2}(\.\d+)?)?$/i.test(value)) {
+    if (verboseDurationRegex.test(value)) {
         return 'duration';
     }
-    // uuid
-    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) {
+    if (uuidRegex.test(value)) {
         return 'uuid';
     }
-    // email
-    if (/^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[\w-]{2,}$/.test(value)) {
+    if (emailRegex.test(value)) {
         return 'email';
     }
-    // url
-    if (/^([a-zA-Z]+):\/\/[^\s\/$.?#].[^\s]*$/.test(value)) {
+    if (urlRegex.test(value)) {
         return 'url';
     }
-    // file
-    if (/^([a-zA-Z]:|\/|\\|~|\.\/|\.\.\/)[^\s]*$/.test(value)) {
+    if (fileRegex.test(value)) {
         return 'file';
     }
-    // phone
-    if (/^\+?[0-9\s\-\(\)]+$/.test(value)) {
+    if (phoneRegex.test(value)) {
         return 'phone';
     }
-    // ip
-    if (/^(\d{1,3}\.){3}\d{1,3}$/.test(value)) {
+    if (ipRegex.test(value)) {
         return 'ip';
     }
-    // mac
-    if (/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/.test(value)) {
+    if (macRegex.test(value)) {
         return 'mac';
     }
-    // json
-    if (/^(\{.*\}|\[.*\])$/.test(value)) {
+    if (jsonRegex.test(value)) {
         try {
             JSON.parse(value);
             return 'json';
         } catch { }
     }
-    // xml
-    if (/^<\?xml.*\?>.*<\/.*>$/.test(value)) {
+    if (xmlRegex.test(value)) {
         return 'xml';
     }
-    // geometry
-    if (/^(SRID=\d+;)?\s*(POINT|LINESTRING|POLYGON|MULTIPOINT|MULTILINESTRING|MULTIPOLYGON|GEOMETRYCOLLECTION)\s*\(.*\)$/i.test(value)) {
+    if (wktGeometryRegex.test(value)) {
         return 'geometry';
     }
-    if (/^\s*\{\s*"type"\s*:\s*"(Point|LineString|Polygon|MultiPoint|MultiLineString|MultiPolygon|GeometryCollection)"/i.test(value)) {
+    if (geoJsonTypeRegex.test(value)) {
         return 'geometry';
     }
-    // color
-    if (/^(\#([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$|rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)$|rgba\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*(0|1|0?\.\d+)\s*\)$|hsl\(\s*\d{1,3}\s*,\s*\d{1,3}%\s*,\s*\d{1,3}%\s*\)$|hsla\(\s*\d{1,3}\s*,\s*\d{1,3}%\s*,\s*\d{1,3}%\s*,\s*(0|1|0?\.\d+)\s*\)$|transparent$|currentColor$|inherit$|$)/i.test(value)) {
+    if (colorRegex.test(value)) {
         return 'color';
     }
     return 'string';
@@ -859,11 +866,16 @@ const quantityUnits: Record<string, number> = {
     "¥": 1,
 };
 
+const sizeRegexEnd = /^([\d.,]+)\s*([^\d\s]+)$/;
+const sizeRegexStart = /^([^\d\s]+)\s*([\d.,]+)$/;
+const quantityRegexEnd = /^([\d.,]+)\s*([^\d\s%€$£¥]+|[%€$£¥])$/;
+const quantityRegexStart = /^([^\d\s%€$£¥]+|[%€$£¥])\s*([\d.,]+)$/;
+
 // Parsuje wartość quantity/size na liczbę i jednostkę
 export function parseSize(value: any): { number: number; unit: string } | null {
     if (typeof value !== 'string') return null;
     // jednostka na końcu
-    const endMatch = value.match(/^([\d.,]+)\s*([^\d\s]+)$/);
+    const endMatch = value.match(sizeRegexEnd);
     if (endMatch) {
         const num = parseFloat(endMatch[1].replace(/,/g, ''));
         if (!Number.isFinite(num)) return null;
@@ -873,7 +885,7 @@ export function parseSize(value: any): { number: number; unit: string } | null {
         return { number: num, unit: key };
     }
     // jednostka na początku
-    const startMatch = value.match(/^([^\d\s]+)\s*([\d.,]+)$/);
+    const startMatch = value.match(sizeRegexStart);
     if (startMatch) {
         const num = parseFloat(startMatch[2].replace(/,/g, ''));
         if (!Number.isFinite(num)) return null;
@@ -888,7 +900,7 @@ export function parseSize(value: any): { number: number; unit: string } | null {
 export function parseQuantity(value: any): { number: number; unit: string } | null {
     if (typeof value !== 'string') return null;
     // jednostka na końcu
-    const endMatch = value.match(/^([\d.,]+)\s*([^\d\s%€$£¥]+|[%€$£¥])$/);
+    const endMatch = value.match(quantityRegexEnd);
     if (endMatch) {
         const num = parseFloat(endMatch[1].replace(/,/g, ''));
         if (!Number.isFinite(num)) return null;
@@ -897,7 +909,7 @@ export function parseQuantity(value: any): { number: number; unit: string } | nu
         return { number: num, unit: key };
     }
     // jednostka na początku
-    const startMatch = value.match(/^([^\d\s%€$£¥]+|[%€$£¥])\s*([\d.,]+)$/);
+    const startMatch = value.match(quantityRegexStart);
     if (startMatch) {
         const num = parseFloat(startMatch[2].replace(/,/g, ''));
         if (!Number.isFinite(num)) return null;
@@ -908,9 +920,11 @@ export function parseQuantity(value: any): { number: number; unit: string } | nu
     return null;
 }
 
+const percentageRegex = /^\s*([\d.,]+)\s*%$/;
+
 export function parsePercentage(value: any): number | null {
     if (typeof value !== 'string') return null;
-    const match = value.match(/^([\d.,]+)\s*%$/);
+    const match = value.match(percentageRegex);
     if (match) {
         const num = parseFloat(match[1].replace(/,/g, ''));
         return Number.isFinite(num) ? num / 100 : null;
