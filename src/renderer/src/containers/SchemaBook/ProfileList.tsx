@@ -260,8 +260,6 @@ const ProfileList: React.FC<ProfileListOwnProps> = (props) => {
     const [openCommandPalette, setOpenCommandPalette] = React.useState(false);
     const searchRef = React.useRef<HTMLInputElement>(null);
 
-    console.count("ProfileList render");
-
     const t_connectionProfile = t("connection-profiles", "Connection profiles");
 
     React.useEffect(() => {

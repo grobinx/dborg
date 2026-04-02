@@ -31,8 +31,6 @@ const AppWrapper: React.FC = () => {
         }, 3200);
     }, [settingsContext?.isLoading]);
 
-    console.count("AppWrapper Render");
-
     return (
         <div style={{ height: '100vh', width: '100vw' }}>
             {initStep < 4 &&

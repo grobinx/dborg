@@ -329,7 +329,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
                 }
             }
 
-            console.log(extractSqlParameters(query));
+            //console.log(extractSqlParameters(query));
 
             queueMessage(SQL_EDITOR_EXECUTE_QUERY, {
                 to: session.info.uniqueId,

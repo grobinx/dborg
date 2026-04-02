@@ -532,8 +532,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     values,
 }) => {
     const { t } = useTranslation();
-    console.count("SettingsView Render");
-
+    
     useScrollIntoView({
         containerRef: ref,
         targetId: selectedGroup ?? selected,

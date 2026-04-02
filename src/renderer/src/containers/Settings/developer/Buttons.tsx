@@ -33,8 +33,6 @@ export const ButtonsContent: React.FC<TabPanelContentOwnProps> = (props) => {
         }
     };
 
-    console.count("ButtonsContent render");
-
     return (
         <TabPanelContent {...props} sx={{ width: "100%", height: "100%", overflow: "auto", padding: 8, }}>
             <Stack key="ButtonList" direction="row" width="100%" gap={8}>

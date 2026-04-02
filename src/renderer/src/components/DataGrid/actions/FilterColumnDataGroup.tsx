@@ -52,8 +52,6 @@ export const FilterColumnDataGroup = (): ActionGroup<DataGridActionContext<any>>
                 oldSearchText = searchText;
             }
 
-            console.log('Current filter:', JSON.stringify(filter));
-            console.log("searchText:", searchText);
             const actions: Action<any>[] = [
                 {
                     id: leaveResultOfId,

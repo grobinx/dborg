@@ -496,8 +496,6 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         };
     }, [updateProfile]);
 
-    console.count("ProfilesProvider render");
-
     return (
         <ProfilesContext.Provider
             value={{

@@ -667,7 +667,7 @@ export class Connection extends driver.Connection {
                     if (this.metadataFileName) {
                         const filePath = path.join(dataPath(DBORG_DATA_PATH), "metadata");
                         await fs.mkdir(filePath, { recursive: true });
-                        this.metadata.storeMetadata(path.join(filePath, this.metadataFileName)).catch((e) => console.log("Storing metadata failed:", e));
+                        this.metadata.storeMetadata(path.join(filePath, this.metadataFileName)).catch((e) => console.error("Storing metadata failed:", e));
                     }
 
                     return metadata;

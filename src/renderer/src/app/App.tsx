@@ -42,8 +42,6 @@ const App: React.FC = () => {
     const { queueMessage, subscribe, unsubscribe } = useMessages();
     const lastToolItemRef = React.useRef<{ tabsItemID: string; itemID: string } | null>(null);
 
-    console.count("App Render");
-
     React.useEffect(() => {
         window.sessionStorage.setItem(App_toolsTabsPanelVisible, JSON.stringify(toolsTabsPanelVisible));
     }, [toolsTabsPanelVisible]);

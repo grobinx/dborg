@@ -31,6 +31,8 @@ export type UtilityStatementType = "EXPLAIN" | "ANALYZE" | "VACUUM" | "CLUSTER" 
 
 export type ClauseType = "SELECT" | "FROM" | "WHERE" | "GROUP BY" | "HAVING" | "ORDER BY" | "VALUES" | "SET" | "RETURNING";
 
+export type ColumnType = "result" | "source" | "reference";
+
 export const StatementKindByType: Record<StatementType, StatementKind> = {
     SELECT: "dql",
     VALUES: "dql",
@@ -195,7 +197,24 @@ export interface ReturningClause extends ClauseBlock {
 
 export interface ColumnBlock extends BlockBase {
     block: "column";
+    type: ColumnType;
+}
+
+export interface ResultColumn extends BlockBase {
+    block: "column";
+    type: "result";
     alias: Token | null;
+}
+
+export interface DefinitionColumn extends BlockBase {
+    block: "column";
+    type: "definition";
+    name: Token | null;
+}
+
+export interface ReferenceColumn extends BlockBase {
+    block: "column";
+    type: "reference";
 }
 
 export interface SourceBlock extends BlockBase {
@@ -232,7 +251,9 @@ export type BlockNode =
     | ExpressionBlock
     | CteBlock
     | SetBlock
-    | ColumnBlock
+    | ResultColumn
+    | DefinitionColumn
+    | ReferenceColumn
     | SourceBlock;
 
 export type BlockItem = BlockNode | Token;
@@ -374,7 +395,7 @@ export class Scoper {
                 while (pos < statement.items.length) {
                     item = statement.items[pos];
                     if (isKeyword(item, "SELECT")) {
-                        const { collected, endPos } = this.decomposeColumns(statement.items, pos);
+                        const { collected, endPos } = this.decomposeResultColumns(statement.items, pos);
                         const selectClause: SelectClause = {
                             class: "block",
                             block: "clause",
@@ -396,6 +417,18 @@ export class Scoper {
                             close: collected.length > 0 ? this.findLastToken(collected[collected.length - 1]) : this.findLastToken(item),
                         };
                         setBlock.items!.push(fromClause);
+                        pos = endPos;
+                    } else if (isKeyword(item, "WHERE")) {
+                        const { collected, endPos } = this.decomposeWhere(statement.items, pos);
+                        const whereClause: WhereClause = {
+                            class: "block",
+                            block: "clause",
+                            clause: "WHERE",
+                            items: collected,
+                            open: this.findFirstToken(item),
+                            close: collected.length > 0 ? this.findLastToken(collected[collected.length - 1]) : this.findLastToken(item),
+                        };
+                        setBlock.items!.push(whereClause);
                         pos = endPos;
                     } else {
                         if (isKeyword(item, "UNION", "INTERSECT", "EXCEPT", "MINUS")) {
@@ -527,7 +560,7 @@ export class Scoper {
                 const secondLast = exprItems[exprItems.length - 2];
                 if (isBlockNode(lastItem) && (lastItem as BlockNode).block === "expression" && isIdentifier(secondLast)) {
                     alias = secondLast as Token;
-                    columns = (lastItem as ExpressionBlock).items ? (lastItem as ExpressionBlock).items!.filter(it => !isPunctuator(it, ",")) : null;
+                    columns = this.splitColumnDefinitions(lastItem);
                     exprItems = exprItems.slice(0, -2);
                 }
             }
@@ -568,12 +601,12 @@ export class Scoper {
 
             const openToken = this.findFirstToken(exprItems[0] || segment[0]);
             let closeItem: BlockItem | null = null;
-            if (columns && columns.length > 0) {
+            if (alias) {
+                closeItem = alias;
+            } else if (columns && columns.length > 0) {
                 closeItem = columns[columns.length - 1];
             } else if (exprItems.length > 0) {
                 closeItem = exprItems[exprItems.length - 1];
-            } else if (alias) {
-                closeItem = alias;
             } else {
                 closeItem = segment[segment.length - 1];
             }
@@ -651,7 +684,7 @@ export class Scoper {
                     const secondLast = jExprItems[jExprItems.length - 2];
                     if (isBlockNode(lastItem) && (lastItem as BlockNode).block === "expression" && isIdentifier(secondLast)) {
                         jAlias = secondLast as Token;
-                        jColumns = (lastItem as ExpressionBlock).items ? (lastItem as ExpressionBlock).items!.filter(it => !isPunctuator(it, ",")) : null;
+                        jColumns = this.splitColumnDefinitions(lastItem);
                         jExprItems = jExprItems.slice(0, -2);
                     }
                 }
@@ -749,8 +782,30 @@ export class Scoper {
         return { collected, endPos: pos - 1 };
     }
 
-    private decomposeColumns(items: BlockItem[], startPos: number): { collected: ColumnBlock[]; endPos: number } {
-        const collected: ColumnBlock[] = [];
+    private decomposeWhere(items: BlockItem[], startPos: number): { collected: BlockItem[]; endPos: number } {
+        const collected: BlockItem[] = [];
+        let pos = startPos;
+
+        // Skip WHERE keyword
+        if (pos < items.length && isKeyword(items[pos], "WHERE")) {
+            pos++;
+        }
+
+        // Collect all items until we hit a stop keyword
+        while (pos < items.length) {
+            if (this.isStopKeyword(items[pos])) {
+                break;
+            }
+
+            collected.push(items[pos]);
+            pos++;
+        }
+
+        return { collected, endPos: pos - 1 };
+    }
+
+    private decomposeResultColumns(items: BlockItem[], startPos: number): { collected: ResultColumn[]; endPos: number } {
+        const collected: ResultColumn[] = [];
         let pos = startPos;
 
         // Skip SELECT keyword
@@ -826,9 +881,10 @@ export class Scoper {
                 alias = this.findLastToken(exprItems[exprItems.length - 1], "identifier");
             }
 
-            const colBlock: ColumnBlock = {
+            const colBlock: ResultColumn = {
                 class: "block",
                 block: "column",
+                type: "result",
                 open: exprItems.length > 0 ? this.findFirstToken(exprItems[0]) : this.findFirstToken(last),
                 close: exprItems.length > 0 ? this.findLastToken(exprItems[exprItems.length - 1]) : this.findLastToken(last),
                 items: exprItems.length > 0 ? exprItems : null,
@@ -918,7 +974,7 @@ export class Scoper {
                     items: [cteStatement],
                     name: cteName,
                     options,
-                    columns: columnsExpression && columnsExpression.items ? columnsExpression.items.filter(item => !isPunctuator(item, ",")) : null,
+                    columns: columnsExpression ? this.splitColumnDefinitions(columnsExpression) : null,
                 };
 
                 collected.push(cte);
@@ -946,7 +1002,7 @@ export class Scoper {
                     items: rawPart.length > 0 ? rawPart.slice() : null,
                     name: cteName,
                     options,
-                    columns: columnsExpression && columnsExpression.items ? columnsExpression.items.filter(item => !isPunctuator(item, ",")) : null,
+                    columns: columnsExpression ? this.splitColumnDefinitions(columnsExpression) : null,
                 };
 
                 collected.push(cte);
@@ -963,6 +1019,84 @@ export class Scoper {
         }
 
         return { collected, endPos: pos };
+    }
+
+    private splitColumnDefinitions(node: BlockNode): BlockNode[] {
+        if (!node.items || node.items.length === 0) return [];
+
+        // Słowa kluczowe typowe dla definicji ograniczeń tabeli (nie nazwa kolumny)
+        const NON_COLUMN_STARTERS = [
+            "PRIMARY",
+            "CONSTRAINT",
+            "FOREIGN",
+            "UNIQUE",
+            "CHECK",
+            "EXCLUDE",
+            "KEY",
+        ] as const;
+
+        // 1) Podział node.items po przecinkach na segmenty
+        const segments: BlockItem[][] = [];
+        let current: BlockItem[] = [];
+
+        for (const it of node.items) {
+            if (isPunctuator(it, ",")) {
+                if (current.length > 0) {
+                    segments.push(current);
+                    current = [];
+                }
+                continue;
+            }
+            current.push(it);
+        }
+        if (current.length > 0) {
+            segments.push(current);
+        }
+
+        // 2) Konwersja segmentów do DefinitionColumn albo ExpressionBlock
+        const converted: BlockNode[] = [];
+
+        for (const segment of segments) {
+            if (segment.length === 0) continue;
+
+            const firstItem = segment[0];
+
+            const asExpression = (): ExpressionBlock => ({
+                class: "block",
+                block: "expression",
+                open: this.findFirstToken(segment[0]),
+                close: this.findLastToken(segment[segment.length - 1]),
+                items: segment,
+            });
+
+            // Jeśli segment zaczyna się od constraint keyword (PRIMARY/CONSTRAINT/...)
+            // i nie wygląda na nazwę kolumny, traktujemy cały segment jako expression
+            if (isKeyword(firstItem, ...NON_COLUMN_STARTERS)) {
+                converted.push(asExpression());
+                continue;
+            }
+
+            // Żeby sklasyfikować jako DefinitionColumn, pierwszy element musi być
+            // bezpośrednio tokenem identifier (nazwa kolumny)
+            if (!isIdentifier(firstItem)) {
+                converted.push(isBlockNode(firstItem) ? firstItem : asExpression());
+                continue;
+            }
+
+            const def: DefinitionColumn = {
+                class: "block",
+                block: "column",
+                type: "definition",
+                open: this.findFirstToken(segment[0]),
+                close: this.findLastToken(segment[segment.length - 1]),
+                name: firstItem as Token,
+                items: segment.length > 1 ? segment.slice(1) : null,
+            };
+
+            converted.push(def);
+        }
+
+        return converted;
     }
 
     private splitStatements(root: RootBlock): void {
