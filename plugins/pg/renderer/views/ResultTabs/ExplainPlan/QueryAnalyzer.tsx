@@ -333,16 +333,26 @@ const analyzePlan = (plan: PlanNode, options: QueryAnalyzerOptions, topLevel = t
         }
     }
 
-    if (plan['Shared Read Blocks'] && plan['Shared Read Blocks'] > options.highDiskIOMinSharedReadBlocks) {
+    const sharedReadBlocks = Number(plan['Shared Read Blocks'] ?? 0);
+    if (sharedReadBlocks > options.highDiskIOMinSharedReadBlocks) {
         const readTime = plan['Actual Total Time'] ?? 0;
-
         const targetTable = fqTableFromPlan(plan);
+
+        // Estymacja rozmiaru danych (domyślny block_size Postgres = 8192B)
+        // TODO: trzeba pobrać z current_setting('block_size')::bigint
+        const blockSize = 8192;
+        const bytes = sharedReadBlocks * blockSize;
+        const safetyFactor = 1.25; // margines bezpieczeństwa
+        let recommendedMB = Math.ceil((bytes * safetyFactor) / (1024 * 1024));
+        recommendedMB = Math.max(4, recommendedMB); // minimum 4MB (typowe domyślne)
+        recommendedMB = Math.min(recommendedMB, 4096); // górna granica (4GB) — dopasuj jeśli potrzeba
+
         suggestions.push({
             type: 'warning',
-            title: t("query-analyzer:high-disk-io-title", "High disk I/O ({{reads}} blocks read)", { reads: plan['Shared Read Blocks'] }),
+            title: t("query-analyzer:high-disk-io-title", "High disk I/O ({{reads}} blocks read)", { reads: sharedReadBlocks }),
             description: t("query-analyzer:high-disk-io-desc", "Node {{node}} read {{reads}} blocks from disk taking {{time}}ms. Data not in cache. Consider indexing or increasing work_mem.", {
                 node: plan['Node Type'],
-                reads: plan['Shared Read Blocks'],
+                reads: sharedReadBlocks,
                 time: readTime.toFixed(2)
             }),
             node: t("query-analyzer:disk-io", "Disk I/O"),
@@ -351,7 +361,10 @@ const analyzePlan = (plan: PlanNode, options: QueryAnalyzerOptions, topLevel = t
                 sql: `VACUUM ANALYZE ${targetTable};`
             }, {
                 caption: t("query-analyzer:increase-work-mem", "Increase work_mem"),
-                sql: `SET work_mem = '256MB';`
+                sql: `SET work_mem = '${recommendedMB}MB';`
+            }, {
+                caption: t("query-analyzer:estimate-details", "Estimate details"),
+                sql: `-- estimated read: ${(bytes / (1024 * 1024)).toFixed(2)} MB (${sharedReadBlocks} blocks @ ${blockSize}B), recommended: ${recommendedMB}MB (safetyFactor=${safetyFactor})`
             }]
         });
     }
