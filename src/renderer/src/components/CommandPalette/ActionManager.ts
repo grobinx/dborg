@@ -456,7 +456,6 @@ export class ActionManager<T> implements IActionManager<T> {
             return [];
         }
 
-        console.debug("ActionManager.getRegisteredActions");
         const actionGroup = Array.from(this.actionGroups.values()).find(group => group.prefix === prefix);
 
         if (!actionGroup) {

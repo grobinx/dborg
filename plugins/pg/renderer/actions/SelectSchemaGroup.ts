@@ -28,7 +28,6 @@ export const SelectSchemaGroup = (
             const actions: Action<any>[] = [];
             let schemas: string[] = [];
 
-            console.debug('Fetching schemas...', session.profile.sch_name);
             if (session.metadata) {
                 const database = session.metadata ? Object.values(session.metadata).find((db) => db.connected) : null;
 
@@ -53,7 +52,6 @@ export const SelectSchemaGroup = (
                 }
             }
 
-            console.debug('schemas:', schemas);
             schemas.forEach((schemaName) => {
                 actions.push({
                     id: `dataGrid.pg.schema.${schemaName}`,

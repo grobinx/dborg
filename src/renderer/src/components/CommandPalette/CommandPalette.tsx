@@ -185,7 +185,6 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({
     }, [open, manager, prefix]);
 
     useEffect(() => {
-        console.debug("updateSelectedIndex");
         if (!open) return; // Nie wykonuj operacji, jeśli okno jest zamknięte
 
         // Znajdź indeks akcji, która ma właściwość selected ustawioną na true

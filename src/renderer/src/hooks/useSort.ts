@@ -193,7 +193,6 @@ export function useSort<T>(
     }
 
     React.useEffect(() => {
-        console.debug("useSort: sorting data");
         if (!data || !indexes) {
             setSortedData(null);
             return;

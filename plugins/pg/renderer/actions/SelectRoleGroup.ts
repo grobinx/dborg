@@ -26,7 +26,6 @@ export const SelectRoleGroup = (
             const actions: Action<any>[] = [];
             let roles: string[] = [];
 
-            console.debug('Fetching roles...', session.profile.sch_name);
             try {
                 const { rows } = await session.query(sql);
                 if (rows.length !== 0) {
@@ -36,7 +35,6 @@ export const SelectRoleGroup = (
                 console.error("Error fetching roles:", error);
             }
 
-            console.debug('roles:', roles);
             roles.forEach((roleName) => {
                 actions.push({
                     id: `dataGrid.pg.role.${roleName}`,
