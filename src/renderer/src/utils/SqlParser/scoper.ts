@@ -93,8 +93,15 @@ export interface BlockBase {
     items: BlockItem[] | null;
 }
 
-function isBlockNode(obj: any): obj is BlockNode {
-    return obj && typeof obj === "object" && obj.class === "block" && "block" in obj && "open" in obj && "close" in obj && "items" in obj;
+function isBlockNode(obj: any, blockType?: BlockType): obj is BlockNode {
+    return (
+        obj && typeof obj === "object" && 
+        obj.class === "block" && "block" in obj && 
+        "open" in obj && 
+        "close" in obj && 
+        "items" in obj && 
+        (blockType ? obj.block === blockType : true)
+    );
 }
 
 export interface RootBlock extends BlockBase {
@@ -504,7 +511,7 @@ export class Scoper {
             }
 
             const first = segment[idx];
-            if (isBlockNode(first) && (first as BlockNode).block === "statement") {
+            if (isBlockNode(first, "statement")) {
                 // subquery: (SELECT ...)
                 exprItems = [first];
                 idx = idx + 1;
@@ -516,7 +523,7 @@ export class Scoper {
                 }
                 const nameTokens = segment.slice(idx, q);
                 // function call: identifier + ( ... )
-                if (q < segment.length && isBlockNode(segment[q]) && (segment[q] as BlockNode).block === "expression") {
+                if (q < segment.length && isBlockNode(segment[q], "expression")) {
                     exprItems = [...nameTokens, segment[q]];
                     idx = q + 1;
                 } else {
@@ -549,7 +556,7 @@ export class Scoper {
             }
 
             // columns after alias: alias (col1, col2)
-            if (idx < segment.length && isBlockNode(segment[idx]) && (segment[idx] as BlockNode).block === "expression") {
+            if (idx < segment.length && isBlockNode(segment[idx], "expression")) {
                 columns = this.splitColumnDefinitions(segment[idx] as BlockNode);
                 idx += 1;
             }
@@ -559,7 +566,7 @@ export class Scoper {
             const localOptions: BlockItem[] = [];
             for (let j = 0; j < tail.length;) {
                 const t = tail[j];
-                if (!isBlockNode(t) && isKeyword(t, "ON", "USING")) {
+                if (isKeyword(t, "ON", "USING")) {
                     // group remaining tokens starting from ON/USING as one expression (join condition)
                     const condTokens = tail.slice(j);
                     const condBlock: OnClause = {
@@ -712,7 +719,7 @@ export class Scoper {
             let columnsExpression: ExpressionBlock | null = null;
             if (i < segment.length) {
                 const maybeCols = segment[i];
-                if (isBlockNode(maybeCols) && (maybeCols as BlockNode).block === "expression") {
+                if (isBlockNode(maybeCols, "expression")) {
                     columnsExpression = maybeCols as ExpressionBlock;
                     i++;
                 }
@@ -727,7 +734,7 @@ export class Scoper {
             let cteStatement: StatementBlock | null = null;
             for (let j = i; j < segment.length; j++) {
                 const maybe = segment[j];
-                if (isBlockNode(maybe) && (maybe as BlockNode).block === "statement") {
+                if (isBlockNode(maybe, "statement")) {
                     cteStatement = maybe as StatementBlock;
                     break;
                 }
