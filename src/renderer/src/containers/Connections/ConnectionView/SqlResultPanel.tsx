@@ -382,8 +382,10 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
 
 
         if (query) {
+            console.time("parse");
             const tokens = new Tokenizer(query, { dialect: "postgres" }).tokenize();
             const scopes = Scoper.fromTokens(tokens);
+            console.timeEnd("parse");
             console.log(scopes);
 
             if (isSelect()) {

@@ -269,7 +269,35 @@ export type BlockNode =
 
 export type BlockItem = BlockNode | Token;
 
-const SQL_JOIN_LIST: Set<string> = new Set(["JOIN", "LEFT", "RIGHT", "FULL", "INNER", "OUTER", "CROSS", "NATURAL", "SEMI", "ANTI", "ASOF", "ANY", "STRAIGHT_JOIN", "GLOBAL", "APPLY"]);
+const JOIN_KEYWORDS = new Set([
+    "JOIN", "LEFT", "RIGHT", "FULL", "INNER", "OUTER", "CROSS",
+    "NATURAL", "SEMI", "ANTI", "ASOF", "ANY", "STRAIGHT_JOIN",
+    "GLOBAL", "APPLY",
+]);
+
+const STOP_KEYWORDS = new Set([
+    "SELECT", "FROM", "WHERE", "GROUP", "ORDER",
+    "UNION", "INTERSECT", "EXCEPT", "MINUS", "INTO", "LIMIT",
+    "OFFSET", "FETCH", "RETURNING", "WINDOW", "QUALIFY",
+    "HAVING", "WITH", "FOR",
+]);
+
+const ALIAS_FORBIDDEN = new Set([
+    "END", "NULL", "TRUE", "FALSE", "UNKNOWN",
+    "ASC", "DESC", "NULLS", "FIRST", "LAST", "ALL", "DISTINCT",
+    "PRECEDING", "FOLLOWING", "UNBOUNDED", "CURRENT",
+    "ROWS", "RANGE", "GROUPS", "WHERE", "GROUP", "ORDER", "HAVING", "LIMIT", "OFFSET",
+    "FETCH", "RETURNING", "WINDOW", "QUALIFY",
+]);
+
+const NON_COLUMN_STARTERS = new Set([
+    "PRIMARY", "CONSTRAINT", "FOREIGN", "UNIQUE", "CHECK",
+    "EXCLUDE", "KEY",
+]);
+
+function isKeywordInSet(token: unknown, keywords: Set<string>): boolean {
+    return isIdentifier(token) && !token.quote && keywords.has(token.value.toUpperCase());
+}
 
 export class Scoper {
     private openBrackets: string[] = ['(', '[', '{'];
@@ -313,22 +341,6 @@ export class Scoper {
         return root;
     }
 
-    private findStatemets(node: BlockNode): StatementResolved[] {
-        const statements: StatementResolved[] = [];
-        if (!node.items || node.items.length === 0) return statements;
-
-        for (const item of node.items) {
-            if (isStatementResolved(item)) {
-                statements.push(item);
-            }
-            if (isBlockNode(item)) {
-                statements.push(...this.findStatemets(item));
-            }
-        }
-
-        return statements;
-    }
-
     private findExpressions(node: BlockNode): ExpressionBlock[] {
         const expressions: ExpressionBlock[] = [];
         if (!node.items || node.items.length === 0) return expressions;
@@ -355,6 +367,22 @@ export class Scoper {
                 expr.items = collected;
             }
         }
+    }
+
+    private findStatemets(node: BlockNode): StatementResolved[] {
+        const statements: StatementResolved[] = [];
+        if (!node.items || node.items.length === 0) return statements;
+
+        for (const item of node.items) {
+            if (isStatementResolved(item)) {
+                statements.push(item);
+            }
+            if (isBlockNode(item)) {
+                statements.push(...this.findStatemets(item));
+            }
+        }
+
+        return statements;
     }
 
     private decomposeStatements(root: BlockNode): void {
@@ -558,14 +586,6 @@ export class Scoper {
     private decomposeSources(items: BlockItem[], startPos: number): { collected: SourceBlock[]; endPos: number; separators?: Token[][] } {
         let pos = startPos;
 
-        const NOT_ALIAS = [
-            "END", "NULL", "TRUE", "FALSE", "UNKNOWN",
-            "ASC", "DESC", "NULLS", "FIRST", "LAST", "ALL", "DISTINCT",
-            "PRECEDING", "FOLLOWING", "UNBOUNDED", "CURRENT",
-            "ROWS", "RANGE", "GROUPS",
-            "WHERE", "GROUP", "ORDER", "HAVING", "LIMIT", "OFFSET", "FETCH", "RETURNING", "WINDOW", "QUALIFY"
-        ] as const;
-
         const { segments, endPos, separators } = this.segmentateItems(items, pos, true);
         const collected: SourceBlock[] = [];
 
@@ -633,7 +653,7 @@ export class Scoper {
                 const prev = exprItems.length > 0 ? exprItems[exprItems.length - 1] : null;
                 if (!prev || !isPunctuator(prev as Token, ".")) {
                     const candidate = segment[idx] as Token;
-                    if (!isKeyword(candidate, ...NOT_ALIAS)) {
+                    if (!isKeywordInSet(candidate, ALIAS_FORBIDDEN)) {
                         alias = candidate;
                         idx += 1;
                     }
@@ -747,17 +767,12 @@ export class Scoper {
             collected.push(expression);
         }
 
-        return { collected, endPos: endPos -1 };
+        return { collected, endPos: endPos - 1 };
     }
 
     private decomposeResultColumns(items: BlockItem[], startPos: number): { collected: ResultColumn[]; endPos: number } {
         const collected: ResultColumn[] = [];
         let pos = startPos;
-
-        const NOT_ALIAS = ["END", "NULL", "TRUE", "FALSE", "UNKNOWN",
-            "ASC", "DESC", "NULLS", "FIRST", "LAST", "ALL", "DISTINCT",
-            "PRECEDING", "FOLLOWING", "UNBOUNDED", "CURRENT",
-            "ROWS", "RANGE", "GROUPS"] as const;
 
         const { segments, endPos } = this.segmentateItems(items, pos);
 
@@ -774,7 +789,7 @@ export class Scoper {
                     // explicit: expr AS alias
                     alias = last as Token;
                     exprItems = segment.slice(0, -2);
-                } else if (!isKeyword(last as Token, ...NOT_ALIAS) && !isPunctuator(secondLast, ".")) {
+                } else if (!isKeywordInSet(last as Token, ALIAS_FORBIDDEN) && !isPunctuator(secondLast, ".")) {
                     // implicit: expr alias
                     alias = last as Token;
                     exprItems = segment.slice(0, -1);
@@ -911,13 +926,13 @@ export class Scoper {
                 continue;
             }
 
-            if (joins && isKeyword(item, ...SQL_JOIN_LIST)) {
+            if (joins && isKeywordInSet(item, JOIN_KEYWORDS)) {
                 if (current.length > 0) {
                     segments.push(current);
                     current = [];
                 }
                 const joinSeparators: Token[] = [];
-                while (startPos < items.length && isKeyword(items[startPos], ...SQL_JOIN_LIST)) {
+                while (startPos < items.length && isKeywordInSet(items[startPos], JOIN_KEYWORDS)) {
                     joinSeparators.push(items[startPos] as Token);
                     startPos++;
                 }
@@ -936,17 +951,6 @@ export class Scoper {
 
     private splitColumnDefinitions(node: BlockNode): BlockNode[] {
         if (!node.items || node.items.length === 0) return [];
-
-        // Słowa kluczowe typowe dla definicji ograniczeń tabeli (nie nazwa kolumny)
-        const NON_COLUMN_STARTERS = [
-            "PRIMARY",
-            "CONSTRAINT",
-            "FOREIGN",
-            "UNIQUE",
-            "CHECK",
-            "EXCLUDE",
-            "KEY",
-        ] as const;
 
         const { segments } = this.segmentateItems(node.items, 0);
 
@@ -968,7 +972,7 @@ export class Scoper {
 
             // Jeśli segment zaczyna się od constraint keyword (PRIMARY/CONSTRAINT/...)
             // i nie wygląda na nazwę kolumny, traktujemy cały segment jako expression
-            if (isKeyword(firstItem, ...NON_COLUMN_STARTERS)) {
+            if (isKeywordInSet(firstItem, NON_COLUMN_STARTERS)) {
                 converted.push(asExpression());
                 continue;
             }
@@ -1041,12 +1045,7 @@ export class Scoper {
     }
 
     private isStopKeyword(token: any): boolean {
-        return isKeyword(token,
-            "SELECT", "FROM", "WHERE", "GROUP", "ORDER",
-            "UNION", "INTERSECT", "EXCEPT", "MINUS", "INTO", "LIMIT", "OFFSET",
-            "FETCH", "RETURNING", "WINDOW", "QUALIFY", "HAVING", "WITH",
-            "FOR"
-        );
+        return isKeywordInSet(token, STOP_KEYWORDS);
     }
 
     private identifyBlocks(node: BlockNode): void {
@@ -1217,34 +1216,36 @@ export class Scoper {
         return null;
     }
 
-    private findTokens(node: BlockItem | null): Token[] {
-        if (!node) return [];
+    private findLastToken(node: BlockItem | null, type: TokenType | null = null): Token | null {
+        if (!node) return null;
 
-        if (isToken(node)) return [node];
-
-        if (isBlockNode(node)) {
-            const tokens: Token[] = [];
-            tokens.push(...(node.open ? [node.open] : []));
-            for (const item of node.items || []) {
-                tokens.push(...this.findTokens(item));
-            }
-            tokens.push(...(node.close ? [node.close] : []));
-            return tokens;
+        if (isToken(node)) {
+            return !type || node.type === type ? node : null;
         }
 
-        return [];
-    }
+        if (!isBlockNode(node)) return null;
 
-    private findLastToken(node: BlockItem | null, type: TokenType | null = null): Token | null {
-        const tokens = this.findTokens(node);
-        if (type) {
-            for (let i = tokens.length - 1; i >= 0; i--) {
-                if (tokens[i].type === type) {
-                    return tokens[i];
+        if (!type) {
+            // Fast path: close jest ostatnim tokenem bloku
+            if (node.close) return node.close;
+            if (node.items) {
+                for (let i = node.items.length - 1; i >= 0; i--) {
+                    const found = this.findLastToken(node.items[i], null);
+                    if (found) return found;
                 }
             }
-            return null;
+            return node.open;
         }
-        return tokens.length > 0 ? tokens[tokens.length - 1] : null;
+
+        // Z filtrem: szukamy od końca w kolejności close → items od końca → open
+        if (node.close && node.close.type === type) return node.close;
+        if (node.items) {
+            for (let i = node.items.length - 1; i >= 0; i--) {
+                const found = this.findLastToken(node.items[i], type);
+                if (found) return found;
+            }
+        }
+        if (node.open && node.open.type === type) return node.open;
+        return null;
     }
 }
