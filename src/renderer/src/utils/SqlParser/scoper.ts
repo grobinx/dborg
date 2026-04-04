@@ -233,6 +233,7 @@ export interface SourceBlock extends BlockBase {
     alias: Token | null;
     options: BlockItem[] | null;
     columns: BlockItem[] | null;
+    cteRef?: CteBlock | null; 
 }
 
 export type Statement =
@@ -299,6 +300,22 @@ function isKeywordInSet(token: unknown, keywords: Set<string>): boolean {
     return isIdentifier(token) && !token.quote && keywords.has(token.value.toUpperCase());
 }
 
+function isBlockClause(obj: any, clauseType?: ClauseType): obj is ClauseBlock {
+    return isBlockNode(obj, "clause") && (clauseType ? (obj as ClauseBlock).clause === clauseType : true);
+}
+
+function isBlockSource(obj: any): obj is SourceBlock {
+    return isBlockNode(obj, "source");
+}
+
+function isBlockStatement(obj: any): obj is StatementBlock {
+    return isBlockNode(obj, "statement");
+}
+
+function isBLockCte(obj: any): obj is CteBlock {
+    return isBlockNode(obj, "cte");
+}
+
 export class Scoper {
     private openBrackets: string[] = ['(', '[', '{'];
     private closeBrackets: string[] = [')', ']', '}'];
@@ -337,8 +354,85 @@ export class Scoper {
         this.identifyBlocks(root);
         this.decomposeStatements(root);
         this.decomposeArrays(root);
+        this.resolveCteReferences(root);
 
         return root;
+    }
+
+    private resolveCteReferences(root: BlockNode): void {
+        if (!root.items) return;
+
+        // Start only from top-level statements.
+        // Nested statements are handled recursively with inherited scope.
+        for (const item of root.items) {
+            if (isBlockStatement(item)) {
+                this.resolveStatementCteRefs(item, new Map<string, CteBlock>());
+            }
+        }
+    }
+
+    private resolveStatementCteRefs(statement: StatementBlock, inherited: Map<string, CteBlock>): void {
+        if (!statement.items || statement.items.length === 0) return;
+
+        const scope = new Map(inherited);
+
+        for (const item of statement.items) {
+            // CTE declaration at current statement level
+            if (isBLockCte(item)) {
+                if (item.name) {
+                    scope.set(this.normalizeIdentifier(item.name), item);
+                }
+
+                // Resolve references inside CTE body with current visible scope
+                for (const cteItem of item.items || []) {
+                    if (isBlockStatement(cteItem)) {
+                        this.resolveStatementCteRefs(cteItem, new Map(scope));
+                    }
+                }
+
+                continue;
+            }
+
+            // Main query/set parts
+            if (!isBlockNode(item, "set") || !item.items) continue;
+
+            for (const setItem of item.items) {
+                if (!isBlockClause(setItem, "FROM") || !setItem.items) continue;
+
+                for (const srcItem of setItem.items) {
+                    if (!isBlockSource(srcItem)) continue;
+
+                    const nameToken = this.extractSourceNameToken(srcItem);
+                    srcItem.cteRef = nameToken
+                        ? (scope.get(this.normalizeIdentifier(nameToken)) ?? null)
+                        : null;
+
+                    // Subquery in FROM (...) inherits current scope
+                    const first = srcItem.items && srcItem.items[0];
+                    if (isBlockStatement(first)) {
+                        this.resolveStatementCteRefs(first, new Map(scope));
+                    }
+                }
+            }
+        }
+    }
+
+    private extractSourceNameToken(source: SourceBlock): Token | null {
+        if (!source.items || source.items.length === 0) return null;
+
+        const first = source.items[0];
+
+        // subquery source: no direct CTE name
+        if (isBlockStatement(first)) return null;
+
+        // normal source starts from identifier in your decomposeSources
+        if (isIdentifier(first)) return first;
+
+        return null;
+    }
+
+    private normalizeIdentifier(token: Token): string {
+        return isIdentifier(token) && token.quote ? token.value : token.value.toUpperCase();
     }
 
     private findExpressions(node: BlockNode): ExpressionBlock[] {
