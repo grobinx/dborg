@@ -95,11 +95,11 @@ export interface BlockBase {
 
 function isBlockNode(obj: any, blockType?: BlockType): obj is BlockNode {
     return (
-        obj && typeof obj === "object" && 
-        obj.class === "block" && "block" in obj && 
-        "open" in obj && 
-        "close" in obj && 
-        "items" in obj && 
+        obj && typeof obj === "object" &&
+        obj.class === "block" && "block" in obj &&
+        "open" in obj &&
+        "close" in obj &&
+        "items" in obj &&
         (blockType ? obj.block === blockType : true)
     );
 }
@@ -269,7 +269,7 @@ export type BlockNode =
 
 export type BlockItem = BlockNode | Token;
 
-const SQL_JOIN_LIST = ["JOIN", "LEFT", "RIGHT", "FULL", "INNER", "OUTER", "CROSS", "NATURAL", "SEMI", "ANTI", "ASOF", "ANY", "STRAIGHT_JOIN", "GLOBAL", "APPLY"];
+const SQL_JOIN_LIST: Set<string> = new Set(["JOIN", "LEFT", "RIGHT", "FULL", "INNER", "OUTER", "CROSS", "NATURAL", "SEMI", "ANTI", "ASOF", "ANY", "STRAIGHT_JOIN", "GLOBAL", "APPLY"]);
 
 export class Scoper {
     private openBrackets: string[] = ['(', '[', '{'];
@@ -308,6 +308,7 @@ export class Scoper {
         this.splitStatements(root);
         this.identifyBlocks(root);
         this.decomposeStatements(root);
+        this.decomposeArrays(root);
 
         return root;
     }
@@ -328,6 +329,34 @@ export class Scoper {
         return statements;
     }
 
+    private findExpressions(node: BlockNode): ExpressionBlock[] {
+        const expressions: ExpressionBlock[] = [];
+        if (!node.items || node.items.length === 0) return expressions;
+
+        for (const item of node.items) {
+            if (isBlockNode(item, "expression")) {
+                expressions.push(item as ExpressionBlock);
+            }
+            if (isBlockNode(item)) {
+                expressions.push(...this.findExpressions(item));
+            }
+        }
+
+        return expressions;
+    }
+
+    private decomposeArrays(node: BlockNode): void {
+        if (!node.items || node.items.length === 0) return;
+
+        const expressions = this.findExpressions(node);
+        for (const expr of expressions) {
+            if (expr.items && expr.items.length > 0) {
+                const { collected } = this.decomposeList(expr.items, 0);
+                expr.items = collected;
+            }
+        }
+    }
+
     private decomposeStatements(root: BlockNode): void {
         if (!root.items || root.items.length === 0) return;
 
@@ -336,7 +365,7 @@ export class Scoper {
         for (let i = 0; i < statements.length; i++) {
             const statement = statements[i];
             if (isStatementResolved(statement)) {
-                if (statement.type === "SELECT") {
+                if (statement.type === "SELECT" || statement.type === "VALUES") {
                     this.decomposeSelectStatement(statement);
                 } else if (statement.type === "INSERT") {
                     this.decomposeInsertStatement(statement);
@@ -395,7 +424,7 @@ export class Scoper {
                 }
                 item = statement.items[pos];
             }
-            if (isKeyword(item, "SELECT")) {
+            if (isKeyword(item, "SELECT", "VALUES")) {
                 const setBlock: SetBlock = {
                     class: "block",
                     block: "set",
@@ -408,6 +437,7 @@ export class Scoper {
                 while (pos < statement.items.length) {
                     item = statement.items[pos];
                     if (isKeyword(item, "SELECT")) {
+                        pos++;
                         const { collected, endPos } = this.decomposeResultColumns(statement.items, pos);
                         const selectClause: SelectClause = {
                             class: "block",
@@ -420,6 +450,7 @@ export class Scoper {
                         setBlock.items!.push(selectClause);
                         pos = endPos;
                     } else if (isKeyword(item, "FROM")) {
+                        pos++;
                         const { collected, endPos } = this.decomposeSources(statement.items, pos);
                         const fromClause: FromClause = {
                             class: "block",
@@ -432,7 +463,8 @@ export class Scoper {
                         setBlock.items!.push(fromClause);
                         pos = endPos;
                     } else if (isKeyword(item, "WHERE")) {
-                        const { collected, endPos } = this.decomposeWhere(statement.items, pos);
+                        pos++;
+                        const { collected, endPos } = this.decomposeExpression(statement.items, pos);
                         const whereClause: WhereClause = {
                             class: "block",
                             block: "clause",
@@ -442,6 +474,60 @@ export class Scoper {
                             close: collected.length > 0 ? this.findLastToken(collected[collected.length - 1]) : this.findLastToken(item),
                         };
                         setBlock.items!.push(whereClause);
+                        pos = endPos;
+                    } else if (isKeyword(item, "ORDER")) {
+                        pos++;
+                        if (pos < items.length && isKeyword(items[pos], "BY")) pos++;
+                        const { collected, endPos } = this.decomposeList(statement.items, pos);
+                        const orderClause: OrderByClause = {
+                            class: "block",
+                            block: "clause",
+                            clause: "ORDER BY",
+                            items: collected,
+                            open: this.findFirstToken(item),
+                            close: collected.length > 0 ? this.findLastToken(collected[collected.length - 1]) : this.findLastToken(item),
+                        };
+                        setBlock.items!.push(orderClause);
+                        pos = endPos;
+                    } else if (isKeyword(item, "HAVING")) {
+                        pos++;
+                        const { collected, endPos } = this.decomposeExpression(statement.items, pos);
+                        const havingClause: HavingClause = {
+                            class: "block",
+                            block: "clause",
+                            clause: "HAVING",
+                            items: collected,
+                            open: this.findFirstToken(item),
+                            close: collected.length > 0 ? this.findLastToken(collected[collected.length - 1]) : this.findLastToken(item),
+                        };
+                        setBlock.items!.push(havingClause);
+                        pos = endPos;
+                    } else if (isKeyword(item, "GROUP")) {
+                        pos++;
+                        if (pos < items.length && isKeyword(items[pos], "BY")) pos++;
+                        const { collected, endPos } = this.decomposeList(statement.items, pos);
+                        const groupClause: GroupByClause = {
+                            class: "block",
+                            block: "clause",
+                            clause: "GROUP BY",
+                            items: collected,
+                            open: this.findFirstToken(item),
+                            close: collected.length > 0 ? this.findLastToken(collected[collected.length - 1]) : this.findLastToken(item),
+                        };
+                        setBlock.items!.push(groupClause);
+                        pos = endPos;
+                    } else if (isKeyword(item, "VALUES")) {
+                        pos++;
+                        const { collected, endPos } = this.decomposeList(statement.items, pos);
+                        const valuesClause: ValuesClause = {
+                            class: "block",
+                            block: "clause",
+                            clause: "VALUES",
+                            items: collected,
+                            open: this.findFirstToken(item),
+                            close: collected.length > 0 ? this.findLastToken(collected[collected.length - 1]) : this.findLastToken(item),
+                        };
+                        setBlock.items!.push(valuesClause);
                         pos = endPos;
                     } else {
                         if (isKeyword(item, "UNION", "INTERSECT", "EXCEPT", "MINUS")) {
@@ -471,7 +557,6 @@ export class Scoper {
 
     private decomposeSources(items: BlockItem[], startPos: number): { collected: SourceBlock[]; endPos: number; separators?: Token[][] } {
         let pos = startPos;
-        if (pos < items.length && isKeyword(items[pos], "FROM")) pos++;
 
         const NOT_ALIAS = [
             "END", "NULL", "TRUE", "FALSE", "UNKNOWN",
@@ -621,14 +706,9 @@ export class Scoper {
         return { collected, endPos: endPos - 1, separators: separators ? separators.map(arr => arr.filter((t): t is Token => t !== null)) : undefined };
     }
 
-    private decomposeWhere(items: BlockItem[], startPos: number): { collected: BlockItem[]; endPos: number } {
+    private decomposeExpression(items: BlockItem[], startPos: number): { collected: BlockItem[]; endPos: number } {
         const collected: BlockItem[] = [];
         let pos = startPos;
-
-        // Skip WHERE keyword
-        if (pos < items.length && isKeyword(items[pos], "WHERE")) {
-            pos++;
-        }
 
         // Collect all items until we hit a stop keyword
         while (pos < items.length) {
@@ -640,15 +720,39 @@ export class Scoper {
             pos++;
         }
 
+        if (collected.length === 1 && isBlockNode(collected[0], "expression")) {
+            return { collected: (collected[0] as ExpressionBlock).items || [], endPos: pos - 1 };
+        }
+
         return { collected, endPos: pos - 1 };
+    }
+
+    private decomposeList(items: BlockItem[], startPos: number): { collected: BlockItem[]; endPos: number } {
+        const collected: BlockItem[] = [];
+        let pos = startPos;
+
+        const { segments, endPos } = this.segmentateItems(items, pos);
+
+        for (const segment of segments) {
+            if (segment.length === 0) continue;
+
+            const expression: ExpressionBlock = {
+                class: "block",
+                block: "expression",
+                open: this.findFirstToken(segment[0]),
+                close: this.findLastToken(segment[segment.length - 1]),
+                items: segment.length === 1 && isBlockNode(segment[0], "expression") ? (segment[0] as ExpressionBlock).items : segment,
+            };
+
+            collected.push(expression);
+        }
+
+        return { collected, endPos: endPos -1 };
     }
 
     private decomposeResultColumns(items: BlockItem[], startPos: number): { collected: ResultColumn[]; endPos: number } {
         const collected: ResultColumn[] = [];
         let pos = startPos;
-
-        // Skip SELECT keyword
-        if (pos < items.length && isKeyword(items[pos], "SELECT")) pos++;
 
         const NOT_ALIAS = ["END", "NULL", "TRUE", "FALSE", "UNKNOWN",
             "ASC", "DESC", "NULLS", "FIRST", "LAST", "ALL", "DISTINCT",
@@ -1018,10 +1122,6 @@ export class Scoper {
         return { collected, endPos: pos };
     }
 
-    private isArrayExpression(tokens: Token[]): boolean {
-        return tokens.some(t => isPunctuator(t, ","));
-    }
-
     private isStatement(tokens: Token[]): boolean {
         if (tokens.length === 0) return false;
         const token = tokens[0];
@@ -1076,7 +1176,7 @@ export class Scoper {
                     node.items = this.collectNestedItems(innerTokens);
 
                     // BlockBase nie jest bezposrednio w BlockNode, wiec rzutowanie do BlockItem
-                    items.push(node!);
+                    items.push(node);
 
                     pos = balanced.endPos;
                     continue;
