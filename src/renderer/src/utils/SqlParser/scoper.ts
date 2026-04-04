@@ -1067,29 +1067,48 @@ export class Scoper {
     }
 
     private identifyStatement(block: StatementBlock): Statement {
-        const identifiers = block.items?.filter(item => isIdentifier(item) && !item.quote) as Token[] || [];
-        if (identifiers.length === 0) return block;
+        if (!block.items || block.items.length === 0) return block;
 
-        // Pobierz pierwszy istotny token (pomijając np. WITH dla uproszczenia na tym etapie)
-        let firstToken = identifiers[0];
+        let firstToken: Token | null = null;
 
-        if (firstToken.value.toUpperCase() === "WITH") {
-            const mainToken = identifiers.find(t => t.value.toUpperCase() in StatementKindByType);
-            if (mainToken) firstToken = mainToken;
+        for (const item of block.items) {
+            if (isIdentifier(item) && !item.quote) {
+                firstToken = item;
+                break;
+            }
         }
 
-        const keyword = firstToken.value.toUpperCase() as StatementType;
-        const kind = StatementKindByType[keyword];
+        if (!firstToken) return block;
 
-        if (kind) {
-            return {
-                ...block,
-                kind: kind,
-                type: keyword,
-            } as StatementResolved;
+        let keyword = firstToken.value.toUpperCase();
+
+        if (keyword === "WITH") {
+            let mainToken: Token | null = null;
+
+            for (const item of block.items) {
+                if (!isIdentifier(item) || item.quote) continue;
+
+                const value = item.value.toUpperCase();
+                if (value in StatementKindByType) {
+                    mainToken = item;
+                    break;
+                }
+            }
+
+            if (!mainToken) return block;
+            keyword = mainToken.value.toUpperCase();
         }
 
-        return block;
+        const type = keyword as StatementType;
+        const kind = StatementKindByType[type];
+
+        if (!kind) return block;
+
+        return {
+            ...block,
+            kind,
+            type,
+        } as StatementResolved;
     }
 
     private collectBalanced(tokens: Token[], startPos: number): { collected: Token[]; endPos: number } {
