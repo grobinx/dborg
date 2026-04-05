@@ -1,6 +1,9 @@
 import { IdentifierToken, isIdentifier, isKeyword, isPunctuator, isToken, Tokenizer, TokenType, type Token, type TokenizerOptions } from "./tokenizer";
 
-export type BlockType = "root" | "statement" | "expression" | "cte" | "set" | "clause" | "column" | "source";
+export type BlockType =
+    | "root" | "statement" | "expression" | "cte"
+    | "set" | "clause" | "column" | "source"
+    | "database-object";
 
 export type StatementKind = "dml" | "ddl" | "dcl" | "dql" | "tcl" | "utility";
 
@@ -14,9 +17,14 @@ export type DclStatementType = "GRANT" | "REVOKE";
 
 export type TclStatementType = "COMMIT" | "ROLLBACK" | "SAVEPOINT" | "SET TRANSACTION";
 
-export type UtilityStatementType = "EXPLAIN" | "ANALYZE" | "VACUUM" | "CLUSTER" | "CHECKPOINT" | "DISCARD" | "LOAD" | "RESET" | "REINDEX" | "USE" | "SHOW" | "DESCRIBE" | "HELP";
+export type UtilityStatementType =
+    | "EXPLAIN" | "ANALYZE" | "VACUUM" | "CLUSTER" | "CHECKPOINT"
+    | "DISCARD" | "LOAD" | "RESET" | "REINDEX" | "USE" | "SHOW"
+    | "DESCRIBE" | "HELP";
 
-export type ClauseType = "SELECT" | "FROM" | "WHERE" | "GROUP BY" | "HAVING" | "ORDER BY" | "VALUES" | "SET" | "RETURNING" | "ON";
+export type ClauseType =
+    | "SELECT" | "FROM" | "WHERE" | "GROUP BY" | "HAVING"
+    | "ORDER BY" | "VALUES" | "SET" | "RETURNING" | "ON";
 
 export type ColumnType = "result" | "source" | "reference";
 
@@ -84,9 +92,7 @@ function isBlockNode(obj: any, blockType?: BlockType): obj is BlockNode {
     return (
         obj && typeof obj === "object" &&
         obj.class === "block" && "block" in obj &&
-        "open" in obj &&
-        "close" in obj &&
-        "items" in obj &&
+        "block" in obj &&
         (blockType ? obj.block === blockType : true)
     );
 }
@@ -220,7 +226,7 @@ export interface SourceBlock extends BlockBase {
     alias: Token | null;
     options: BlockItem[] | null;
     columns: BlockItem[] | null;
-    cteRef?: CteBlock | null; 
+    reference?: CteBlock | null;
 }
 
 export type Statement =
@@ -243,7 +249,7 @@ export type Clause =
     | SetClause
     | ReturningClause;
 
-export type BlockNode =
+export type BlockNode<U = unknown> =
     | RootBlock
     | Statement
     | ClauseBlock
@@ -253,9 +259,57 @@ export type BlockNode =
     | ResultColumn
     | DefinitionColumn
     | ReferenceColumn
-    | SourceBlock;
+    | SourceBlock
+    | DatabaseObject<U>;
 
-export type BlockItem = BlockNode | Token;
+export type ObjectResolveMode =
+    /**
+     * Ten tryb jest używana gry rozpoznajemy źródła danych w klauzuli FROM lub podobnych. W tym trybie szukamy głównie tabel, widoków, funkcji tabelarycznych itp. oraz ich aliasów.
+     */
+    | "producer"
+    /**
+     * Ten tryb jest używany gdy rozpoznajemy odwołania do obiektów (tabel, kolumn) wewnątrz wyrażeń, np. w SELECT, WHERE, GROUP BY itp.
+     */
+    | "consumer";
+
+export type DatabaseIdentifierKind =
+    /**
+     * Schemat, baza danych lub inny kontener obiektów, który może być częścią kwalifikowanej nazwy (np. schema.table).
+     */
+    | "group"
+    /**
+     * Tabela, widok lub inny obiekt, który może być źródłem danych w klauzuli FROM lub podobnej. 
+     */
+    | "relation"
+    /**
+     * Funkcja, która może być wywoływana w zapytaniach SQL i zwraca wynik, który może być użyty w klauzuli FROM lub innej.
+     */
+    | "routine";
+
+export interface ResolvedIdentifierResult<U = unknown> {
+    kind: DatabaseIdentifierKind;
+    data: U;
+}
+
+export interface ResolvedIdentifier<U = unknown> extends ResolvedIdentifierResult<U> {
+    class: "resolved-identifier";
+    token: IdentifierToken;
+}
+
+export interface DatabaseObject<U = unknown> extends BlockBase {
+    block: "database-object";
+    items: ResolvedIdentifier<U>[] | null;
+    kind: DatabaseIdentifierKind;
+    data: U;
+}
+
+export type ResolveIdentifierCallback<U = unknown> = (
+    mode: ObjectResolveMode,
+    token: IdentifierToken,
+    resolved: ResolvedIdentifier<U>[],
+) => ResolvedIdentifierResult<U> | null;
+
+export type BlockItem<U = unknown> = BlockNode | Token | ResolvedIdentifier<U>;
 
 const JOIN_KEYWORDS = new Set([
     "JOIN", "LEFT", "RIGHT", "FULL", "INNER", "OUTER", "CROSS",
@@ -303,41 +357,6 @@ function isBLockCte(obj: any): obj is CteBlock {
     return isBlockNode(obj, "cte");
 }
 
-export type ObjectResolveMode = 
-    /**
-     * Ten tryb jest używana gry rozpoznajemy źródła danych w klauzuli FROM lub podobnych. W tym trybie szukamy głównie tabel, widoków, funkcji tabelarycznych itp. oraz ich aliasów.
-     */
-    | "producer" 
-    /**
-     * Ten tryb jest używany gdy rozpoznajemy odwołania do obiektów (tabel, kolumn) wewnątrz wyrażeń, np. w SELECT, WHERE, GROUP BY itp.
-     */
-    | "consumer";
-
-export type ResolvedObjectKind =
-    /**
-     * Schemat, baza danych lub inny kontener obiektów, który może być częścią kwalifikowanej nazwy (np. schema.table).
-     */
-    | "group"
-    /**
-     * Tabela, widok lub inny obiekt, który może być źródłem danych w klauzuli FROM lub podobnej. 
-     */
-    | "relation"
-    /**
-     * Funkcja, która może być wywoływana w zapytaniach SQL i zwraca wynik, który może być użyty w klauzuli FROM lub innej.
-     */
-    | "routine"
-
-export interface ResolvedIdentifier<U = unknown> {
-    kind: ResolvedObjectKind;
-    data: U;
-}
-
-export type ResolveObjectCallback<U = unknown> = (
-    mode: ObjectResolveMode, 
-    token: IdentifierToken,
-    resolved: ResolvedIdentifier<U>[],
-) => ResolvedIdentifier<U> | null;
-
 export class Scoper {
     private openBrackets: string[] = ['(', '[', '{'];
     private closeBrackets: string[] = [')', ']', '}'];
@@ -345,22 +364,22 @@ export class Scoper {
     constructor() {
     }
 
-    public static fromTokens(tokens: Token[]): RootBlock {
+    public static fromTokens<U = unknown>(tokens: Token[], resolveIdentifierCallback?: ResolveIdentifierCallback<U>): RootBlock {
         tokens = tokens.filter(t => t.type !== "comment" && t.type !== "whitespace");
         for (const token of tokens) {
             if (isIdentifier(token) && !token.quote) {
                 token.value = token.value.toUpperCase();
             }
         }
-        return new Scoper().build(tokens);
+        return new Scoper().build(tokens, resolveIdentifierCallback);
     }
 
-    public static fromSql(sql: string, tokenizerOptions: TokenizerOptions = {}): RootBlock {
+    public static fromSql<U = unknown>(sql: string, resolveIdentifierCallback?: ResolveIdentifierCallback<U>, tokenizerOptions: TokenizerOptions = {}): RootBlock {
         const tokens = new Tokenizer(sql, tokenizerOptions).tokenize();
-        return Scoper.fromTokens(tokens);
+        return Scoper.fromTokens<U>(tokens, resolveIdentifierCallback);
     }
 
-    public build(tokens: Token[]): RootBlock {
+    public build<U = unknown>(tokens: Token[], resolveIdentifierCallback?: ResolveIdentifierCallback<U>): RootBlock {
         const root: RootBlock = {
             class: "block",
             block: "root",
@@ -381,7 +400,11 @@ export class Scoper {
         this.identifyBlocks(root);
         this.decomposeStatements(root);
         this.decomposeArrays(root);
-        this.resolveCteReferences(root);
+        if (resolveIdentifierCallback) {
+            this.resolveCteReferences(root);
+        } else {
+            this.resolveCteReferences(root);
+        }
 
         return root;
     }
@@ -430,7 +453,7 @@ export class Scoper {
                     if (!isBlockSource(srcItem)) continue;
 
                     const nameToken = this.extractSourceNameToken(srcItem);
-                    srcItem.cteRef = nameToken
+                    srcItem.reference = nameToken
                         ? (scope.get(nameToken.value) ?? null)
                         : null;
 
