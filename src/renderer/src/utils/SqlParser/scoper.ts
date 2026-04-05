@@ -329,7 +329,6 @@ export type ResolvedObjectKind =
 
 export interface ResolvedIdentifier<U = unknown> {
     kind: ResolvedObjectKind;
-    token: IdentifierToken;
     data: U;
 }
 
