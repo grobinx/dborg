@@ -1,17 +1,4 @@
-import { isIdentifier, isKeyword, isPunctuator, isToken, Tokenizer, TokenType, type Token, type TokenizerOptions } from "./tokenizer";
-
-/**
- * class: token | scope
- * + token
- *   + type: identifier | string | number | operator | punctuator | comment | whitespace
- * + scope: root | statement | expression | cte 
- *   + statement
- *     + kind: dml | ddl | dcl | dql | tcl | utility
- *     + type: SELECT | INSERT | UPDATE | DELETE | MERGE | VALUES
- *   + expression
- *     + type: single | array
- *
- */
+import { IdentifierToken, isIdentifier, isKeyword, isPunctuator, isToken, Tokenizer, TokenType, type Token, type TokenizerOptions } from "./tokenizer";
 
 export type BlockType = "root" | "statement" | "expression" | "cte" | "set" | "clause" | "column" | "source";
 
@@ -340,16 +327,17 @@ export type ResolvedObjectKind =
      */
     | "routine"
 
-export interface ResolvedObject<U = unknown> {
+export interface ResolvedIdentifier<U = unknown> {
     kind: ResolvedObjectKind;
+    token: IdentifierToken;
     data: U;
 }
 
 export type ResolveObjectCallback<U = unknown> = (
     mode: ObjectResolveMode, 
-    token: Token, 
-    resolved: ResolvedObject<U>[],
-) => ResolvedObject<U> | null;
+    token: IdentifierToken,
+    resolved: ResolvedIdentifier<U>[],
+) => ResolvedIdentifier<U> | null;
 
 export class Scoper {
     private openBrackets: string[] = ['(', '[', '{'];
