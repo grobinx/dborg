@@ -297,7 +297,7 @@ const NON_COLUMN_STARTERS = new Set([
 ]);
 
 function isKeywordInSet(token: unknown, keywords: Set<string>): boolean {
-    return isIdentifier(token) && !token.quote && keywords.has(token.value.toUpperCase());
+    return isIdentifier(token) && !token.quote && keywords.has(token.value);
 }
 
 function isBlockClause(obj: any, clauseType?: ClauseType): obj is ClauseBlock {
@@ -316,6 +316,41 @@ function isBLockCte(obj: any): obj is CteBlock {
     return isBlockNode(obj, "cte");
 }
 
+export type ObjectResolveMode = 
+    /**
+     * Ten tryb jest używana gry rozpoznajemy źródła danych w klauzuli FROM lub podobnych. W tym trybie szukamy głównie tabel, widoków, funkcji tabelarycznych itp. oraz ich aliasów.
+     */
+    | "producer" 
+    /**
+     * Ten tryb jest używany gdy rozpoznajemy odwołania do obiektów (tabel, kolumn) wewnątrz wyrażeń, np. w SELECT, WHERE, GROUP BY itp.
+     */
+    | "consumer";
+
+export type ResolvedObjectKind =
+    /**
+     * Schemat, baza danych lub inny kontener obiektów, który może być częścią kwalifikowanej nazwy (np. schema.table).
+     */
+    | "group"
+    /**
+     * Tabela, widok lub inny obiekt, który może być źródłem danych w klauzuli FROM lub podobnej. 
+     */
+    | "relation"
+    /**
+     * Funkcja, która może być wywoływana w zapytaniach SQL i zwraca wynik, który może być użyty w klauzuli FROM lub innej.
+     */
+    | "routine"
+
+export interface ResolvedObject<U = unknown> {
+    kind: ResolvedObjectKind;
+    data: U;
+}
+
+export type ResolveObjectCallback<U = unknown> = (
+    mode: ObjectResolveMode, 
+    token: Token, 
+    resolved: ResolvedObject<U>[],
+) => ResolvedObject<U> | null;
+
 export class Scoper {
     private openBrackets: string[] = ['(', '[', '{'];
     private closeBrackets: string[] = [')', ']', '}'];
@@ -325,6 +360,11 @@ export class Scoper {
 
     public static fromTokens(tokens: Token[]): RootBlock {
         tokens = tokens.filter(t => t.type !== "comment" && t.type !== "whitespace");
+        for (const token of tokens) {
+            if (isIdentifier(token) && !token.quote) {
+                token.value = token.value.toUpperCase();
+            }
+        }
         return new Scoper().build(tokens);
     }
 
@@ -380,7 +420,7 @@ export class Scoper {
             // CTE declaration at current statement level
             if (isBLockCte(item)) {
                 if (item.name) {
-                    scope.set(this.normalizeIdentifier(item.name), item);
+                    scope.set(item.name.value, item);
                 }
 
                 // Resolve references inside CTE body with current visible scope
@@ -404,7 +444,7 @@ export class Scoper {
 
                     const nameToken = this.extractSourceNameToken(srcItem);
                     srcItem.cteRef = nameToken
-                        ? (scope.get(this.normalizeIdentifier(nameToken)) ?? null)
+                        ? (scope.get(nameToken.value) ?? null)
                         : null;
 
                     // Subquery in FROM (...) inherits current scope
@@ -429,10 +469,6 @@ export class Scoper {
         if (isIdentifier(first)) return first;
 
         return null;
-    }
-
-    private normalizeIdentifier(token: Token): string {
-        return isIdentifier(token) && token.quote ? token.value : token.value.toUpperCase();
     }
 
     private findExpressions(node: BlockNode): ExpressionBlock[] {
@@ -538,7 +574,7 @@ export class Scoper {
             item = statement.items[pos];
             let operator: SetOperator | null = null;
             if (isKeyword(item, "UNION", "INTERSECT", "EXCEPT", "MINUS")) {
-                operator = item.value.toUpperCase() as SetOperator;
+                operator = item.value as SetOperator;
                 pos++;
                 if (pos < statement.items.length && isKeyword(item, "UNION") && isKeyword(statement.items[pos], "ALL")) {
                     operator = "UNION ALL";
@@ -1174,7 +1210,7 @@ export class Scoper {
 
         if (!firstToken) return block;
 
-        let keyword = firstToken.value.toUpperCase();
+        let keyword = firstToken.value;
 
         if (keyword === "WITH") {
             let mainToken: Token | null = null;
@@ -1182,7 +1218,7 @@ export class Scoper {
             for (const item of block.items) {
                 if (!isIdentifier(item) || item.quote) continue;
 
-                const value = item.value.toUpperCase();
+                const value = item.value;
                 if (value in StatementKindByType) {
                     mainToken = item;
                     break;
@@ -1190,7 +1226,7 @@ export class Scoper {
             }
 
             if (!mainToken) return block;
-            keyword = mainToken.value.toUpperCase();
+            keyword = mainToken.value;
         }
 
         const type = keyword as StatementType;
@@ -1238,7 +1274,7 @@ export class Scoper {
         if (tokens.length === 0) return false;
         const token = tokens[0];
         if (token.type !== "identifier" || token.quote) return false;
-        const keyword = token.value.toUpperCase();
+        const keyword = token.value;
         return keyword in StatementKindByType || (keyword === "WITH");
     }
 
