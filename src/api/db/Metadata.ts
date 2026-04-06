@@ -23,36 +23,6 @@ export interface OwnedMetadataBase extends MetadataBase {
     modified?: string | null;
 }
 
-/** Permissions assigned to the current session */
-export interface SessionPermissions {
-    /** User have permission for create namespace (eg. schema) */
-    createNamespace?: boolean | null;
-
-    /** User have superuser privileges. This field is optional and can be null if the database does not support superuser roles or if the information is not available. If true, it indicates that the user has all permissions and can perform any action on the database, regardless of other specific permissions. */
-    isSuperUser?: boolean | null;
-}
-
-/** Metadata about the current session */
-export interface SessionMetadata {
-    /** Name of the user or role for which the permissions are defined. This field is optional and can be null if the permissions apply to the current session user or if the database does not support role-based permissions. */
-    userName: string;
-
-    /** List of roles assigned to the user. This field is optional and can be null if the database does not support role-based permissions or if the information is not available. If provided, it contains the names of the roles that are granted to the user, which may confer additional permissions or privileges on top of the user's base permissions. */
-    roles?: string[] | null;
-
-    /** Search path for the session, if applicable. This field is optional and can be null if the database does not support search paths or if the information is not available. If provided, it contains an ordered list of schema names that define the search path for unqualified object names in SQL queries executed in the session. The search path determines the order in which schemas are searched when resolving object names that do not specify a schema. */
-    searchPath?: string[] | null;
-
-    /** Name of the current database schema (e.g., "public"). This field is optional and can be null if the database does not support schemas or if the information is not available. If provided, it indicates the default schema that is in use for the session, which may affect how unqualified object names are resolved in SQL queries. */
-    currentNamespace?: string | null;
-
-    /** Permissions assigned to the current session */
-    permissions?: SessionPermissions;
-
-    /** Session-specific settings or configuration parameters. This field is optional and can be null if the database does not support session settings or if the information is not available. If provided, it contains a key-value map of settings that apply to the current session. */
-    settings?: Record<string, any>;
-};
-
 /** Main structure describing the database */
 export interface DatabaseMetadata extends OwnedMetadataBase {
     /** To this database are you connected */
@@ -60,9 +30,6 @@ export interface DatabaseMetadata extends OwnedMetadataBase {
 
     /** Whether the database is the template database */
     template?: boolean | null;
-
-    /** Metadata about the current session */
-    session?: SessionMetadata;
 
     /** List of schemas in the database */
     schemas: Record<string, SchemaMetadata>;

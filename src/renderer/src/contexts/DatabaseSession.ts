@@ -19,6 +19,8 @@ export interface IDatabaseSession extends api.BaseConnection {
 
     getVersion(): string | undefined; // Get the version of the database
 
+    getContext(reload?: boolean): Promise<api.SessionContext | undefined>; // Get session context, if supported by database, for example current user, roles, permissions, etc. This method is optional and may not be implemented by all drivers. If the database does not support session context or if the information is not available, this method may return undefined or throw an error. The session context provides information about the current session and can be used to determine the permissions and capabilities of the session user.
+
     open(sql: string, values?: unknown[], maxRowsMode?: api.CursorFetchMaxRowsMode): Promise<IDatabaseSessionCursor>;
 
     closeCursors(): Promise<void>; // Close all cursors
@@ -210,6 +212,14 @@ class DatabaseSession implements IDatabaseSession {
         // cancel all queued (not started) tasks
         this.queue.cancelAllQueued();
         return window.dborg.database.connection.close(this.info.uniqueId);
+    }
+
+    async getContext(reload?: boolean): Promise<api.SessionContext | undefined> {
+        if (this.info.context && !reload) {
+            return this.info.context;
+        }
+        this.info.context = await window.dborg.database.connection.getContext(this.info.uniqueId, reload);
+        return this.info.context;
     }
 
     async getMetadata(progress?: (current: string) => void, force?: boolean): Promise<api.DatabasesMetadata> {

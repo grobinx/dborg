@@ -30,7 +30,6 @@ export class MetadataCollector implements api.IMetadataCollector {
     async restoreMetadata(fileName: string): Promise<api.DatabasesMetadata> {
         try {
             this.databases = await this.restoreMetadataArchive(fileName);
-            await this.updateSession();
         } catch (error) {
             if (!(error instanceof Error) || error.message !== NOT_ARCHIVE_ERROR) {
                 throw error;
@@ -260,8 +259,6 @@ export class MetadataCollector implements api.IMetadataCollector {
         await this.updateTypes(progress);
         await this.updateSequence(progress);
 
-        await this.updateSession(progress);
-
         this.inited = true;
     }
 
@@ -327,50 +324,6 @@ export class MetadataCollector implements api.IMetadataCollector {
             throw new Error(`Database ${databaseName} not found`);
         }
         return database;
-    }
-
-    async updateSession(progress?: (current: string) => void): Promise<void> {
-        const database = this.connectedDatabase();
-
-        if (progress) {
-            progress("session");
-        }
-
-        const { rows } = await this.client!.query(`
-        SELECT 
-            current_user AS "userName",
-            ARRAY(
-                SELECT r.rolname 
-                FROM pg_catalog.pg_roles r 
-                WHERE pg_catalog.pg_has_role(current_user, r.oid, 'USAGE')
-            ) AS "roles",
-            current_schemas(true) AS "searchPath",
-            current_schema() AS "currentNamespace",
-            pg_catalog.has_database_privilege(current_user, current_database(), 'CREATE') AS "canCreate",
-            (SELECT rolsuper FROM pg_catalog.pg_roles WHERE rolname = current_user) AS "isSuper",
-            pg_catalog.json_build_object(
-                'application_name', current_setting('application_name', true),
-                'server_version', current_setting('server_version', true),
-                'client_encoding', current_setting('client_encoding', true),
-                'timezone', current_setting('TimeZone', true)
-            ) AS "settings"
-        `);
-
-        if (rows.length > 0) {
-            const row = rows[0];
-
-            database.session = {
-                userName: row.userName,
-                roles: row.roles,
-                searchPath: row.searchPath,
-                currentNamespace: row.currentNamespace,
-                settings: row.settings,
-                permissions: {
-                    createNamespace: row.canCreate,
-                    isSuperUser: row.isSuper
-                }
-            };
-        }
     }
 
     async updateSchemas(progress?: (current: string) => void, name?: string): Promise<void> {

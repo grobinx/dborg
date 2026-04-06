@@ -90,6 +90,7 @@ declare global {
                 },
                 connection: {
                     getConnection: (uniqueId: string) => Promise<ConnectionInfo | undefined>,
+                    getContext: (uniqueId: string, reload?: boolean) => Promise<SessionContext | undefined>,
                     close: (uniqueId: string) => Promise<void>,
                     userData: {
                         get: (uniqueId: string, property: string) => Promise<unknown>,

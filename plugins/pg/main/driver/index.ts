@@ -385,6 +385,7 @@ export class Connection extends driver.Connection {
     private metadataPromise: Promise<api.DatabasesMetadata> | null = null;
     private pid: string | undefined;
     private metadataFileName: string | undefined;
+    private context: api.SessionContext | undefined;
 
     constructor(properties: api.Properties, driver: Driver, client: pg.Client | pg.Pool, uniqueId?: string, pid?: string) {
         super(driver);
@@ -460,6 +461,50 @@ export class Connection extends driver.Connection {
         }
 
         return this.version as Version;
+    }
+
+    async getContext(reload?: boolean): Promise<api.SessionContext | undefined> {
+        this._checkConnected();
+
+        if (this.context === undefined || reload) {
+            const { rows } = await this.query(`
+        SELECT 
+            current_user AS "userName",
+            ARRAY(
+                SELECT r.rolname 
+                FROM pg_catalog.pg_roles r 
+                WHERE pg_catalog.pg_has_role(current_user, r.oid, 'USAGE')
+            ) AS "roles",
+            current_schemas(true) AS "searchPath",
+            current_schema() AS "currentNamespace",
+            pg_catalog.has_database_privilege(current_user, current_database(), 'CREATE') AS "canCreate",
+            (SELECT rolsuper FROM pg_catalog.pg_roles WHERE rolname = current_user) AS "isSuper",
+            pg_catalog.json_build_object(
+                'application_name', current_setting('application_name', true),
+                'server_version', current_setting('server_version', true),
+                'client_encoding', current_setting('client_encoding', true),
+                'timezone', current_setting('TimeZone', true)
+            ) AS "settings"
+        `);
+
+            if (rows.length > 0) {
+                const row = rows[0];
+
+                this.context = {
+                    userName: row.userName as string,
+                    roles: row.roles as string[],
+                    searchPath: row.searchPath as string[],
+                    currentNamespace: row.currentNamespace as string,
+                    settings: row.settings as Record<string, unknown>,
+                    permissions: {
+                        createNamespace: row.canCreate as boolean,
+                        isSuperUser: row.isSuper as boolean
+                    }
+                };
+            }
+        }
+
+        return this.context;
     }
 
     async store(sql: string): Promise<api.StatementResult> {

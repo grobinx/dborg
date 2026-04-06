@@ -385,9 +385,8 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
             const tokens = new Tokenizer(query, { dialect: "postgres" }).tokenize();
             const scopes = Scoper.fromTokens(tokens);
             console.log(scopes);
-            session.getMetadata().then(metadata => {
-                const database = Object.values(metadata).find(db => db.connected);
-                console.log(database?.session);
+            session.getContext().then(context => {
+                console.log(context);
             });
 
             if (isSelect()) {

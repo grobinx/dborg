@@ -255,6 +255,11 @@ export class Connection extends driver.Connection {
         return this.version as Version;
     }
 
+    async getContext(reload?: boolean): Promise<api.SessionContext | undefined> {
+        this._checkConnected();
+        return undefined;
+    }
+
     isConnected(): boolean {
         this.client?.configure
         return this.client !== null;

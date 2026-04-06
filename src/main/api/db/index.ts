@@ -5,6 +5,7 @@ import * as api from '../../../api/db';
 import { ipcMain, ipcRenderer, IpcMainInvokeEvent, IpcRendererEvent } from "electron";
 import internal from '../../core/db/internal';
 import { handleResult, invokeResult, InvokeResult } from '../../../api/ipc-helpers';
+import { get } from 'http';
 
 // Driver events
 const EVENT_DRIVER_GET_DRIVERS = "dborg:database:driver:getDrivers";
@@ -14,6 +15,7 @@ const EVENT_DRIVER_CONNECT = "dborg:database:driver:connect";
 
 // Connection events
 const EVENT_CONNECTION_GET = "dborg:database:connection:get";
+const EVENT_CONNECTION_CONTEXT_GET = "dborg:database:connection:getContext";
 const EVENT_CONNECTION_CLOSE = "dborg:database:connection:close";
 const EVENT_CONNECTION_USER_DATA_GET = "dborg:database:connection:getUserData";
 const EVENT_CONNECTION_USER_DATA_SET = "dborg:database:connection:setUserData";
@@ -97,6 +99,20 @@ export function init(): void {
         (_: IpcMainInvokeEvent, uniqueId: string): Promise<InvokeResult> =>
             handleResult(async () => await driver.Driver.getConnection(uniqueId)?.getConnectionInfo())
     );
+
+    ipcMain.handle(
+        EVENT_CONNECTION_CONTEXT_GET,
+        async (_: IpcMainInvokeEvent, uniqueId: string, reload: boolean): Promise<InvokeResult> => {
+            return handleResult(async () => {
+                const foundConnection = driver.Driver.getConnection(uniqueId);
+                if (!foundConnection) {
+                    throw ConnectionError(uniqueId);
+                }
+                return await foundConnection.getContext(reload);
+            })
+        }
+    );
+
     ipcMain.handle(
         EVENT_CONNECTION_CLOSE,
         async (_: IpcMainInvokeEvent, uniqueId: string): Promise<InvokeResult> => {
@@ -313,6 +329,7 @@ export const preload = {
     },
     connection: {
         getConnection: (uniqueId: string): Promise<api.ConnectionInfo | undefined> => invokeResult(ipcRenderer.invoke(EVENT_CONNECTION_GET, uniqueId)),
+        getContext: (uniqueId: string, reload: boolean): Promise<api.SessionContext | undefined> => invokeResult(ipcRenderer.invoke(EVENT_CONNECTION_CONTEXT_GET, uniqueId, reload)),
         close: (uniqueId: string): Promise<void> => invokeResult(ipcRenderer.invoke(EVENT_CONNECTION_CLOSE, uniqueId)),
         userData: {
             get: (uniqueId: string, property: string): Promise<unknown> => invokeResult(ipcRenderer.invoke(EVENT_CONNECTION_USER_DATA_GET, uniqueId, property)),
