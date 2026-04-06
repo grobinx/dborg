@@ -20,7 +20,7 @@ export type TclStatementType = "commit" | "rollback" | "savepoint" | "set transa
 export type UtilityStatementType =
     | "explain" | "analyze" | "vacuum" | "cluster" | "checkpoint"
     | "discard" | "load" | "reset" | "reindex" | "use" | "show"
-    | "describe" | "help";
+    | "describe" | "help" | "pragma" | "call" | "execute" | "prepare" | "deallocate";
 
 export type ClauseType =
     | "select" | "from" | "where" | "group by" | "having"
@@ -63,6 +63,11 @@ export const StatementKindByType: Record<StatementType, StatementKind> = {
     show: "utility",
     describe: "utility",
     help: "utility",
+    pragma: "utility",
+    call: "utility",
+    execute: "utility",
+    prepare: "utility",
+    deallocate: "utility",
 };
 
 export type StatementType =
