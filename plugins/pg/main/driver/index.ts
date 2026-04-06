@@ -481,7 +481,6 @@ export class Connection extends driver.Connection {
             (SELECT rolsuper FROM pg_catalog.pg_roles WHERE rolname = current_user) AS "isSuper",
             pg_catalog.json_build_object(
                 'application_name', current_setting('application_name', true),
-                'server_version', current_setting('server_version', true),
                 'client_encoding', current_setting('client_encoding', true),
                 'timezone', current_setting('TimeZone', true)
             ) AS "settings"

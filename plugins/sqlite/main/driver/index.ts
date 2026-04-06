@@ -202,6 +202,7 @@ export class Connection extends driver.Connection {
     private fetchRecordCount: number;
     private maxStatementRows: number;
     private version: Version<"major" | "minor" | "patch" | "toString"> | undefined;
+    private context: api.SessionContext | undefined;
 
     constructor(properties: api.Properties, driver: Driver, client: sqlite3.Database, uniqueId?: string) {
         super(driver);
@@ -257,7 +258,55 @@ export class Connection extends driver.Connection {
 
     async getContext(reload?: boolean): Promise<api.SessionContext | undefined> {
         this._checkConnected();
-        return undefined;
+
+        if (this.context === undefined || reload) {
+            // 1. Pobieramy listę podpiętych baz (odpowiednik searchPath / namespaces)
+            // Zwraca tabelę z kolumnami: seq, name, file
+            const dbList = await this.query(`PRAGMA database_list`);
+
+            // 2. Pobieramy flagi konfiguracyjne
+            // PRAGMA zwraca zazwyczaj jeden wiersz z jedną kolumną o nazwie pragmy lub '0'/'1'
+            const fk = await this.query(`PRAGMA foreign_keys`);
+            const readOnly = await this.query(`PRAGMA query_only`);
+            const autoVac = await this.query(`PRAGMA auto_vacuum`);
+            const recursiveTriggers = await this.query(`PRAGMA recursive_triggers`);
+
+            // Mapujemy wyniki
+            const searchPath = dbList.rows.map((r: any) => r.name as string);
+            const isReadOnly = (readOnly.rows[0]?.query_only === 1 || readOnly.rows[0]?.query_only === '1');
+
+            this.context = {
+                // SQLite nie posiada wbudowanych użytkowników wewnątrz pliku bazy
+                userName: "main_user",
+
+                // searchPath to lista baz: 'main', 'temp' oraz te z komendy ATTACH
+                searchPath: searchPath,
+
+                // Domyślnie główna baza to 'main'
+                currentNamespace: "main",
+
+                roles: [], // SQLite nie posiada ról
+
+                settings: {
+                    foreign_keys: fk.rows[0]?.foreign_keys === 1,
+                    auto_vacuum: autoVac.rows[0]?.auto_vacuum,
+                    recursive_triggers: recursiveTriggers.rows[0]?.recursive_triggers === 1,
+                    // Informacja o tym, czy baza jest w pamięci RAM czy w pliku
+                    in_memory: dbList.rows.find((r: any) => r.name === 'main')?.file === ''
+                },
+
+                permissions: {
+                    // W SQLite możesz tworzyć "namespaces" (bazy) przez komendę ATTACH, 
+                    // o ile sesja nie jest w trybie query_only
+                    createNamespace: !isReadOnly,
+
+                    // Każdy użytkownik pliku ma pełne uprawnienia do jego struktury
+                    isSuperUser: true
+                }
+            };
+        }
+
+        return this.context;
     }
 
     isConnected(): boolean {
