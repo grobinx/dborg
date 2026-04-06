@@ -7,62 +7,62 @@ export type BlockType =
 
 export type StatementKind = "dml" | "ddl" | "dcl" | "dql" | "tcl" | "utility";
 
-export type DmlStatementType = "INSERT" | "UPDATE" | "DELETE" | "MERGE";
+export type DmlStatementType = "insert" | "update" | "delete" | "merge";
 
-export type DqlStatementType = "SELECT" | "VALUES";
+export type DqlStatementType = "select" | "values";
 
-export type DdlStatementType = "CREATE" | "ALTER" | "DROP" | "TRUNCATE" | "RENAME";
+export type DdlStatementType = "create" | "alter" | "drop" | "truncate" | "rename";
 
-export type DclStatementType = "GRANT" | "REVOKE";
+export type DclStatementType = "grant" | "revoke";
 
-export type TclStatementType = "COMMIT" | "ROLLBACK" | "SAVEPOINT" | "SET TRANSACTION";
+export type TclStatementType = "commit" | "rollback" | "savepoint" | "set transaction";
 
 export type UtilityStatementType =
-    | "EXPLAIN" | "ANALYZE" | "VACUUM" | "CLUSTER" | "CHECKPOINT"
-    | "DISCARD" | "LOAD" | "RESET" | "REINDEX" | "USE" | "SHOW"
-    | "DESCRIBE" | "HELP";
+    | "explain" | "analyze" | "vacuum" | "cluster" | "checkpoint"
+    | "discard" | "load" | "reset" | "reindex" | "use" | "show"
+    | "describe" | "help";
 
 export type ClauseType =
-    | "SELECT" | "FROM" | "WHERE" | "GROUP BY" | "HAVING"
-    | "ORDER BY" | "VALUES" | "SET" | "RETURNING" | "ON";
+    | "select" | "from" | "where" | "group by" | "having"
+    | "order by" | "values" | "set" | "returning" | "on";
 
 export type ColumnType = "result" | "source" | "reference";
 
 export const StatementKindByType: Record<StatementType, StatementKind> = {
-    SELECT: "dql",
-    VALUES: "dql",
+    select: "dql",
+    values: "dql",
 
-    INSERT: "dml",
-    UPDATE: "dml",
-    DELETE: "dml",
-    MERGE: "dml",
-    CREATE: "ddl",
-    ALTER: "ddl",
-    DROP: "ddl",
-    TRUNCATE: "ddl",
-    RENAME: "ddl",
+    insert: "dml",
+    update: "dml",
+    delete: "dml",
+    merge: "dml",
+    create: "ddl",
+    alter: "ddl",
+    drop: "ddl",
+    truncate: "ddl",
+    rename: "ddl",
 
-    GRANT: "dcl",
-    REVOKE: "dcl",
+    grant: "dcl",
+    revoke: "dcl",
 
-    COMMIT: "tcl",
-    ROLLBACK: "tcl",
-    "SET TRANSACTION": "tcl",
-    SAVEPOINT: "tcl",
+    commit: "tcl",
+    rollback: "tcl",
+    "set transaction": "tcl",
+    savepoint: "tcl",
 
-    EXPLAIN: "utility",
-    ANALYZE: "utility",
-    VACUUM: "utility",
-    CLUSTER: "utility",
-    CHECKPOINT: "utility",
-    DISCARD: "utility",
-    LOAD: "utility",
-    RESET: "utility",
-    REINDEX: "utility",
-    USE: "utility",
-    SHOW: "utility",
-    DESCRIBE: "utility",
-    HELP: "utility",
+    explain: "utility",
+    analyze: "utility",
+    vacuum: "utility",
+    cluster: "utility",
+    checkpoint: "utility",
+    discard: "utility",
+    load: "utility",
+    reset: "utility",
+    reindex: "utility",
+    use: "utility",
+    show: "utility",
+    describe: "utility",
+    help: "utility",
 };
 
 export type StatementType =
@@ -74,11 +74,11 @@ export type StatementType =
     | UtilityStatementType;
 
 export type SetOperator =
-    | "UNION"
-    | "UNION ALL"
-    | "INTERSECT"
-    | "EXCEPT"
-    | "MINUS";
+    | "union"
+    | "union all"
+    | "intersect"
+    | "except"
+    | "minus";
 
 export interface BlockBase {
     class: "block";
@@ -131,27 +131,27 @@ export interface SetBlock extends BlockBase {
 }
 
 export interface SelectStatement extends StatementBlock {
-    type: "SELECT";
+    type: "select";
 }
 
 export interface DeleteStatement extends StatementBlock {
-    type: "DELETE";
+    type: "delete";
 }
 
 export interface InsertStatement extends StatementBlock {
-    type: "INSERT";
+    type: "insert";
 }
 
 export interface UpdateStatement extends StatementBlock {
-    type: "UPDATE";
+    type: "update";
 }
 
 export interface MergeStatement extends StatementBlock {
-    type: "MERGE";
+    type: "merge";
 }
 
 export interface ValuesStatement extends StatementBlock {
-    type: "VALUES";
+    type: "values";
 }
 
 export interface ClauseBlock extends BlockBase {
@@ -160,43 +160,43 @@ export interface ClauseBlock extends BlockBase {
 }
 
 export interface SelectClause extends ClauseBlock {
-    clause: "SELECT";
+    clause: "select";
 }
 
 export interface FromClause extends ClauseBlock {
-    clause: "FROM";
+    clause: "from";
 }
 
 export interface WhereClause extends ClauseBlock {
-    clause: "WHERE";
+    clause: "where";
 }
 
 export interface GroupByClause extends ClauseBlock {
-    clause: "GROUP BY";
+    clause: "group by";
 }
 
 export interface HavingClause extends ClauseBlock {
-    clause: "HAVING";
+    clause: "having";
 }
 
 export interface OrderByClause extends ClauseBlock {
-    clause: "ORDER BY";
+    clause: "order by";
 }
 
 export interface ValuesClause extends ClauseBlock {
-    clause: "VALUES";
+    clause: "values";
 }
 
 export interface SetClause extends ClauseBlock {
-    clause: "SET";
+    clause: "set";
 }
 
 export interface ReturningClause extends ClauseBlock {
-    clause: "RETURNING";
+    clause: "returning";
 }
 
 export interface OnClause extends ClauseBlock {
-    clause: "ON";
+    clause: "on";
 }
 
 export interface ColumnBlock extends BlockBase {
@@ -312,33 +312,40 @@ export type ResolveIdentifierCallback<U = unknown> = (
 export type BlockItem<U = unknown> = BlockNode | Token | ResolvedIdentifier<U>;
 
 const JOIN_KEYWORDS = new Set([
-    "JOIN", "LEFT", "RIGHT", "FULL", "INNER", "OUTER", "CROSS",
-    "NATURAL", "SEMI", "ANTI", "ASOF", "ANY", "STRAIGHT_JOIN",
-    "GLOBAL", "APPLY",
+    "join", "left", "right", "full", "inner", "outer", "cross",
+    "natural", "semi", "anti", "asof", "any", "straight_join",
+    "global", "apply",
 ]);
 
 const STOP_KEYWORDS = new Set([
-    "SELECT", "FROM", "WHERE", "GROUP", "ORDER",
-    "UNION", "INTERSECT", "EXCEPT", "MINUS", "INTO", "LIMIT",
-    "OFFSET", "FETCH", "RETURNING", "WINDOW", "QUALIFY",
-    "HAVING", "WITH", "FOR",
+    "select", "from", "where", "group", "order",
+    "union", "intersect", "except", "minus", "into", "limit",
+    "offset", "fetch", "returning", "window", "qualify",
+    "having", "with", "for",
 ]);
 
 const ALIAS_FORBIDDEN = new Set([
-    "END", "NULL", "TRUE", "FALSE", "UNKNOWN",
-    "ASC", "DESC", "NULLS", "FIRST", "LAST", "ALL", "DISTINCT",
-    "PRECEDING", "FOLLOWING", "UNBOUNDED", "CURRENT",
-    "ROWS", "RANGE", "GROUPS", "WHERE", "GROUP", "ORDER", "HAVING", "LIMIT", "OFFSET",
-    "FETCH", "RETURNING", "WINDOW", "QUALIFY",
+    "end", "null", "true", "false", "unknown",
+    "asc", "desc", "nulls", "first", "last", "all", "distinct",
+    "preceding", "following", "unbounded", "current",
+    "rows", "range", "groups", "where", "group", "order", "having", "limit", "offset",
+    "fetch", "returning", "window", "qualify",
 ]);
 
 const NON_COLUMN_STARTERS = new Set([
-    "PRIMARY", "CONSTRAINT", "FOREIGN", "UNIQUE", "CHECK",
-    "EXCLUDE", "KEY",
+    "primary", "constraint", "foreign", "unique", "check",
+    "exclude", "key",
 ]);
 
+/**
+ * Sprawdza czy token jest na liście słów kluczowych.
+ * 
+ * @param token 
+ * @param keywords wszystkie słowa kluczowe powinny być podane w formie lowercase, ponieważ porównanie jest case-insensitive dla nie-quoted identifierów.
+ * @returns 
+ */
 function isKeywordInSet(token: unknown, keywords: Set<string>): boolean {
-    return isIdentifier(token) && !token.quote && keywords.has(token.value);
+    return isIdentifier(token) && !token.quote && keywords.has(token.value.toLowerCase());
 }
 
 function isBlockClause(obj: any, clauseType?: ClauseType): obj is ClauseBlock {
@@ -366,11 +373,6 @@ export class Scoper {
 
     public static fromTokens<U = unknown>(tokens: Token[], resolveIdentifierCallback?: ResolveIdentifierCallback<U>): RootBlock {
         tokens = tokens.filter(t => t.type !== "comment" && t.type !== "whitespace");
-        for (const token of tokens) {
-            if (isIdentifier(token) && !token.quote) {
-                token.value = token.value.toUpperCase();
-            }
-        }
         return new Scoper().build(tokens, resolveIdentifierCallback);
     }
 
@@ -447,7 +449,7 @@ export class Scoper {
             if (!isBlockNode(item, "set") || !item.items) continue;
 
             for (const setItem of item.items) {
-                if (!isBlockClause(setItem, "FROM") || !setItem.items) continue;
+                if (!isBlockClause(setItem, "from") || !setItem.items) continue;
 
                 for (const srcItem of setItem.items) {
                     if (!isBlockSource(srcItem)) continue;
@@ -504,7 +506,11 @@ export class Scoper {
         for (const expr of expressions) {
             if (expr.items && expr.items.length > 0) {
                 const { collected } = this.decomposeList(expr.items, 0);
-                expr.items = collected;
+                // tu trzeba się zastanawić to ma tak zostać.
+                // Nie wiadomo na tym etapie czy jednak nie powinien ten expression być jednak traktowany jak array
+                if (collected.length > 1) {
+                    expr.items = collected;
+                }
             }
         }
     }
@@ -533,9 +539,9 @@ export class Scoper {
         for (let i = 0; i < statements.length; i++) {
             const statement = statements[i];
             if (isStatementResolved(statement)) {
-                if (statement.type === "SELECT" || statement.type === "VALUES") {
+                if (statement.type === "select" || statement.type === "values") {
                     this.decomposeSelectStatement(statement);
-                } else if (statement.type === "INSERT") {
+                } else if (statement.type === "insert") {
                     this.decomposeInsertStatement(statement);
                 }
             }
@@ -549,14 +555,14 @@ export class Scoper {
         let pos = 0;
 
         let item = statement.items[pos];
-        if (isKeyword(item, "WITH")) {
+        if (isKeyword(item, "with")) {
             const { collected, endPos } = this.decomposeWithClasue(statement.items, pos + 1);
             items.push(...collected);
             pos = endPos;
         }
 
         item = statement.items[pos];
-        if (isKeyword(item, "INSERT")) {
+        if (isKeyword(item, "insert")) {
             while (pos < statement.items.length) {
                 item = statement.items[pos];
                 items.push(item);
@@ -574,7 +580,7 @@ export class Scoper {
         let pos = 0;
 
         let item = statement.items[pos];
-        if (isKeyword(item, "WITH")) {
+        if (isKeyword(item, "with")) {
             const { collected, endPos } = this.decomposeWithClasue(statement.items, pos + 1);
             items.push(...collected);
             pos = endPos;
@@ -583,16 +589,16 @@ export class Scoper {
         while (pos < statement.items.length) {
             item = statement.items[pos];
             let operator: SetOperator | null = null;
-            if (isKeyword(item, "UNION", "INTERSECT", "EXCEPT", "MINUS")) {
+            if (isKeyword(item, "union", "intersect", "except", "minus")) {
                 operator = item.value as SetOperator;
                 pos++;
-                if (pos < statement.items.length && isKeyword(item, "UNION") && isKeyword(statement.items[pos], "ALL")) {
-                    operator = "UNION ALL";
+                if (pos < statement.items.length && isKeyword(item, "union") && isKeyword(statement.items[pos], "all")) {
+                    operator = "union all";
                     pos++;
                 }
                 item = statement.items[pos];
             }
-            if (isKeyword(item, "SELECT", "VALUES")) {
+            if (isKeyword(item, "select", "values")) {
                 const setBlock: SetBlock = {
                     class: "block",
                     block: "set",
@@ -604,93 +610,93 @@ export class Scoper {
 
                 while (pos < statement.items.length) {
                     item = statement.items[pos];
-                    if (isKeyword(item, "SELECT")) {
+                    if (isKeyword(item, "select")) {
                         pos++;
                         const { collected, endPos } = this.decomposeResultColumns(statement.items, pos);
                         const selectClause: SelectClause = {
                             class: "block",
                             block: "clause",
-                            clause: "SELECT",
+                            clause: "select",
                             items: collected,
                             open: this.findFirstToken(item),
                             close: collected.length > 0 ? this.findLastToken(collected[collected.length - 1]) : this.findLastToken(item),
                         };
                         setBlock.items!.push(selectClause);
                         pos = endPos;
-                    } else if (isKeyword(item, "FROM")) {
+                    } else if (isKeyword(item, "from")) {
                         pos++;
                         const { collected, endPos } = this.decomposeSources(statement.items, pos);
                         const fromClause: FromClause = {
                             class: "block",
                             block: "clause",
-                            clause: "FROM",
+                            clause: "from",
                             items: collected,
                             open: this.findFirstToken(item),
                             close: collected.length > 0 ? this.findLastToken(collected[collected.length - 1]) : this.findLastToken(item),
                         };
                         setBlock.items!.push(fromClause);
                         pos = endPos;
-                    } else if (isKeyword(item, "WHERE")) {
+                    } else if (isKeyword(item, "where")) {
                         pos++;
                         const { collected, endPos } = this.decomposeExpression(statement.items, pos);
                         const whereClause: WhereClause = {
                             class: "block",
                             block: "clause",
-                            clause: "WHERE",
+                            clause: "where",
                             items: collected,
                             open: this.findFirstToken(item),
                             close: collected.length > 0 ? this.findLastToken(collected[collected.length - 1]) : this.findLastToken(item),
                         };
                         setBlock.items!.push(whereClause);
                         pos = endPos;
-                    } else if (isKeyword(item, "ORDER")) {
+                    } else if (isKeyword(item, "order")) {
                         pos++;
-                        if (pos < items.length && isKeyword(items[pos], "BY")) pos++;
+                        if (pos < items.length && isKeyword(items[pos], "by")) pos++;
                         const { collected, endPos } = this.decomposeList(statement.items, pos);
                         const orderClause: OrderByClause = {
                             class: "block",
                             block: "clause",
-                            clause: "ORDER BY",
+                            clause: "order by",
                             items: collected,
                             open: this.findFirstToken(item),
                             close: collected.length > 0 ? this.findLastToken(collected[collected.length - 1]) : this.findLastToken(item),
                         };
                         setBlock.items!.push(orderClause);
                         pos = endPos;
-                    } else if (isKeyword(item, "HAVING")) {
+                    } else if (isKeyword(item, "having")) {
                         pos++;
                         const { collected, endPos } = this.decomposeExpression(statement.items, pos);
                         const havingClause: HavingClause = {
                             class: "block",
                             block: "clause",
-                            clause: "HAVING",
+                            clause: "having",
                             items: collected,
                             open: this.findFirstToken(item),
                             close: collected.length > 0 ? this.findLastToken(collected[collected.length - 1]) : this.findLastToken(item),
                         };
                         setBlock.items!.push(havingClause);
                         pos = endPos;
-                    } else if (isKeyword(item, "GROUP")) {
+                    } else if (isKeyword(item, "group")) {
                         pos++;
-                        if (pos < items.length && isKeyword(items[pos], "BY")) pos++;
+                        if (pos < items.length && isKeyword(items[pos], "by")) pos++;
                         const { collected, endPos } = this.decomposeList(statement.items, pos);
                         const groupClause: GroupByClause = {
                             class: "block",
                             block: "clause",
-                            clause: "GROUP BY",
+                            clause: "group by",
                             items: collected,
                             open: this.findFirstToken(item),
                             close: collected.length > 0 ? this.findLastToken(collected[collected.length - 1]) : this.findLastToken(item),
                         };
                         setBlock.items!.push(groupClause);
                         pos = endPos;
-                    } else if (isKeyword(item, "VALUES")) {
+                    } else if (isKeyword(item, "values")) {
                         pos++;
                         const { collected, endPos } = this.decomposeList(statement.items, pos);
                         const valuesClause: ValuesClause = {
                             class: "block",
                             block: "clause",
-                            clause: "VALUES",
+                            clause: "values",
                             items: collected,
                             open: this.findFirstToken(item),
                             close: collected.length > 0 ? this.findLastToken(collected[collected.length - 1]) : this.findLastToken(item),
@@ -698,7 +704,7 @@ export class Scoper {
                         setBlock.items!.push(valuesClause);
                         pos = endPos;
                     } else {
-                        if (isKeyword(item, "UNION", "INTERSECT", "EXCEPT", "MINUS")) {
+                        if (isKeyword(item, "union", "intersect", "except", "minus")) {
                             break;
                         }
                         setBlock.items!.push(item);
@@ -747,7 +753,7 @@ export class Scoper {
             let alias: Token | null = null;
 
 
-            while (idx < segment.length && isKeyword(segment[idx], "LATERAL", "ONLY")) {
+            while (idx < segment.length && isKeyword(segment[idx], "lateral", "only")) {
                 if (!options) {
                     options = [];
                 }
@@ -811,13 +817,13 @@ export class Scoper {
             const localOptions: BlockItem[] = [];
             for (let j = 0; j < tail.length;) {
                 const t = tail[j];
-                if (isKeyword(t, "ON", "USING")) {
+                if (isKeyword(t, "on", "using")) {
                     // group remaining tokens starting from ON/USING as one expression (join condition)
                     const condTokens = tail.slice(j);
                     const condBlock: OnClause = {
                         class: "block",
                         block: "clause",
-                        clause: "ON",
+                        clause: "on",
                         open: this.findFirstToken(condTokens[0]),
                         close: this.findLastToken(condTokens[condTokens.length - 1]),
                         items: condTokens.slice(1),
@@ -925,7 +931,7 @@ export class Scoper {
 
             if (segment.length >= 2 && isIdentifier(last)) {
                 const secondLast = segment[segment.length - 2];
-                if (isKeyword(secondLast, "AS")) {
+                if (isKeyword(secondLast, "as")) {
                     // explicit: expr AS alias
                     alias = last as Token;
                     exprItems = segment.slice(0, -2);
@@ -969,7 +975,7 @@ export class Scoper {
             // collect identifier-like name tokens (stop at AS)
             const nameTokens: Token[] = [];
             let i = 0;
-            while (i < segment.length && isIdentifier(segment[i]) && !isKeyword(segment[i], "AS")) {
+            while (i < segment.length && isIdentifier(segment[i]) && !isKeyword(segment[i], "as")) {
                 nameTokens.push(segment[i] as Token);
                 i++;
             }
@@ -985,7 +991,7 @@ export class Scoper {
             }
 
             // optional AS token
-            if (i < segment.length && isKeyword(segment[i], "AS")) {
+            if (i < segment.length && isKeyword(segment[i], "as")) {
                 i++;
             }
 
@@ -1220,15 +1226,15 @@ export class Scoper {
 
         if (!firstToken) return block;
 
-        let keyword = firstToken.value;
+        let keyword = firstToken.value.toLowerCase();
 
-        if (keyword === "WITH") {
+        if (keyword === "with") {
             let mainToken: Token | null = null;
 
             for (const item of block.items) {
                 if (!isIdentifier(item) || item.quote) continue;
 
-                const value = item.value;
+                const value = item.value.toLowerCase();
                 if (value in StatementKindByType) {
                     mainToken = item;
                     break;
@@ -1236,7 +1242,7 @@ export class Scoper {
             }
 
             if (!mainToken) return block;
-            keyword = mainToken.value;
+            keyword = mainToken.value.toLowerCase();
         }
 
         const type = keyword as StatementType;
@@ -1284,8 +1290,8 @@ export class Scoper {
         if (tokens.length === 0) return false;
         const token = tokens[0];
         if (token.type !== "identifier" || token.quote) return false;
-        const keyword = token.value;
-        return keyword in StatementKindByType || (keyword === "WITH");
+        const keyword = token.value.toLowerCase();
+        return keyword in StatementKindByType || (keyword === "with");
     }
 
     private collectNestedItems(

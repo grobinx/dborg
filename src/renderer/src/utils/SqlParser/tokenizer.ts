@@ -95,6 +95,7 @@ export interface TokenizerOptions {
     allowBinaryNumbers?: boolean;
     allowLeadingDotNumbers?: boolean;
     allowTrailingDotNumbers?: boolean;
+    folding?: "upper" | "lower" | false;
 }
 
 export function isToken(obj: any): obj is Token {
@@ -136,6 +137,7 @@ export class Tokenizer {
             allowBinaryNumbers: true,
             allowLeadingDotNumbers: true,
             allowTrailingDotNumbers: true,
+            folding: "upper",
         },
         postgres: {
             dialect: "postgres",
@@ -150,6 +152,7 @@ export class Tokenizer {
             allowBinaryNumbers: false,
             allowLeadingDotNumbers: true,
             allowTrailingDotNumbers: true,
+            folding: "lower",
         },
         mysql: {
             dialect: "mysql",
@@ -164,6 +167,7 @@ export class Tokenizer {
             allowBinaryNumbers: true,
             allowLeadingDotNumbers: true,
             allowTrailingDotNumbers: true,
+            folding: "lower",
         },
         mssql: {
             dialect: "mssql",
@@ -178,6 +182,7 @@ export class Tokenizer {
             allowBinaryNumbers: false,
             allowLeadingDotNumbers: true,
             allowTrailingDotNumbers: true,
+            folding: "upper",
         },
         oracle: {
             dialect: "oracle",
@@ -192,6 +197,7 @@ export class Tokenizer {
             allowBinaryNumbers: false,
             allowLeadingDotNumbers: true,
             allowTrailingDotNumbers: true,
+            folding: "upper",
         },
         sqlite: {
             dialect: "sqlite",
@@ -206,6 +212,7 @@ export class Tokenizer {
             allowBinaryNumbers: false,
             allowLeadingDotNumbers: true,
             allowTrailingDotNumbers: true,
+            folding: "lower",
         },
         mariadb: {
             dialect: "mariadb",
@@ -220,6 +227,7 @@ export class Tokenizer {
             allowBinaryNumbers: true,
             allowLeadingDotNumbers: true,
             allowTrailingDotNumbers: true,
+            folding: "lower",
         },
         redshift: {
             dialect: "redshift",
@@ -234,6 +242,7 @@ export class Tokenizer {
             allowBinaryNumbers: false,
             allowLeadingDotNumbers: true,
             allowTrailingDotNumbers: true,
+            folding: "upper",
         },
         snowflake: {
             dialect: "snowflake",
@@ -248,6 +257,7 @@ export class Tokenizer {
             allowBinaryNumbers: false,
             allowLeadingDotNumbers: true,
             allowTrailingDotNumbers: true,
+            folding: "upper",
         },
         bigquery: {
             dialect: "bigquery",
@@ -262,6 +272,7 @@ export class Tokenizer {
             allowBinaryNumbers: false,
             allowLeadingDotNumbers: true,
             allowTrailingDotNumbers: true,
+            folding: "upper",
         },
         db2: {
             dialect: "db2",
@@ -276,6 +287,7 @@ export class Tokenizer {
             allowBinaryNumbers: false,
             allowLeadingDotNumbers: true,
             allowTrailingDotNumbers: true,
+            folding: "upper",
         },
         teradata: {
             dialect: "teradata",
@@ -290,6 +302,7 @@ export class Tokenizer {
             allowBinaryNumbers: false,
             allowLeadingDotNumbers: true,
             allowTrailingDotNumbers: true,
+            folding: "upper",
         },
         firebird: {
             dialect: "firebird",
@@ -304,6 +317,7 @@ export class Tokenizer {
             allowBinaryNumbers: false,
             allowLeadingDotNumbers: true,
             allowTrailingDotNumbers: true,
+            folding: "upper",
         },
         duckdb: {
             dialect: "duckdb",
@@ -318,6 +332,7 @@ export class Tokenizer {
             allowBinaryNumbers: false,
             allowLeadingDotNumbers: true,
             allowTrailingDotNumbers: true,
+            folding: "lower",
         },
         clickhouse: {
             dialect: "clickhouse",
@@ -332,6 +347,7 @@ export class Tokenizer {
             allowBinaryNumbers: false,
             allowLeadingDotNumbers: true,
             allowTrailingDotNumbers: true,
+            folding: "lower",
         },
     };
 
@@ -612,6 +628,15 @@ export class Tokenizer {
             this.advance();
             const end = this.makePos();
             tokens.push({ class: "token", type: "operator", value: ch, start, end } as OperatorToken);
+        }
+
+        if (this.options.folding) {
+            const folding = this.options.folding;
+            for (const token of tokens) {
+                if (token.type === "identifier" && !token.quote) {
+                    token.value = folding === "upper" ? token.value.toUpperCase() : token.value.toLowerCase();
+                }
+            }
         }
 
         return tokens;
