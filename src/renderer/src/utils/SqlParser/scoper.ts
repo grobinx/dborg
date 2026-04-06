@@ -284,7 +284,11 @@ export type DatabaseIdentifierKind =
     /**
      * Funkcja, która może być wywoływana w zapytaniach SQL i zwraca wynik, który może być użyty w klauzuli FROM lub innej.
      */
-    | "routine";
+    | "routine"
+    /**
+     * Członek obiektu bazy danych, np. kolumna w tabeli.
+     */
+    | "member";
 
 export interface ResolvedIdentifierResult<U = unknown> {
     kind: DatabaseIdentifierKind;

@@ -382,11 +382,13 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
 
 
         if (query) {
-            console.time("parse");
             const tokens = new Tokenizer(query, { dialect: "postgres" }).tokenize();
             const scopes = Scoper.fromTokens(tokens);
-            console.timeEnd("parse");
             console.log(scopes);
+            session.getMetadata().then(metadata => {
+                const database = Object.values(metadata).find(db => db.connected);
+                console.log(database?.session);
+            });
 
             if (isSelect()) {
                 fetchData();

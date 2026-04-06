@@ -168,7 +168,7 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     React.useEffect(() => {
         loadProfiles();
     }, []);
-    
+
     const reloadProfiles = useCallback(async () => {
         await loadProfiles();
     }, []);
@@ -326,7 +326,7 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const deleteProfile = useCallback(async (profileId: string) => {
         const profile = getProfile(profileId)!;
         emitEvent('deleting', { profile, status: 'started' });
-        
+
         if (await dialogs.confirm(
             t("delete-profile-q", 'Delete profile "{{name}}" ?', { name: profile.sch_name }),
             { severity: "warning", title: t("confirm", "Confirm"), cancelText: t("no", "No"), okText: t("yes", "Yes") }
@@ -336,15 +336,15 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                 sch_deleted: true,
                 sch_updated: DateTime.now().toSQL(),
             };
-            
+
             setProfiles(prev =>
                 prev.map(p => p.sch_id === profileId ? deletedProfile : p)
             );
-            
+
             emitEvent('deleting', { profile: deletedProfile, status: 'success' });
             return true;
         }
-        
+
         emitEvent('deleting', { profile, status: 'cancel' });
         return false;
     }, []);
@@ -496,23 +496,30 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         };
     }, [updateProfile]);
 
+    const value: ProfilesContextValue = React.useMemo(() => ({
+        initialized: profilesInitialized,
+        profiles,
+        getProfile,
+        reloadProfiles,
+        createProfile,
+        updateProfile,
+        deleteProfile,
+        swapProfilesOrder,
+        connectToDatabase,
+        disconnectSession,
+        disconnectProfile,
+        testConnection,
+        onEvent: onEvent as ProfileEventMethod,
+    }), [
+        profilesInitialized, profiles, getProfile, reloadProfiles,
+        createProfile, updateProfile, deleteProfile, swapProfilesOrder,
+        connectToDatabase, disconnectSession, disconnectProfile,
+        testConnection, onEvent
+    ]);
+
     return (
         <ProfilesContext.Provider
-            value={{
-                initialized: profilesInitialized,
-                profiles: profiles,
-                getProfile,
-                reloadProfiles,
-                createProfile,
-                updateProfile,
-                deleteProfile,
-                swapProfilesOrder,
-                connectToDatabase,
-                disconnectSession,
-                disconnectProfile,
-                testConnection,
-                onEvent: onEvent as ProfileEventMethod,
-            }}
+            value={value}
         >
             {children}
         </ProfilesContext.Provider>

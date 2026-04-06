@@ -1,6 +1,6 @@
 {
   "name": "dborg",
-  "version": "1.0.8-dev",
+  "version": "1.0.9-dev",
   "description": "ORBADA - Database Organizer",
   "main": "./out/main/index.js",
   "author": "Andrzej Kałuża",

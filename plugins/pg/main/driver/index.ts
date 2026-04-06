@@ -89,6 +89,9 @@ pg.types.setTypeParser(pgTypes.INT8_ARRAY as unknown as number, function (val: s
 pg.types.setTypeParser(pgTypes.MONEY_ARRAY as unknown as number, function (val: string) {
     return val.replace(arrayRegex, '').split(',').map(item => item.trim());
 });
+pg.types.setTypeParser(pgTypes.NAME_ARRAY as unknown as number, function (val: string) {
+    return val.replace(arrayRegex, '').split(',').map(item => item.trim());
+});
 
 // Prosta obsługa błędów z pg, żeby nie wywalały procesu gdy backend zostanie ubity
 function attachPgErrorHandlers(clientOrPool: pg.Client | pg.Pool, scope: string) {
