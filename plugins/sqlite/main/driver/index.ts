@@ -509,15 +509,13 @@ export class Driver extends driver.Driver {
             maxVersion: "3.0",
             objects: ["table", "view", "index", "trigger", "schema", "database"],
             sourceObjects: ["table", "view", "trigger"],
-            supports: {
-                transactions: true,
-                preparedStatements: false,
-                cursors: true,
-                batchs: false,
-                encryption: false,
-                pooling: false,
-                parameterizedQueries: true,
-            },
+            transactions: true,
+            preparedStatements: false,
+            cursors: true,
+            batchOperations: false,
+            encryption: false,
+            pooling: false,
+            parameterizedQueries: true,
             parameterPlaceholder: "?",
         }
     }

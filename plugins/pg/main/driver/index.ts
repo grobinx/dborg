@@ -764,15 +764,13 @@ export class Driver extends driver.Driver {
             maxVersion: "17",
             objects: ["table", "view", "index", "schema", "function", "procedure", "trigger", "sequence", "materialized_view", "database", "type"],
             sourceObjects: [],
-            supports: {
-                transactions: true,
-                preparedStatements: false,
-                cursors: true,
-                batchs: true,
-                encryption: false,
-                pooling: true,
-                parameterizedQueries: true,
-            },
+            transactions: true,
+            preparedStatements: false,
+            cursors: true,
+            batchOperations: true,
+            encryption: false,
+            pooling: true,
+            parameterizedQueries: true,
             parameterPlaceholder: "$n",
         }
     }

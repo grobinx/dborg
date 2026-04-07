@@ -42,13 +42,13 @@ function DriverInfoDialog({ open, onClose, payload }: DialogProps<DriverInfoDial
                             type: "section",
                             title: { type: "text", text: t("supported-features", "Supported Features"), variant: "title-sm" },
                             items: [
-                                { type: "row", layout: "grid", gridTemplateColumns: "1fr 3fr", items: [{ type: "text", text: `${t("transactions", "Transactions")}:` }, yesNo(driver.supports.supports.transactions)] },
-                                { type: "row", layout: "grid", gridTemplateColumns: "1fr 3fr", items: [{ type: "text", text: `${t("prepared-statements", "Prepared Statements")}:` }, yesNo(driver.supports.supports.preparedStatements)] },
-                                { type: "row", layout: "grid", gridTemplateColumns: "1fr 3fr", items: [{ type: "text", text: `${t("cursors", "Cursors")}:` }, yesNo(driver.supports.supports.cursors)] },
-                                { type: "row", layout: "grid", gridTemplateColumns: "1fr 3fr", items: [{ type: "text", text: `${t("batch-operations", "Batch Operations")}:` }, yesNo(driver.supports.supports.batchs)] },
-                                { type: "row", layout: "grid", gridTemplateColumns: "1fr 3fr", items: [{ type: "text", text: `${t("encryption", "Encryption")}:` }, yesNo(driver.supports.supports.encryption)] },
-                                { type: "row", layout: "grid", gridTemplateColumns: "1fr 3fr", items: [{ type: "text", text: `${t("pooling", "Pooling")}:` }, yesNo(driver.supports.supports.pooling)] },
-                                { type: "row", layout: "grid", gridTemplateColumns: "1fr 3fr", items: [{ type: "text", text: `${t("paremetrized-queries", "Parametrized queries")}:` }, yesNo(driver.supports.supports.parameterizedQueries)] },
+                                { type: "row", layout: "grid", gridTemplateColumns: "1fr 3fr", items: [{ type: "text", text: `${t("transactions", "Transactions")}:` }, yesNo(driver.supports.transactions)] },
+                                { type: "row", layout: "grid", gridTemplateColumns: "1fr 3fr", items: [{ type: "text", text: `${t("prepared-statements", "Prepared Statements")}:` }, yesNo(driver.supports.preparedStatements)] },
+                                { type: "row", layout: "grid", gridTemplateColumns: "1fr 3fr", items: [{ type: "text", text: `${t("cursors", "Cursors")}:` }, yesNo(driver.supports.cursors)] },
+                                { type: "row", layout: "grid", gridTemplateColumns: "1fr 3fr", items: [{ type: "text", text: `${t("batch-operations", "Batch Operations")}:` }, yesNo(driver.supports.batchOperations)] },
+                                { type: "row", layout: "grid", gridTemplateColumns: "1fr 3fr", items: [{ type: "text", text: `${t("encryption", "Encryption")}:` }, yesNo(driver.supports.encryption)] },
+                                { type: "row", layout: "grid", gridTemplateColumns: "1fr 3fr", items: [{ type: "text", text: `${t("pooling", "Pooling")}:` }, yesNo(driver.supports.pooling)] },
+                                { type: "row", layout: "grid", gridTemplateColumns: "1fr 3fr", items: [{ type: "text", text: `${t("paremetrized-queries", "Parametrized queries")}:` }, yesNo(driver.supports.parameterizedQueries)] },
                             ]
                         },
                         {

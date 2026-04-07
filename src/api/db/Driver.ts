@@ -177,13 +177,13 @@ export type Properties = {
     [key: string]: unknown;
 }
 
-export type ConnectionImplementsMethod = 
-    "store" 
-    | "query" 
-    | "open" 
-    | "execute" 
-    | "clone" 
-    | "version" 
+export type ConnectionImplementsMethod =
+    "store"
+    | "query"
+    | "open"
+    | "execute"
+    | "clone"
+    | "version"
     | "metadata"
     | "cancel";
 export type ConnectionImplementsMethods = ConnectionImplementsMethod[];
@@ -462,36 +462,34 @@ export interface DatabaseSupports {
      * This is a driver supports objects, not plugin supports.
      */
     sourceObjects: DatabaseObjectTypes;
-    supports: {
-        /**
-         * Transactions supported by this driver
-         */
-        transactions: boolean;
-        /**
-         * Prepared statements supported by this driver
-         */
-        preparedStatements: boolean;
-        /**
-         * Cursors supported by this driver
-         */
-        cursors: boolean;
-        /**
-         * Batch operations supported by this driver
-         */
-        batchs: boolean;
-        /**
-         * Connection encryption supported by this driver
-         */
-        encryption: boolean;
-        /**
-         * Connection pooling supported by this driver
-         */
-        pooling: boolean;
-        /**
-         * Indicates if parameterized queries are supported by this driver
-         */
-        parameterizedQueries: boolean;
-    };
+    /**
+     * Transactions supported by this driver
+     */
+    transactions: boolean;
+    /**
+     * Prepared statements supported by this driver
+     */
+    preparedStatements: boolean;
+    /**
+     * Cursors supported by this driver
+     */
+    cursors: boolean;
+    /**
+     * Batch operations supported by this driver
+     */
+    batchOperations: boolean;
+    /**
+     * Connection encryption supported by this driver
+     */
+    encryption: boolean;
+    /**
+     * Connection pooling supported by this driver
+     */
+    pooling: boolean;
+    /**
+     * Indicates if parameterized queries are supported by this driver
+     */
+    parameterizedQueries: boolean;
     /**
      * Regexp placeholder pattern for parameterized queries
      * @example "$n" for PostgreSQL
