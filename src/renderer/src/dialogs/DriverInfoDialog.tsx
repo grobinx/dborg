@@ -1,108 +1,76 @@
-import { Dialog, DialogTitle, DialogContent, DialogActions, Typography, Box, useThemeProps } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, useThemeProps } from '@mui/material';
 import { DialogProps } from '@toolpad/core';
 import { useTranslation } from 'react-i18next';
 import { DriverInfo } from 'src/api/db';
 import { DefaultDialogProps } from './DefaultDialogProps';
 import { Button } from '@renderer/components/buttons/Button';
+import { IRichText, RichContainer } from '@renderer/components/RichContent';
 
 export interface DriverInfoDialogProps extends DefaultDialogProps {
     driver: DriverInfo;
 }
 
-// Stałe dla Yes i No z kolorami
-const YES_TEXT = <Typography component="span" sx={{ color: 'success.main', fontWeight: 'bold' }}>Yes</Typography>;
-const NO_TEXT = <Typography component="span" sx={{ color: 'error.main', fontWeight: 'bold' }}>No</Typography>;
-
 function DriverInfoDialog({ open, onClose, payload }: DialogProps<DriverInfoDialogProps>) {
     const { driver } = useThemeProps({ name: "Dialog", props: payload });
     const { t } = useTranslation();
 
+    const yesNo = (val?: boolean): IRichText => ({
+        type: "text" as const,
+        text: val ? t("yes", "Yes") : t("no", "No"),
+        severity: val ? "success" as const : "error" as const,
+        decoration: ["bold"],
+    });
+
     return (
         <Dialog open={open} onClose={() => onClose()} maxWidth="md" fullWidth>
-            {/* Tytuł dialogu */}
             <DialogTitle>{t("driver-info", "Driver Information")}</DialogTitle>
 
-            {/* Zawartość dialogu */}
             <DialogContent>
-                {/* Sekcja podstawowych informacji */}
-                <Box sx={{ mt: 2, mb: 2 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                        {t("general-info", "General Information")}
-                    </Typography>
-                    <Typography variant="body2">
-                        <strong>{t("name", "Name")}:</strong> {driver.name}
-                    </Typography>
-                    <Typography variant="body2">
-                        <strong>{t("description", "Description")}:</strong> {driver.description || t("not-available", "N/A")}
-                    </Typography>
-                    <Typography variant="body2">
-                        <strong>{t("version", "Version")}:</strong> {`${driver.version.major}.${driver.version.minor}.${driver.version.release}.${driver.version.build}`}
-                    </Typography>
-                </Box>
-
-                {/* Sekcja obsługiwanych funkcji */}
-                <Box sx={{ mt: 2, mb: 2 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                        {t("supported-features", "Supported Features")}
-                    </Typography>
-                    <Typography variant="body2">
-                        <strong>{t("transactions", "Transactions")}:</strong> {driver.supports.supports.transactions ? YES_TEXT : NO_TEXT}
-                    </Typography>
-                    <Typography variant="body2">
-                        <strong>{t("prepared-statements", "Prepared Statements")}:</strong> {driver.supports.supports.preparedStatements ? YES_TEXT : NO_TEXT}
-                    </Typography>
-                    <Typography variant="body2">
-                        <strong>{t("cursors", "Cursors")}:</strong> {driver.supports.supports.cursors ? YES_TEXT : NO_TEXT}
-                    </Typography>
-                    <Typography variant="body2">
-                        <strong>{t("batch-operations", "Batch Operations")}:</strong> {driver.supports.supports.batchs ? YES_TEXT : NO_TEXT}
-                    </Typography>
-                    <Typography variant="body2">
-                        <strong>{t("encryption", "Encryption")}:</strong> {driver.supports.supports.encryption ? YES_TEXT : NO_TEXT}
-                    </Typography>
-                    <Typography variant="body2">
-                        <strong>{t("pooling", "Pooling")}:</strong> {driver.supports.supports.pooling ? YES_TEXT : NO_TEXT}
-                    </Typography>
-                    <Typography variant="body2">
-                        <strong>{t("paremetrized-queries", "Parametrized queries")}:</strong> {driver.supports.supports.parameterizedQueries ? YES_TEXT : NO_TEXT}
-                    </Typography>
-                </Box>
-
-                {/* Sekcja obsługiwanych obiektów */}
-                <Box sx={{ mt: 2, mb: 2 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                        {t("supported-database-objects", "Supported Database Objects")}
-                    </Typography>
-                    <Typography variant="body2">
-                        <strong>{t("objects", "Objects")}:</strong> {driver.supports.objects.join(", ")}
-                    </Typography>
-                    <Typography variant="body2">
-                        <strong>{t("source-objects", "Source Objects")}:</strong> {driver.supports.sourceObjects.join(", ")}
-                    </Typography>
-                </Box>
-
-                {/* Sekcja implementacji */}
-                <Box sx={{ mt: 2, mb: 2 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                        {t("implemented-methods", "Implemented Methods")}
-                    </Typography>
-                    <Typography variant="body2">
-                        <strong>{t("methods", "Methods")}:</strong> {driver.implements.join(", ")}
-                    </Typography>
-                </Box>
-
-                {/* Pozostałe */}
-                <Box sx={{ mt: 2, mb: 2 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                        {t("remaining", "Remaining")}
-                    </Typography>
-                    <Typography variant="body2">
-                        <strong>{t("parameter-placeholder", "Parameter placeholder")}:</strong> {driver.supports.parameterPlaceholder}
-                    </Typography>
-                </Box>
+                <RichContainer node={{
+                    style: { padding: 0 },
+                    items: [
+                        {
+                            type: "section",
+                            title: { type: "text", text: t("general-info", "General Information"), variant: "title-sm" },
+                            items: [
+                                { type: "row", layout: "grid", gridTemplateColumns: "1fr 3fr", items: [{ type: "text", text: `${t("name", "Name")}:` }, { type: "text", text: driver.name, decoration: ["bold"] }] },
+                                { type: "row", layout: "grid", gridTemplateColumns: "1fr 3fr", items: [{ type: "text", text: `${t("description", "Description")}:` }, { type: "text", text: driver.description || t("not-available", "N/A"), decoration: ["bold"] }] },
+                                { type: "row", layout: "grid", gridTemplateColumns: "1fr 3fr", items: [{ type: "text", text: `${t("version", "Version")}:` }, { type: "text", text: `${driver.version.major}.${driver.version.minor}.${driver.version.release}.${driver.version.build}`, decoration: ["bold"] }] },
+                            ]
+                        },
+                        {
+                            type: "section",
+                            title: { type: "text", text: t("supported-features", "Supported Features"), variant: "title-sm" },
+                            items: [
+                                { type: "row", layout: "grid", gridTemplateColumns: "1fr 3fr", items: [{ type: "text", text: `${t("transactions", "Transactions")}:` }, yesNo(driver.supports.supports.transactions)] },
+                                { type: "row", layout: "grid", gridTemplateColumns: "1fr 3fr", items: [{ type: "text", text: `${t("prepared-statements", "Prepared Statements")}:` }, yesNo(driver.supports.supports.preparedStatements)] },
+                                { type: "row", layout: "grid", gridTemplateColumns: "1fr 3fr", items: [{ type: "text", text: `${t("cursors", "Cursors")}:` }, yesNo(driver.supports.supports.cursors)] },
+                                { type: "row", layout: "grid", gridTemplateColumns: "1fr 3fr", items: [{ type: "text", text: `${t("batch-operations", "Batch Operations")}:` }, yesNo(driver.supports.supports.batchs)] },
+                                { type: "row", layout: "grid", gridTemplateColumns: "1fr 3fr", items: [{ type: "text", text: `${t("encryption", "Encryption")}:` }, yesNo(driver.supports.supports.encryption)] },
+                                { type: "row", layout: "grid", gridTemplateColumns: "1fr 3fr", items: [{ type: "text", text: `${t("pooling", "Pooling")}:` }, yesNo(driver.supports.supports.pooling)] },
+                                { type: "row", layout: "grid", gridTemplateColumns: "1fr 3fr", items: [{ type: "text", text: `${t("paremetrized-queries", "Parametrized queries")}:` }, yesNo(driver.supports.supports.parameterizedQueries)] },
+                            ]
+                        },
+                        {
+                            type: "section",
+                            title: { type: "text", text: t("supported-database-objects", "Supported Database Objects"), variant: "title-sm" },
+                            items: [
+                                { type: "row", layout: "grid", gridTemplateColumns: "1fr 3fr", items: [{ type: "text", text: `${t("objects", "Objects")}:` }, { type: "text", text: driver.supports.objects.join(", "), decoration: ["bold"] }] },
+                                { type: "row", layout: "grid", gridTemplateColumns: "1fr 3fr", items: [{ type: "text", text: `${t("source-objects", "Source Objects")}:` }, { type: "text", text: driver.supports.sourceObjects.join(", "), decoration: ["bold"] }] },
+                            ]
+                        },
+                        {
+                            type: "section",
+                            title: { type: "text", text: t("implemented-methods", "Implemented Methods"), variant: "title-sm" },
+                            items: [
+                                { type: "row", layout: "grid", gridTemplateColumns: "1fr 3fr", items: [{ type: "text", text: `${t("methods", "Methods")}:` }, { type: "text", text: driver.implements.join(", "), decoration: ["bold"] }] },
+                                { type: "row", layout: "grid", gridTemplateColumns: "1fr 3fr", items: [{ type: "text", text: `${t("parameter-placeholder", "Parameter placeholder")}:` }, { type: "text", text: driver.supports.parameterPlaceholder, decoration: ["bold"] }] },
+                            ]
+                        }
+                    ]
+                }} />
             </DialogContent>
 
-            {/* Akcje dialogu */}
             <DialogActions>
                 <Button onClick={() => onClose()} color="primary">
                     {t("close", "Close")}
