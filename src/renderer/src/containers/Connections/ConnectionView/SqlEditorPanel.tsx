@@ -431,7 +431,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
                             }
                         }
                     }}
-                    profileName={(session.getUserData("profile") as ProfileRecord).sch_name}
+                    profileName={(session.getProfile()).sch_name}
                 />
             )}
             {dialogs}

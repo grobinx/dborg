@@ -5,7 +5,6 @@ import * as api from '../../../api/db';
 import { ipcMain, ipcRenderer, IpcMainInvokeEvent, IpcRendererEvent } from "electron";
 import internal from '../../core/db/internal';
 import { handleResult, invokeResult, InvokeResult } from '../../../api/ipc-helpers';
-import { get } from 'http';
 
 // Driver events
 const EVENT_DRIVER_GET_DRIVERS = "dborg:database:driver:getDrivers";

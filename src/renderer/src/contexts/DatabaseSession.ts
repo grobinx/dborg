@@ -3,7 +3,7 @@ import * as api from "../../../api/db";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IQueueTask, QueueTask, TaskOptions } from "@renderer/utils/QueueTask";
 import { queueMessage } from "./MessageContext";
-import { PROFILE_UPDATE_MESSAGE } from "./ProfilesContext";
+import { getProfileSettings, PROFILE_UPDATE_MESSAGE, storeProfileSettings } from "./ProfilesContext";
 import { DataGridChangesManager, DataGridChangesOptions } from "@renderer/components/DataGrid/DataGridChangesManager";
 import { versionToNumber } from "../../../../src/api/version";
 
@@ -53,6 +53,10 @@ export interface IDatabaseSession extends api.BaseConnection {
     storeProfileSettings(name: string, value: Record<string, any>): void;
 
     getProfileSettings(name: string): Promise<Record<string, any> | null>;
+
+    getProfile(): ProfileRecord;
+
+    setProfile(profile: ProfileRecord): void;
 
     /**
      * Create a DataGridChangesManager for managing changes in data grids. Each manager is associated with a context object (e.g. component instance) and can be retrieved later using that context.
@@ -184,6 +188,14 @@ class DatabaseSession implements IDatabaseSession {
         this.info.userData[property] = value;
     }
 
+    getProfile(): ProfileRecord {
+        return this.getUserData("profile") as ProfileRecord;
+    }
+
+    setProfile(profile: ProfileRecord): void {
+        this.setUserData("profile", profile);
+    }
+
     getUniqueId(): string {
         return this.info.uniqueId;
     }
@@ -272,20 +284,16 @@ class DatabaseSession implements IDatabaseSession {
     }
 
     storeProfileField(property: string, value: Record<string, any>): void {
-        queueMessage(PROFILE_UPDATE_MESSAGE, { profileId: this.profile.sch_id, profile: { [property]: value } });
-        this.setUserData("profile", { ...this.profile, [property]: value });
+        queueMessage(PROFILE_UPDATE_MESSAGE, { profileId: this.getProfile().sch_id, profile: { [property]: value } });
+        this.setProfile({ ...this.getProfile(), [property]: value });
     }
 
     storeProfileSettings(name: string, value: Record<string, any>): void {
-        window.dborg.settings.store(name, value, "profiles", this.profile.sch_id);
-        this.settings.set(name, value);
+        storeProfileSettings(this.getProfile().sch_id, name, value);
     }
 
     getProfileSettings(name: string): Promise<Record<string, any> | null> {
-        if (this.settings.has(name)) {
-            return Promise.resolve(this.settings.get(name)!);
-        }
-        return window.dborg.settings.get(name, "profiles", this.profile.sch_id) ?? null;
+        return getProfileSettings(this.getProfile().sch_id, name);
     }
 
     /**

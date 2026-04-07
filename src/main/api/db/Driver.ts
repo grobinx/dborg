@@ -70,7 +70,7 @@ export abstract class Connection implements api.Connection {
                     : undefined,
             cursors: Object.keys(this.cursors),
             sessionId: this.getSessionId(),
-            context: await this.getContext()
+            context: await this.getContext(),
         };
     }
 

@@ -106,7 +106,7 @@ const activityTab = (
     maximizedCharts = chartList.map(c => c.key).filter(key => !minimizedCharts.includes(key));
 
     // Persisted state key per session/profile
-    const storageKey = `dbActivityCharts:${(session.getUserData("profile") as ProfileRecord).sch_id}`;
+    const storageKey = `dbActivityCharts:${(session.getProfile()).sch_id}`;
 
     const saveChartState = () => {
         try {

@@ -74,11 +74,30 @@ interface ProfilesContextValue {
     disconnectSession: (uniqueId: string) => Promise<void>;
     disconnectProfile: (profileId: string) => Promise<void>;
     testConnection: (driverUniqueId: string, usePassword: ProfileUsePasswordType, properties: Properties, profileName: string) => Promise<boolean | undefined>;
+    getProfileSettings: (profileId: string, name: string) => Promise<Record<string, any> | null>;
+    setProfileSettings: (profileId: string, name: string, value: Record<string, any>) => void;
 
     onEvent: ProfileEventMethod;
 }
 
 const ProfilesContext = createContext<ProfilesContextValue | undefined>(undefined);
+
+const settings: Map<string, Map<string, Record<string, any>>> = new Map();
+
+export const storeProfileSettings = (profileId: string, name: string, value: Record<string, any>): void => {
+    if (!settings.has(profileId)) {
+        settings.set(profileId, new Map());
+    }
+    window.dborg.settings.store(name, value, "profiles", profileId);
+    settings.get(profileId)!.set(name, value);
+}
+
+export const getProfileSettings = (profileId: string, name: string): Promise<Record<string, any> | null> => {
+    if (settings.has(profileId) && settings.get(profileId)!.has(name)) {
+        return Promise.resolve(settings.get(profileId)!.get(name)!);
+    }
+    return window.dborg.settings.get(name, "profiles", profileId) ?? null;
+};
 
 export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { drivers, connections } = useDatabase();
@@ -487,6 +506,14 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
     }, []);
 
+    const getProfileSettings = useCallback((profileId: string, name: string) => {
+        return getProfileSettings(profileId, name);
+    }, []);
+
+    const setProfileSettings = useCallback((profileId: string, name: string, value: Record<string, any>) => {
+        storeProfileSettings(profileId, name, value);
+    }, []);
+
     React.useEffect(() => {
         const unsubscribeProfileUpdate = subscribe(PROFILE_UPDATE_MESSAGE, (message: ProfileUpdateMessage) => {
             return updateProfile(message.profileId, message.profile);
@@ -510,11 +537,13 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         disconnectProfile,
         testConnection,
         onEvent: onEvent as ProfileEventMethod,
+        getProfileSettings,
+        setProfileSettings,
     }), [
         profilesInitialized, profiles, getProfile, reloadProfiles,
         createProfile, updateProfile, deleteProfile, swapProfilesOrder,
         connectToDatabase, disconnectSession, disconnectProfile,
-        testConnection, onEvent
+        testConnection, onEvent, getProfileSettings, setProfileSettings
     ]);
 
     return (

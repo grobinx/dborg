@@ -1,5 +1,5 @@
 import Version from "../version";
-import { ColumnBaseType, ColumnDataType } from "./DataType";
+import { ColumnDataType } from "./DataType";
 import { DatabasesMetadata } from "./Metadata";
 
 /**
