@@ -11,6 +11,8 @@ import { InputDecoratorContext, InputDecoratorContextType } from "../inputs/deco
 import clsx from "@renderer/utils/clsx";
 import { themeColors } from "@renderer/types/colors";
 import { borderRadius } from "@renderer/themes/layouts/default/consts";
+import { resolve } from "path";
+import { resolveIcon } from "@renderer/themes/icons";
 
 export interface SettingDecoratorProps {
     children?: React.ReactElement<BaseInputProps>;
@@ -76,7 +78,7 @@ const StyledSettingDecorator = styled('div', {
     outlineOffset: -1,
     ...themeColors.reduce((acc, color) => {
         acc[`&.color-${color}`] = {
-            backgroundColor: alpha(theme.palette[color].main, 0.03),
+            backgroundColor: theme.palette.mode === 'dark' ? alpha(theme.palette[color].main, 0.1) : alpha(theme.palette[color].main, 0.05),
         };
         return acc;
     }, {}),
@@ -477,6 +479,12 @@ export const SettingDecorator = (props: SettingDecoratorProps): React.ReactEleme
                         classes,
                     )}
                 />
+
+                {setting.icon && (
+                    <span className={clsx("SettingDecorator-icon", classes)} style={{ fontSize: "2em" }}>
+                        {resolveIcon(theme, setting.icon)}
+                    </span>
+                )}
 
                 {showMenu && (
                     <StyledSettingDecoratorMenu

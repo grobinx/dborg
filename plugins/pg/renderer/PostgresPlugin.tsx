@@ -122,6 +122,7 @@ SettingsRegistry.register((context) => {
     context.registerCollection({
         key: PLUGIN_ID,
         title: t("postgres-plugin-settings-title", "PostgreSQL Plugin Settings"),
+        icon: logo,
         groups: [
             {
                 key: "pg-dump",

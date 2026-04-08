@@ -5,13 +5,15 @@ import { SettingDecorator } from "./SettingDecorator";
 import { TextField } from "../inputs/TextField";
 import { NumberField } from "../inputs/NumberField";
 import { BooleanField } from "../inputs/BooleanField";
-import { alpha, styled, Typography } from "@mui/material";
+import { alpha, Stack, styled, Typography, useTheme } from "@mui/material";
 import createKey from "./createKey";
 import clsx from "@renderer/utils/clsx";
 import { useTranslation } from "react-i18next";
 import { useScrollIntoView } from "@renderer/hooks/useScrollIntoView";
 import { SelectField } from "../inputs/SelectField";
 import { FilePathField } from "../inputs/FileField";
+import { resolve } from "path";
+import { resolveIcon } from "@renderer/themes/icons";
 
 const StyledSettingsView = styled('div', {
     name: 'SettingsView',
@@ -44,7 +46,7 @@ const StyledSettingsViewCollection = styled('div', {
 })(() => ({
     display: "flex",
     flexDirection: "column",
-    gap: 4,
+    gap: 2,
 }));
 
 const StyledSettingsViewList = styled('div', {
@@ -53,7 +55,7 @@ const StyledSettingsViewList = styled('div', {
 })(() => ({
     display: "flex",
     flexDirection: "column",
-    gap: 4,
+    gap: 2,
 }));
 
 const StyledSettingsViewGroup = styled('div', {
@@ -62,7 +64,7 @@ const StyledSettingsViewGroup = styled('div', {
 })(() => ({
     display: "flex",
     flexDirection: "column",
-    gap: 4,
+    gap: 2,
 }));
 
 const StyledSettingsViewHeader = styled('div', {
@@ -72,9 +74,10 @@ const StyledSettingsViewHeader = styled('div', {
     display: "flex",
     flexDirection: "column",
     padding: 8,
-    borderBottom: `1px solid ${theme.palette.divider}`,
-    boxShadow: "0 4px 8px -4px rgba(0,0,0,0.2)",
-    backgroundColor: alpha(theme.palette.main.main, 0.1),
+    marginTop: 16,
+    // borderBottom: `1px solid ${theme.palette.divider}`,
+    // boxShadow: "0 4px 8px -4px rgba(0,0,0,0.2)",
+    // backgroundColor: alpha(theme.palette.main.main, 0.1),
     '&.selected': {
         backgroundColor: alpha(theme.palette.success.main, 0.3),
     },
@@ -398,7 +401,7 @@ export const SettingsViewGroup: React.FC<{
     onPinned?: (operation: 'add' | 'remove', key: string) => void;
     values?: Record<string, any>;
 }> = ({ group, selected, selectedGroup, onSelect, onPinned, values }) => {
-    
+
     if (!group) {
         return null;
     }
@@ -413,7 +416,12 @@ export const SettingsViewGroup: React.FC<{
                     'group'
                 )}
             >
-                <Typography variant="h6">{group.title}</Typography>
+                <Stack direction="row" spacing={4} alignItems="center">
+                    {group.icon && (
+                        resolveIcon(useTheme(), group.icon)
+                    )}
+                    <Typography variant="body1">{group.title}</Typography>
+                </Stack>
                 {group.description && (
                     <Typography variant="description">{group.description}</Typography>
                 )}
@@ -473,6 +481,7 @@ export const SettingsViewCollection: React.FC<{
     onPinned?: (operation: 'add' | 'remove', key: string) => void;
     values?: Record<string, any>;
 }> = ({ collection, selected, selectedGroup, onSelect, onPinned, values }) => {
+    const theme = useTheme();
 
     return (
         <StyledSettingsViewCollection className="SettingsView-collection">
@@ -484,7 +493,12 @@ export const SettingsViewCollection: React.FC<{
                     'collection'
                 )}
             >
-                <Typography variant="h5">{collection.title}</Typography>
+                <Stack direction="row" spacing={4} alignItems="center">
+                    {collection.icon && (
+                        resolveIcon(theme, collection.icon)
+                    )}
+                    <Typography variant="body1">{collection.title}</Typography>
+                </Stack>
                 {collection?.description && (
                     <Typography variant="description">{collection.description}</Typography>
                 )}
@@ -532,7 +546,7 @@ const SettingsView: React.FC<SettingsViewProps> = ({
     values,
 }) => {
     const { t } = useTranslation();
-    
+
     useScrollIntoView({
         containerRef: ref,
         targetId: selectedGroup ?? selected,

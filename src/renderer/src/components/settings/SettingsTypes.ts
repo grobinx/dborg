@@ -102,6 +102,11 @@ export interface SettingTypeBase {
      */
     label: FormattedContentItem;
     /**
+     * An optional icon for the setting, displayed in the UI.
+     * You can use defined string names of icons from theme.
+     */
+    icon?: React.ReactNode;
+    /**
      * A description of the setting, displayed in the UI.
      * This should provide additional context or instructions for the user.
      * It can be a string or a React node for more complex content.
@@ -417,8 +422,22 @@ export interface SettingsGroup {
      * A unique key for the settings group.
      */
     key: string;
+    /**
+     * The title of the settings group, displayed in the UI.
+     */
     title: string;
+    /**
+     * An optional icon for the setting, displayed in the UI.
+     * You can use defined string names of icons from theme.
+     */
+    icon?: React.ReactNode;
+    /**
+     * A description of the settings group, displayed in the UI.
+     */
     description?: string;
+    /**
+     * Settings that belong to this group.
+     */
     settings: SettingTypeUnion[];
     /**
      * Optional sub-groups within this group.
@@ -437,8 +456,23 @@ export interface SettingsCollection {
      * It can be used to load or save the settings collection with TSettings and SettingsContext.
      */
     key: string;
+    /**
+     * The title of the settings collection, displayed in the UI.
+     */
     title: string;
+    /**
+     * An optional icon for the setting, displayed in the UI.
+     * You can use defined string names of icons from theme.
+     */
+    icon?: React.ReactNode;
+    /**
+     * A description of the settings collection, displayed in the UI.
+     * This should provide additional context or instructions for the user about the collection of settings.
+     */
     description?: string;
+    /**
+     * Groups of settings within this collection.
+     */
     groups?: SettingsGroup[];
     /**
      * Optional settings directly related to this collection (root).

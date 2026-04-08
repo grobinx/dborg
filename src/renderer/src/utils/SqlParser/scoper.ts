@@ -816,10 +816,7 @@ export class Scoper {
             }
 
             if (!alias && exprItems.length > 0 && isIdentifier(exprItems[exprItems.length - 1])) {
-                const candidate = exprItems[exprItems.length - 1] as Token;
-                if (!isKeywordInSet(candidate, ALIAS_FORBIDDEN)) {
-                    alias = candidate;
-                }
+                alias = exprItems.slice().reverse().find(item => isIdentifier(item)) ?? null;
             }
 
             // columns after alias: alias (col1, col2)
@@ -959,7 +956,7 @@ export class Scoper {
             }
 
             if (!alias && exprItems.length > 0) {
-                alias = this.findLastToken(exprItems[exprItems.length - 1], "identifier");
+                alias = exprItems.slice().reverse().find(item => isIdentifier(item)) ?? null;
             }
 
             const colBlock: ResultColumn = {
