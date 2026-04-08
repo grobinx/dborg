@@ -52,7 +52,7 @@ export function init(): void {
         EVENT_DRIVER_GET_DRIVERS,
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         (_: IpcMainInvokeEvent): api.DriverInfo[] => {
-            return driver.Driver.getDrivers().map<api.DriverInfo>(driver => driver.getDriverInfo());
+            return driver.Driver.getDriverList().map<api.DriverInfo>(driver => driver.getDriverInfo());
         }
     );
     ipcMain.handle(
@@ -65,7 +65,7 @@ export function init(): void {
         EVENT_DRIVER_GET_CONNECTIONS,
         (_: IpcMainInvokeEvent, uniqueId: string): Promise<InvokeResult> =>
             handleResult(async () => {
-                const connections = driver.Driver.getDriver(uniqueId)?.getConnections() || [];
+                const connections = driver.Driver.getDriver(uniqueId)?.getConnectionList() || [];
                 // Filtruj połączenia, aby wykluczyć "internal"
                 const filteredConnections = connections.filter(connection => connection.getConnectionId() !== "internal");
                 return await Promise.all(filteredConnections.map(async connection => await connection.getConnectionInfo()));

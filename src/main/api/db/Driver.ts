@@ -106,7 +106,7 @@ export abstract class Connection implements api.Connection {
         return this.driver;
     }
 
-    getCursors(): api.Cursor[] {
+    getCursorList(): api.Cursor[] {
         return [...Object.values<api.Cursor>(this.cursors)];
     }
 
@@ -179,7 +179,7 @@ export abstract class Driver implements api.Driver {
      * 
      * @returns array of drivers
      */
-    static getDrivers(): Driver[] {
+    static getDriverList(): Driver[] {
         return [...Object.values<Driver>(Driver.drivers)];
     }
 
@@ -237,7 +237,7 @@ export abstract class Driver implements api.Driver {
      * @returns connection
      */
     static getConnection(uniqueId: string): Connection | undefined {
-        for (const driver of Driver.getDrivers()) {
+        for (const driver of Driver.getDriverList()) {
             const result = driver.connections[uniqueId];
             if (result) {
                 return result;
@@ -246,7 +246,7 @@ export abstract class Driver implements api.Driver {
         return;
     }
 
-    getConnections(): Connection[] {
+    getConnectionList(): Connection[] {
         return [...Object.values<Connection>(this.connections)];
     }
 

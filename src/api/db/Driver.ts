@@ -412,7 +412,7 @@ export interface Connection extends BaseConnection {
     getDriver(): Driver;
 
 
-    getCursors(): Cursor[];
+    getCursorList(): Cursor[];
 
     /**
      * Version of connected database
@@ -541,7 +541,7 @@ export interface Driver {
      * Get connection list
      * @returns array connection of this driver
      */
-    getConnections(): Connection[];
+    getConnectionList(): Connection[];
 
     /**
      * Unique driver id, static (for reference to other settings)
