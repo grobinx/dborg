@@ -804,7 +804,7 @@ export class Scoper {
                 } else {
                     idx += 1;
                 }
-            } else if (idx < segment.length && isIdentifier(segment[idx])) {
+            } else if (idx < segment.length && isIdentifier(segment[idx]) && !isKeyword(segment[idx], "on", "using")) {
                 const prev = exprItems.length > 0 ? exprItems[exprItems.length - 1] : null;
                 if (!prev || !isPunctuator(prev as Token, ".")) {
                     const candidate = segment[idx] as Token;
@@ -812,6 +812,13 @@ export class Scoper {
                         alias = candidate;
                         idx += 1;
                     }
+                }
+            }
+
+            if (!alias && exprItems.length > 0 && isIdentifier(exprItems[exprItems.length - 1])) {
+                const candidate = exprItems[exprItems.length - 1] as Token;
+                if (!isKeywordInSet(candidate, ALIAS_FORBIDDEN)) {
+                    alias = candidate;
                 }
             }
 
