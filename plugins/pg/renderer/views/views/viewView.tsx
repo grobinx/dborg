@@ -22,7 +22,7 @@ export function viewView(session: IDatabaseSession, view: (() => ViewRecord | nu
     const uniqueId = uuidv7();
 
     const cid = (id: string) => {
-        return `${id}-${session.info.uniqueId}${pinned ? `-${uniqueId}` : ""}`;
+        return `${id}-${session.info.connectionId}${pinned ? `-${uniqueId}` : ""}`;
     }
 
     const getView = (view: (() => ViewRecord | null) | ViewRecord) => {

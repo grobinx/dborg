@@ -8,7 +8,7 @@ import { cidFactory } from "@renderer/containers/ViewSlots/helpers";
 export function toolsView(session: IDatabaseSession): ConnectionView {
     const t = i18next.t.bind(i18next);
 
-    const cid = cidFactory("tools", session.info.uniqueId);
+    const cid = cidFactory("tools", session.info.connectionId);
 
     return {
         type: "connection",

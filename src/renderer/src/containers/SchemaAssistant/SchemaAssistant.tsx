@@ -132,7 +132,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
                 schemaColor: schema.sch_color,
                 usePassword: schema.sch_use_password,
                 properties: schema.sch_properties,
-                driver: drivers.list.find((value) => value.uniqueId === schema.sch_drv_unique_id),
+                driver: drivers.list.find((value) => value.driverId === schema.sch_drv_unique_id),
             });
             setActiveStep(1);
             setAssistantMode("edit");
@@ -153,7 +153,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
                 schemaColor: schema.sch_color,
                 usePassword: schema.sch_use_password,
                 properties: schema.sch_properties,
-                driver: drivers.list.find((value) => value.uniqueId === schema.sch_drv_unique_id),
+                driver: drivers.list.find((value) => value.driverId === schema.sch_drv_unique_id),
             });
             setActiveStep(1);
             setAssistantMode("clone");

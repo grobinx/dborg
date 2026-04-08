@@ -66,7 +66,7 @@ export function aggregatesView(session: IDatabaseSession): ConnectionView {
     };
     setSelectedSchemaName();
 
-    const cid = (id: string) => `${id}-${session.info.uniqueId}`;
+    const cid = (id: string) => `${id}-${session.info.connectionId}`;
 
     return {
         type: "connection",

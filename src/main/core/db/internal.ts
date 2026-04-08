@@ -112,10 +112,10 @@ async function updateDrivers() {
         // ignore
     }
     drivers = Driver.getDrivers().map(driver => {
-        const existing = drivers?.find(d => d.drv_unique_id === driver.getUniqueId());
+        const existing = drivers?.find(d => d.drv_unique_id === driver.getDriverId());
         return {
             drv_id: existing?.drv_id ?? uuidv7(),
-            drv_unique_id: driver.getUniqueId(),
+            drv_unique_id: driver.getDriverId(),
             drv_name: driver.getName(),
             drv_description: driver.getDescription(),
             drv_icon: driver.getIcon(),

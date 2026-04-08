@@ -221,7 +221,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
 
     const onMountHandle = (context: DataGridContext<any>) => {
         context.addCommand("Ctrl+Tab", () => {
-            queueMessage(SQL_EDITOR_FOCUS, { sessionId: session.info.uniqueId });
+            queueMessage(SQL_EDITOR_FOCUS, { sessionId: session.info.connectionId });
         });
         context.addAction({
             id: "refresh-query",
@@ -403,8 +403,8 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
             return;
         }
         queueMessage(SQL_RESULT_SQL_QUERY_EXECUTING, { to: itemID, from: itemID, status: executing });
-        queueMessage(SQL_RESULT_SQL_QUERY_EXECUTING, { to: session.info.uniqueId, from: itemID, status: executing });
-    }, [executing, itemID, session.info.uniqueId]);
+        queueMessage(SQL_RESULT_SQL_QUERY_EXECUTING, { to: session.info.connectionId, from: itemID, status: executing });
+    }, [executing, itemID, session.info.connectionId]);
 
     React.useEffect(() => {
         const extractFirstLineComment = (query: string): string | null => {
@@ -421,7 +421,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
         };
 
         const handleSqlExecute = async (message: SqlEditorExecuteQueryMessage) => {
-            if (message.to !== session.info.uniqueId || executingRef.current) {
+            if (message.to !== session.info.connectionId || executingRef.current) {
                 return;
             }
             const params = extractSqlParameters(message.query);
@@ -450,7 +450,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
         };
 
         const handleShowStructure = (message: { to: string, from: string, data: any[], columns: ColumnDefinition[] }) => {
-            if (message.to !== session.info.uniqueId) {
+            if (message.to !== session.info.connectionId) {
                 return;
             }
             if (tabIsActiveRef.current) {
@@ -466,7 +466,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
         const unsubscribeExecuteQuery = subscribe(SQL_EDITOR_EXECUTE_QUERY, handleSqlExecute);
         const unsubscribeShowStructure = subscribe(SQL_EDITOR_SHOW_STRUCTURE, handleShowStructure);
         const unsubscribeResultFocus = subscribe(SQL_RESULT_FOCUS, (message: SqlResultFocusMessage) => {
-            if (message.sessionId === session.info.uniqueId) {
+            if (message.sessionId === session.info.connectionId) {
                 dataGridRef.current?.focus();
             }
         });
@@ -590,7 +590,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
             <Splitter hidden={!showValuePreview} />
             <SplitPanel defaultSize={25} hidden={!showValuePreview}>
                 <TabsPanel
-                    itemID={`dataGrid-preview-${session.info.uniqueId}`}
+                    itemID={`dataGrid-preview-${session.info.connectionId}`}
                     buttons={
                         <TabPanelButtons>
                             <Tooltip title={t("close-preview-panel", "Close Preview Panel")}>
@@ -605,7 +605,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                     }
                 >
                     <TabPanel
-                        itemID={`value-preview-${session.info.uniqueId}`}
+                        itemID={`value-preview-${session.info.connectionId}`}
                         label={t("value-preview", "Value")}
                         buttons={
                             <ValuePreviewToolbar
@@ -628,7 +628,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                         }
                     />
                     <TabPanel
-                        itemID={`metadata-preview-${session.info.uniqueId}`}
+                        itemID={`metadata-preview-${session.info.connectionId}`}
                         label={t("metadata-preview", "Metadata")}
                         content={
                             <Box sx={{ height: "100%", overflow: "auto", bgcolor: "background.default" }}>

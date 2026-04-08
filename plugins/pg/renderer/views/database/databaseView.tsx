@@ -22,7 +22,7 @@ export function databaseView(session: IDatabaseSession): ConnectionView {
     fetchDatabaseName();
 
     const cid = (id: string) => {
-        return `${id}-${session.info.uniqueId}`;
+        return `${id}-${session.info.connectionId}`;
     }
 
     return {

@@ -35,7 +35,7 @@ export function tablesView(session: IDatabaseSession): ConnectionView {
     setSelectedSchemaName();
 
     const cid = (id: string) => {
-        return `${id}-${session.info.uniqueId}`;
+        return `${id}-${session.info.connectionId}`;
     }
 
     return {
@@ -143,13 +143,13 @@ export function tablesView(session: IDatabaseSession): ConnectionView {
                             if (record) {
                                 if (record.table_type !== "foreign") {
                                     sendMessage(SQL_EDITOR_EXECUTE_QUERY, {
-                                        to: session.info.uniqueId,
+                                        to: session.info.connectionId,
                                         from: cid("tables-grid"),
                                         query: `select * from "${record.schema_name}"."${record.table_name}" tablesample system(10) limit 200`,
                                     } as SqlEditorExecuteQueryMessage);
                                 } else {
                                     sendMessage(SQL_EDITOR_EXECUTE_QUERY, {
-                                        to: session.info.uniqueId,
+                                        to: session.info.connectionId,
                                         from: cid("tables-grid"),
                                         query: `select * from "${record.schema_name}"."${record.table_name}" limit 200`,
                                     } as SqlEditorExecuteQueryMessage);

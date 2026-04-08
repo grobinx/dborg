@@ -29,7 +29,7 @@ export function tableView(session: IDatabaseSession, table: (() => TableRecord |
     const uniqueId = uuidv7();
 
     const cid = (id: string) => {
-        return `${id}-${session.info.uniqueId}${pinned ? `-${uniqueId}` : ""}`;
+        return `${id}-${session.info.connectionId}${pinned ? `-${uniqueId}` : ""}`;
     }
 
     const getTable = (table: (() => TableRecord | null) | TableRecord) => {

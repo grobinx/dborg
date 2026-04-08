@@ -23,7 +23,7 @@ interface SettingRecord {
 
 const databaseSettingsTab = (session: IDatabaseSession): IPinnableTabSlot => {
     const t = i18next.t.bind(i18next);
-    const cid = (id: string) => `${id}-${session.info.uniqueId}`;
+    const cid = (id: string) => `${id}-${session.info.connectionId}`;
     
     const versionNumber = versionToNumber(session.getVersion() ?? "0.0.0");
 

@@ -47,7 +47,7 @@ interface RelationMaintenanceRecord {
 
 const tableMaintenanceTab = (session: IDatabaseSession): IPinnableTabSlot => {
     const t = i18next.t.bind(i18next);
-    const cid = cidFactory("tools-table-maintenance", session.info.uniqueId);
+    const cid = cidFactory("tools-table-maintenance", session.info.connectionId);
     const versionNumber = versionToNumber(session.getVersion() ?? "0.0.0");
 
     let selectedSchemaName: string | null = null;

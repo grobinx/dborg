@@ -49,7 +49,7 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = (props) => {
     const loadDriverList = React.useCallback(async (): Promise<void> => {
         window.dborg.database.driver.getDrivers().then((driverList) => {
             for (const driver of driverList) {
-                const driverKey = `${driver.uniqueId}.driver`;
+                const driverKey = `${driver.driverId}.driver`;
                 for (const group of driver.properties) {
                     const groupKey = `${driverKey}.${group.name}`;
                     group.title = t(`${groupKey}.title`.replaceAll(":", "-"), group.title);
@@ -82,7 +82,7 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = (props) => {
     }, []);
 
     const driverFind = React.useCallback((driverUniqueId: string): api.DriverInfo => {
-        return driverList.filter(driver => driver.uniqueId === driverUniqueId)[0];
+        return driverList.filter(driver => driver.driverId === driverUniqueId)[0];
     }, [driverList]);
 
     const connectionClose = React.useCallback((uniqueId: string): Promise<void> => {
@@ -92,7 +92,7 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = (props) => {
     const connectionList = React.useCallback(async (): Promise<api.ConnectionInfo[]> => {
         const result: api.ConnectionInfo[] = [];
         for (const driver of driverList) {
-            result.push(...await window.dborg.database.driver.getConnections(driver.uniqueId));
+            result.push(...await window.dborg.database.driver.getConnections(driver.driverId));
         }
         return result;
     }, [driverList]);

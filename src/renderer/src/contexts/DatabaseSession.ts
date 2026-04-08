@@ -8,7 +8,7 @@ import { DataGridChangesManager, DataGridChangesOptions } from "@renderer/compon
 import { versionToNumber } from "../../../../src/api/version";
 
 export function resultsTabsId(session: IDatabaseSession): string {
-    return session.profile.sch_id + ":" + session.info.uniqueId + ":results-tabs";
+    return session.profile.sch_id + ":" + session.info.connectionId + ":results-tabs";
 }
 
 export interface IDatabaseSession extends api.BaseConnection {
@@ -112,18 +112,18 @@ export class DatabaseSessionCursor implements IDatabaseSessionCursor {
     constructor(info: api.CursorInfo) {
         this.info = info;
     }
-    getUniqueId(): string {
-        return this.info.uniqueId;
+    getCursorId(): string {
+        return this.info.cursorId;
     }
 
     async getCursorInfo(): Promise<api.CursorInfo> {
-        this.info = (await window.dborg.database.connection.cursor.getCursor(this.info.connectionId, this.info.uniqueId))!;
+        this.info = (await window.dborg.database.connection.cursor.getCursor(this.info.connectionId, this.info.cursorId))!;
         return this.info;
     }
 
     async fetch(fetchCount?: number): Promise<api.QueryResultRow[]> {
-        const rows = await window.dborg.database.connection.cursor.fetch(this.info.connectionId, this.info.uniqueId, fetchCount);
-        this.ended = await window.dborg.database.connection.cursor.isEnd(this.info.connectionId, this.info.uniqueId);
+        const rows = await window.dborg.database.connection.cursor.fetch(this.info.connectionId, this.info.cursorId, fetchCount);
+        this.ended = await window.dborg.database.connection.cursor.isEnd(this.info.connectionId, this.info.cursorId);
         return rows;
     }
 
@@ -132,11 +132,11 @@ export class DatabaseSessionCursor implements IDatabaseSessionCursor {
     }
 
     close(): Promise<void> {
-        return window.dborg.database.connection.cursor.close(this.info.connectionId, this.info.uniqueId);
+        return window.dborg.database.connection.cursor.close(this.info.connectionId, this.info.cursorId);
     }
 
     cancel(): Promise<void> {
-        return window.dborg.database.connection.cursor.cancel(this.info.connectionId, this.info.uniqueId);
+        return window.dborg.database.connection.cursor.cancel(this.info.connectionId, this.info.cursorId);
     }
 
 }
@@ -159,14 +159,14 @@ class DatabaseSession implements IDatabaseSession {
         this.metadataInitialized = false;
 
         this.queue = new QueueTask<IDatabaseSession>({
-            id: this.info.uniqueId,
+            id: this.info.connectionId,
             maxConcurrency: this.profile.sch_queue?.concurrency ?? 1,
             maxQueueHistory: this.profile.sch_queue?.history ?? 200,
         });
     }
 
     async open(sql: string, values?: unknown[], maxRowsMode?: api.CursorFetchMaxRowsMode): Promise<IDatabaseSessionCursor> {
-        const cursorInfo = await window.dborg.database.connection.open(this.info.uniqueId, sql, values, maxRowsMode);
+        const cursorInfo = await window.dborg.database.connection.open(this.info.connectionId, sql, values, maxRowsMode);
         return new DatabaseSessionCursor(cursorInfo);
     }
 
@@ -175,7 +175,7 @@ class DatabaseSession implements IDatabaseSession {
     }
 
     async getConnectionInfo(): Promise<api.ConnectionInfo> {
-        this.info = (await window.dborg.database.connection.getConnection(this.info.uniqueId))!;
+        this.info = (await window.dborg.database.connection.getConnection(this.info.connectionId))!;
         return this.info;
     }
 
@@ -184,7 +184,7 @@ class DatabaseSession implements IDatabaseSession {
     }
 
     setUserData(property: string, value: unknown): void {
-        window.dborg.database.connection.userData.set(this.info.uniqueId, property, value);
+        window.dborg.database.connection.userData.set(this.info.connectionId, property, value);
         this.info.userData[property] = value;
     }
 
@@ -196,8 +196,8 @@ class DatabaseSession implements IDatabaseSession {
         this.setUserData("profile", profile);
     }
 
-    getUniqueId(): string {
-        return this.info.uniqueId;
+    getConnectionId(): string {
+        return this.info.connectionId;
     }
 
     getProperties(): api.Properties {
@@ -209,28 +209,28 @@ class DatabaseSession implements IDatabaseSession {
     }
 
     store(sql: string): Promise<api.StatementResult> {
-        return window.dborg.database.connection.store(this.info.uniqueId, sql);
+        return window.dborg.database.connection.store(this.info.connectionId, sql);
     }
 
     query<R extends api.QueryResultRow>(sql: string, values?: unknown[]): Promise<api.QueryResult<R>> {
-        return window.dborg.database.connection.query<R>(this.info.uniqueId, sql, values);
+        return window.dborg.database.connection.query<R>(this.info.connectionId, sql, values);
     }
 
     execute(sql: string, values?: unknown[]): Promise<api.CommandResult> {
-        return window.dborg.database.connection.execute(this.info.uniqueId, sql, values);
+        return window.dborg.database.connection.execute(this.info.connectionId, sql, values);
     }
 
     close(): Promise<void> {
         // cancel all queued (not started) tasks
         this.queue.cancelAllQueued();
-        return window.dborg.database.connection.close(this.info.uniqueId);
+        return window.dborg.database.connection.close(this.info.connectionId);
     }
 
     async getContext(reload?: boolean): Promise<api.SessionContext | undefined> {
         if (this.info.context && !reload) {
             return this.info.context;
         }
-        this.info.context = await window.dborg.database.connection.getContext(this.info.uniqueId, reload);
+        this.info.context = await window.dborg.database.connection.getContext(this.info.connectionId, reload);
         return this.info.context;
     }
 
@@ -242,7 +242,7 @@ class DatabaseSession implements IDatabaseSession {
             const version = versionToNumber(this.getVersion() ?? "0.0.0");
             const supportVersion = versionToNumber(this.info.driver.supports.minVersion || "0.0.0");
             if (version >= supportVersion) {
-                this.metadata = await window.dborg.database.connection.getMetadata(this.info.uniqueId, progress, force);
+                this.metadata = await window.dborg.database.connection.getMetadata(this.info.connectionId, progress, force);
                 this.metadataInitialized = true;
             }
         }
@@ -251,7 +251,7 @@ class DatabaseSession implements IDatabaseSession {
 
     updateObject(progress?: (current: string) => void, schemaName?: string, objectName?: string): Promise<void> {
         if (this.info.driver.implements.includes("metadata")) {
-            return window.dborg.database.connection.updateObject(this.info.uniqueId, progress, schemaName, objectName);
+            return window.dborg.database.connection.updateObject(this.info.connectionId, progress, schemaName, objectName);
         }
         return Promise.resolve();
     }
@@ -259,14 +259,14 @@ class DatabaseSession implements IDatabaseSession {
     async closeCursors(): Promise<void> {
         if (this.info.cursors.length > 0) {
             this.info.cursors.forEach(async (cursor) => {
-                await window.dborg.database.connection.cursor.close(this.info.uniqueId, cursor);
+                await window.dborg.database.connection.cursor.close(this.info.connectionId, cursor);
             });
             this.info.cursors = [];
         }
     }
 
     cancel(): Promise<void> {
-        return window.dborg.database.connection.cancel(this.info.uniqueId);
+        return window.dborg.database.connection.cancel(this.info.connectionId);
     }
 
     /**

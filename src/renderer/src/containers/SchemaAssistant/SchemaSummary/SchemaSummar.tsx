@@ -54,7 +54,7 @@ type PropertySummaryInfo = {
 const SchemaSummary: React.FC<SchemaSummaryOwnProps> = (props) => {
     const { ref, schema, slotProps, ...other } = useThemeProps({ name: 'SchemaSummary', props });;
     const { drivers } = useDatabase();
-    const driver = drivers.list.find((value) => value.uniqueId === schema.driverUniqueId);
+    const driver = drivers.list.find((value) => value.driverId === schema.driverUniqueId);
     const { t } = useTranslation();
 
     const properties = React.useMemo<PropertySummaryInfo[]>(() => {

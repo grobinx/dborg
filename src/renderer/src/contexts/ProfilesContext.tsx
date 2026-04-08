@@ -267,7 +267,7 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         profile.sch_last_selected = DateTime.now().toSQL();
         profile.sch_db_version = connection.version;
         profile.sch_updated = DateTime.now().toSQL();
-        connections.userData.set(connection.uniqueId, "profile", profile);
+        connections.userData.set(connection.connectionId, "profile", profile);
         connection.userData.profile = profile;
         setProfiles((prev) => {
             const otherProfiles = prev.filter((s) => s.sch_id !== profileId);
@@ -295,7 +295,7 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             (conn) => (conn.userData?.profile as ProfileRecord)?.sch_id === profileId
         );
         for (const conn of allConnections) {
-            disconnectSession(conn.uniqueId);
+            disconnectSession(conn.connectionId);
         }
     }, [connections]);
 
@@ -311,7 +311,7 @@ export const ProfilesProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             }
 
             const connection = await drivers.connect(driverUniqueId, properties);
-            await connections.close(connection.uniqueId);
+            await connections.close(connection.connectionId);
 
             addToast("success",
                 t("profile-test-success", "Connection \"{{name}}\" is valid.", { name: profileName }),

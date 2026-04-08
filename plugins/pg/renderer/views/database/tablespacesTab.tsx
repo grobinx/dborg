@@ -37,7 +37,7 @@ export function tablespacesTab(session: IDatabaseSession): IPinnableTabSlot {
     let loadingStats = false;
     let loadingProgress: number | null = null;
 
-    const cid = (id: string) => `${id}-${session.info.uniqueId}`;
+    const cid = (id: string) => `${id}-${session.info.connectionId}`;
 
     async function getTablespaceStats(tablespaceName: string): Promise<TablespaceStatsRecord> {
         const sql = `

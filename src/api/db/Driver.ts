@@ -189,7 +189,7 @@ export type ConnectionImplementsMethod =
 export type ConnectionImplementsMethods = ConnectionImplementsMethod[];
 
 export interface CursorInfo {
-    uniqueId: string;
+    cursorId: string;
     connectionId: string;
     columns: ColumnInfo[] | undefined;
     command: string | undefined;
@@ -204,7 +204,7 @@ export interface BaseCursor {
     /**
      * Unique id of the connection cursor
      */
-    getUniqueId(): string;
+    getCursorId(): string;
 
     /**
      * Cursor info
@@ -276,7 +276,7 @@ export interface SessionContext {
 };
 
 export interface ConnectionInfo {
-    uniqueId: string;
+    connectionId: string;
     driver: DriverInfo;
     properties: Properties;
     connected: boolean;
@@ -307,7 +307,7 @@ export interface BaseConnection {
     /**
      * Unique id for connection, new for new connection
      */
-    getUniqueId(): string;
+    getConnectionId(): string;
 
     /**
      * Connection properties
@@ -505,7 +505,7 @@ export interface DatabaseSupports {
  * Driver info, structure for exchanging information between main and renderer
  */
 export interface DriverInfo {
-    uniqueId: string;
+    driverId: string;
     supports: DatabaseSupports;
     name: string;
     description?: string;
@@ -546,7 +546,7 @@ export interface Driver {
     /**
      * Unique driver id, static (for reference to other settings)
      */
-    getUniqueId(): string;
+    getDriverId(): string;
 
     /**
      * Driver name, eg PostgreSQL, ClickHouse, Oracle, etc

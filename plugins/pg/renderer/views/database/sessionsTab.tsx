@@ -58,7 +58,7 @@ interface TransactionRecord {
 const sessionsTab = (session: IDatabaseSession, database: string | null): IPinnableTabSlot => {
     const t = i18next.t.bind(i18next);
     const versionNumber = versionToNumber(session.getVersion() ?? "0.0.0");
-    const cid = (id: string) => `${id}-${session.info.uniqueId}`;
+    const cid = (id: string) => `${id}-${session.info.connectionId}`;
 
     let selectedSession: SessionRecord | null = null;
     let sessions: SessionRecord[] = [];

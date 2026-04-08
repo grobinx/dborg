@@ -75,7 +75,7 @@ const SchemaParameters: React.FC<ProfileParametersOwnProps> = (props) => {
     const { schemaRef, schema, slotProps, search, ...other } = useThemeProps({ name: 'SchemaParameters', props });
     const { drivers } = useDatabase();
     const [properties, setProperties] = React.useState<Properties>(schema.properties ?? {});
-    const driver = drivers.list.find((value) => value.uniqueId === schema.driverUniqueId);
+    const driver = drivers.list.find((value) => value.driverId === schema.driverUniqueId);
     const { t } = useTranslation();
     const [schemaPattern, setSchemaPattern] = React.useState(schema.schemaPattern ?? '');
     const [schemaName, setSchemaName] = React.useState(schema.schemaName ?? '');
@@ -183,7 +183,7 @@ const SchemaParameters: React.FC<ProfileParametersOwnProps> = (props) => {
                             schemaName={schemaName}
                             schemaPattern={schemaPattern}
                             schemaColor={schemaColor}
-                            schemaDriverId={driver?.uniqueId}
+                            schemaDriverId={driver?.driverId}
                             onChangePattern={value => setSchemaPattern(value)}
                             onChangeColor={value => setSchemaColor(value)}
                         />

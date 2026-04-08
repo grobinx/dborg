@@ -45,9 +45,9 @@ const DriverSelect: React.FC<DriverSelectOwnProps> = (props) => {
                 return (
                     <DriverSelectButton
                         style={{ flexGrow: 1 }}
-                        key={driver.uniqueId}
+                        key={driver.driverId}
                         onClick={onSelected ? () => { 
-                            onSelected(driver.uniqueId) 
+                            onSelected(driver.driverId) 
                         } : undefined}
                         className="DriverSelect-buttons"
                         {...slotProps?.button}

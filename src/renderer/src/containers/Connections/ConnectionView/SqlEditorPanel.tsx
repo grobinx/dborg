@@ -196,7 +196,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
             };
         }
         const metadataSuccessHandler = (message: Messages.SessionGetMetadataSuccess) => {
-            if (message.connectionId === session.info.uniqueId) {
+            if (message.connectionId === session.info.connectionId) {
                 initMetadata();
             }
         }
@@ -204,7 +204,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
 
         const unsubscribeGetMetadataSuccess = subscribe(Messages.SESSION_GET_METADATA_SUCCESS, metadataSuccessHandler);
         const unsubscribeFocus = subscribe(SQL_EDITOR_FOCUS, (message: SqlEditorFocusMessage) => {
-            if (message.sessionId === session.info.uniqueId && editorInstanceRef.current && tabIsActiveRef.current) {
+            if (message.sessionId === session.info.connectionId && editorInstanceRef.current && tabIsActiveRef.current) {
                 editorInstanceRef.current.focus();
             }
         });
@@ -320,7 +320,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
                 result = CommandProcessor.processCommand(query, session.metadata);
                 if (result) {
                     queueMessage(SQL_EDITOR_SHOW_STRUCTURE, {
-                        to: session.info.uniqueId,
+                        to: session.info.connectionId,
                         from: itemID,
                         data: result.rows,
                         columns: result.columns,
@@ -332,7 +332,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
             //console.log(extractSqlParameters(query));
 
             queueMessage(SQL_EDITOR_EXECUTE_QUERY, {
-                to: session.info.uniqueId,
+                to: session.info.connectionId,
                 from: itemID,
                 query: query,
             } as SqlEditorExecuteQueryMessage);
@@ -351,7 +351,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
         }
 
         editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Tab, () => {
-            queueMessage(SQL_RESULT_FOCUS, { sessionId: session.info.uniqueId });
+            queueMessage(SQL_RESULT_FOCUS, { sessionId: session.info.connectionId });
         });
 
         // Nasłuchiwanie zmian w pozycji kursora

@@ -67,7 +67,7 @@ export function init(): void {
             handleResult(async () => {
                 const connections = driver.Driver.getDriver(uniqueId)?.getConnections() || [];
                 // Filtruj połączenia, aby wykluczyć "internal"
-                const filteredConnections = connections.filter(connection => connection.getUniqueId() !== "internal");
+                const filteredConnections = connections.filter(connection => connection.getConnectionId() !== "internal");
                 return await Promise.all(filteredConnections.map(async connection => await connection.getConnectionInfo()));
             })
     );

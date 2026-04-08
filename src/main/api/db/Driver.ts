@@ -12,7 +12,7 @@ export abstract class Cursor implements api.Cursor {
         return this.connection;
     }
 
-    abstract getUniqueId(): string;
+    abstract getCursorId(): string;
 
     abstract getSessionId(): string | undefined;
 
@@ -24,7 +24,7 @@ export abstract class Cursor implements api.Cursor {
 
     close(): Promise<void> {
         return new Promise(resolve => {
-            this.connection._removeCursor(this.getUniqueId());
+            this.connection._removeCursor(this.getCursorId());
             resolve();
         });
     }
@@ -53,13 +53,13 @@ export abstract class Connection implements api.Connection {
         //driver._addConnection(this);
     }
 
-    abstract getUniqueId(): string;
+    abstract getConnectionId(): string;
 
     abstract getSessionId(): string | undefined;
 
     async getConnectionInfo(): Promise<api.ConnectionInfo> {
         return {
-            uniqueId: this.getUniqueId(),
+            connectionId: this.getConnectionId(),
             driver: this.getDriver().getDriverInfo(),
             properties: this.getProperties(),
             connected: this.isConnected(),
@@ -80,7 +80,7 @@ export abstract class Connection implements api.Connection {
      * @param connection 
      */
     _addCursor(cursor: api.Cursor): void {
-        this.cursors[cursor.getUniqueId()] = cursor;
+        this.cursors[cursor.getCursorId()] = cursor;
     }
 
     /**
@@ -132,7 +132,7 @@ export abstract class Connection implements api.Connection {
 
     close(): Promise<void> {
         this.cursors = {};
-        this.getDriver()._removeConnection(this.getUniqueId());
+        this.getDriver()._removeConnection(this.getConnectionId());
         return new Promise(resolve => resolve());
     }
 
@@ -184,7 +184,7 @@ export abstract class Driver implements api.Driver {
     }
 
     constructor(implementsMethods: api.ConnectionImplementsMethods) {
-        Driver.drivers[this.getUniqueId()] = this;
+        Driver.drivers[this.getDriverId()] = this;
         this.implementsMethods = implementsMethods;
     }
 
@@ -196,7 +196,7 @@ export abstract class Driver implements api.Driver {
         const { major, minor, release, build } = this.getVersion();
         const properties = this.getProperties();
         return {
-            uniqueId: this.getUniqueId(),
+            driverId: this.getDriverId(),
             name: this.getName(),
             supports: this.getSupports(),
             description: this.getDescription(),
@@ -216,7 +216,7 @@ export abstract class Driver implements api.Driver {
      * @param connection 
      */
     _addConnection(connection: Connection): void {
-        this.connections[connection.getUniqueId()] = connection;
+        this.connections[connection.getConnectionId()] = connection;
     }
 
     /**
@@ -250,7 +250,7 @@ export abstract class Driver implements api.Driver {
         return [...Object.values<Connection>(this.connections)];
     }
 
-    abstract getUniqueId(): string;
+    abstract getDriverId(): string;
 
     abstract getSupports(): api.DatabaseSupports;
 
@@ -271,7 +271,7 @@ export abstract class Driver implements api.Driver {
             connection.close();
         }
         this.connections = {};
-        delete Driver.drivers[this.getUniqueId()];
+        delete Driver.drivers[this.getDriverId()];
     }
     
 }

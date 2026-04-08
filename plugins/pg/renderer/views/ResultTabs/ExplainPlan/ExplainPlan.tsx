@@ -19,7 +19,7 @@ export function explainPlanResultTab(session: IDatabaseSession): ConnectionSqlRe
     const t = i18next.t.bind(i18next);
     const versionNumber = versionToNumber(session.getVersion() ?? "0.0.0");
 
-    const cid = (id: string) => `${id}-${session.info.uniqueId}`;
+    const cid = (id: string) => `${id}-${session.info.connectionId}`;
 
     let unsubsribeExplainPlanText: () => void = () => { };
     let explainPlan: ExplainResultKind | null = null;
@@ -131,7 +131,7 @@ export function explainPlanResultTab(session: IDatabaseSession): ConnectionSqlRe
             unsubsribeExplainPlanText = slotContext.messages.subscribe(
                 EXPLAIN_PLAN_TEXT,
                 async (sessionId: string, text: string, widthOptions: boolean) => {
-                    if (sessionId !== session.info.uniqueId || cancelCurrentRequest) {
+                    if (sessionId !== session.info.connectionId || cancelCurrentRequest) {
                         return;
                     }
 
@@ -851,7 +851,7 @@ export function ExplainPlanAction(session: IDatabaseSession, slotContext: SlotRu
             if (selection && model) {
                 const selectedText = model.getValueInRange(selection);
                 if (selectedText.trim()) {
-                    slotContext.messages.sendMessage(EXPLAIN_PLAN_TEXT, session.info.uniqueId, selectedText, widthOptions);
+                    slotContext.messages.sendMessage(EXPLAIN_PLAN_TEXT, session.info.connectionId, selectedText, widthOptions);
                     return;
                 }
             }
@@ -859,7 +859,7 @@ export function ExplainPlanAction(session: IDatabaseSession, slotContext: SlotRu
             // Jeśli nie ma zaznaczonego tekstu, użyj fragmentu wokół kursora
             const fragment = getFragmentAroundCursor(editor);
             if (fragment) {
-                slotContext.messages.sendMessage(EXPLAIN_PLAN_TEXT, session.info.uniqueId, fragment.fragment, widthOptions);
+                slotContext.messages.sendMessage(EXPLAIN_PLAN_TEXT, session.info.connectionId, fragment.fragment, widthOptions);
             }
         }
     };

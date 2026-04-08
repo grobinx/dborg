@@ -298,24 +298,24 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         if (!session.info.driver.implements.includes("metadata")) return;
         setTimeout(() => {
             queueMessage(Messages.SESSION_GET_METADATA_START, {
-                connectionId: session.info.uniqueId,
+                connectionId: session.info.connectionId,
                 profile: session.profile,
             } as Messages.SessionGetMetadataStart);
 
             session.getMetadata((current) => {
                 queueMessage(Messages.SESSION_GET_METADATA_PROGRESS, {
-                    connectionId: session.info.uniqueId,
+                    connectionId: session.info.connectionId,
                     progress: current,
                 } as Messages.SessionGetMetadataProgress);
             }, force).then((metadata: api.DatabasesMetadata) => {
                 session.metadata = metadata;
                 queueMessage(Messages.SESSION_GET_METADATA_SUCCESS, {
-                    connectionId: session.info.uniqueId,
+                    connectionId: session.info.connectionId,
                     metadata,
                 } as Messages.SessionGetMetadataSuccess);
             }).catch((error) => {
                 queueMessage(Messages.SESSION_GET_METADATA_ERROR, {
-                    connectionId: session.info.uniqueId,
+                    connectionId: session.info.connectionId,
                     error: error.message,
                 } as Messages.SessionGetMetadataError);
                 addToast("error", "Error loading metadata", {
@@ -324,7 +324,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                 });
             }).finally(() => {
                 queueMessage(Messages.SESSION_GET_METADATA_END, {
-                    connectionId: session.info.uniqueId,
+                    connectionId: session.info.connectionId,
                 } as Messages.SessionGetMetadataEnd);
             });
         }, force ? 500 : 2000);
@@ -355,7 +355,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
         if (selectedContainer.type === "connections") {
             if (!selectedSession) return null;
-            const sid = selectedSession.info.uniqueId;
+            const sid = selectedSession.info.connectionId;
             const cached = sessionViewStateRef.current[sid];
             if (cached) {
                 return cached.views;
@@ -376,12 +376,12 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         if (selectedContainer.type === "profile-list") {
             return sessions?.map(session => ({
                 type: "clickable",
-                id: "connection-" + session.info.uniqueId,
+                id: "connection-" + session.info.connectionId,
                 icon: <ConnectedViewIcon session={session} />,
                 label: session.profile.sch_name,
                 onClick: () => {
                     sendMessage(Messages.SWITCH_CONTAINER, "connections").then(() => {
-                        sendMessage(SWITCH_PANEL_TAB, "connections-tabs-panel", session.info.uniqueId);
+                        sendMessage(SWITCH_PANEL_TAB, "connections-tabs-panel", session.info.connectionId);
                     });
                 },
             } as ClickableView)) || null;
@@ -395,7 +395,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
         if (selectedContainer.type === "connections") {
             if (!selectedSession) return null;
-            const selectedId = sessionViewStateRef.current[selectedSession.info.uniqueId]?.selectedViewId;
+            const selectedId = sessionViewStateRef.current[selectedSession.info.connectionId]?.selectedViewId;
             return views.find(v => v.id === selectedId) || null;
         }
 
@@ -440,8 +440,8 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         if (selectedView?.id === viewId) {
             const isConn = selectedContainer?.type === "connections";
             if (isConn && selectedSession) {
-                sessionViewStateRef.current[selectedSession.info.uniqueId] = {
-                    views: sessionViewStateRef.current[selectedSession.info.uniqueId]?.views || views,
+                sessionViewStateRef.current[selectedSession.info.connectionId] = {
+                    views: sessionViewStateRef.current[selectedSession.info.connectionId]?.views || views,
                     selectedViewId: null,
                 };
                 setSessionViewStateVersion(prev => prev + 1);
@@ -458,8 +458,8 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         }
 
         if (selectedContainer?.type === "connections" && selectedSession) {
-            sessionViewStateRef.current[selectedSession.info.uniqueId] = {
-                views: sessionViewStateRef.current[selectedSession.info.uniqueId]?.views || views,
+            sessionViewStateRef.current[selectedSession.info.connectionId] = {
+                views: sessionViewStateRef.current[selectedSession.info.connectionId]?.views || views,
                 selectedViewId: viewId,
             };
             setSessionViewStateVersion(prev => prev + 1);
@@ -484,7 +484,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const handleTabConnectionsChanged = React.useCallback((msg: TabPanelChangedMessage) => {
         if (msg.tabsItemID !== "connections-tabs-panel") return;
         if (selectedContainer?.type !== "connections") return;
-        const session = sessions?.find(s => s.info.uniqueId === msg.itemID) || null;
+        const session = sessions?.find(s => s.info.connectionId === msg.itemID) || null;
         setSelectedSession(session);
     }, [sessions, selectedContainer]);
 
@@ -511,8 +511,8 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     const handleSchemaDisconnectSuccess = React.useCallback((connectionId: string) => {
         setSessions(prev => {
-            const filtered = prev?.filter(s => s.info.uniqueId !== connectionId) || null;
-            if (selectedSession?.info.uniqueId === connectionId) {
+            const filtered = prev?.filter(s => s.info.connectionId !== connectionId) || null;
+            if (selectedSession?.info.connectionId === connectionId) {
                 const nextSel = filtered?.[0] || null;
                 setSelectedSession(nextSel);
             }
@@ -526,7 +526,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }, [selectedSession, chooseContainer, selectContainer]);
 
     const handleRefreshMetadata = React.useCallback((msg: RefreshMetadata) => {
-        if (selectedSession && selectedSession.info.uniqueId === msg.connectionId) {
+        if (selectedSession && selectedSession.info.connectionId === msg.connectionId) {
             initMetadata(selectedSession, true);
         }
     }, [selectedSession, initMetadata]);

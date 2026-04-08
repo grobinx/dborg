@@ -35,7 +35,7 @@ const PostgresPlugin: Plugin = {
 
     initialize(context: IPluginContext): void {
         context.registerConnectionViewsFactory((session) => {
-            if (session.info.driver.uniqueId !== DRIVER_UNIQUE_ID) {
+            if (session.info.driver.driverId !== DRIVER_UNIQUE_ID) {
                 return null;
             }
 
@@ -50,7 +50,7 @@ const PostgresPlugin: Plugin = {
             ];
         });
         context.registerConnectionActionsFactory("sql-editor", (session) => {
-            if (session.info.driver.uniqueId !== DRIVER_UNIQUE_ID) {
+            if (session.info.driver.driverId !== DRIVER_UNIQUE_ID) {
                 return null;
             }
 
@@ -62,7 +62,7 @@ const PostgresPlugin: Plugin = {
             };
         });
         context.registerConnectionSqlResultTabFactory((session) => {
-            if (session.info.driver.uniqueId !== DRIVER_UNIQUE_ID) {
+            if (session.info.driver.driverId !== DRIVER_UNIQUE_ID) {
                 return null;
             }
 

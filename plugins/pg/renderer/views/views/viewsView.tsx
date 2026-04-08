@@ -33,7 +33,7 @@ export function viewsView(session: IDatabaseSession): ConnectionView {
     };
     setSelectedSchemaName();
 
-    const cid = (id: string) => `${id}-${session.info.uniqueId}`;
+    const cid = (id: string) => `${id}-${session.info.connectionId}`;
 
     return {
         type: "connection",
@@ -116,7 +116,7 @@ export function viewsView(session: IDatabaseSession): ConnectionView {
                             const record = context.getRowData();
                             if (record) {
                                 sendMessage(SQL_EDITOR_EXECUTE_QUERY, {
-                                    to: session.info.uniqueId,
+                                    to: session.info.connectionId,
                                     from: cid("views-grid"),
                                     query: `select * from "${record.schema_name}"."${record.view_name}" limit 200`,
                                 } as SqlEditorExecuteQueryMessage);

@@ -14,7 +14,7 @@ export function functionView(
     const t = i18next.t.bind(i18next);
     const uniqueId = uuidv7();
 
-    const cid = (id: string) => `${id}-${session.info.uniqueId}${pinned ? `-${uniqueId}` : ""}`;
+    const cid = (id: string) => `${id}-${session.info.connectionId}${pinned ? `-${uniqueId}` : ""}`;
 
     const getFunction = (f: (() => FunctionRecord | null) | FunctionRecord) => (typeof f === "function" ? f() : f);
 

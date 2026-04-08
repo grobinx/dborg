@@ -78,7 +78,7 @@ export class Cursor extends driver.Cursor {
         this.maxRowsMode = maxRowsMode;
     }
 
-    getUniqueId(): string {
+    getCursorId(): string {
         return this.uniqueId;
     }
 
@@ -88,8 +88,8 @@ export class Cursor extends driver.Cursor {
 
     async getCursorInfo(): Promise<api.CursorInfo> {
         return {
-            uniqueId: this.getUniqueId(),
-            connectionId: this.connection.getUniqueId(),
+            cursorId: this.getCursorId(),
+            connectionId: this.connection.getConnectionId(),
             command: this.command,
             duration: this.duration,
             columns: this.columns,
@@ -214,7 +214,7 @@ export class Connection extends driver.Connection {
         this.maxStatementRows = this.properties[driver_max_statement_rows] as number ?? driver_max_statement_rows_default;
     }
 
-    getUniqueId(): string {
+    getConnectionId(): string {
         return this.uniqueId;
     }
 
@@ -497,7 +497,7 @@ export class Driver extends driver.Driver {
         super(["execute", "open", "query", "store", "version"]);
     }
 
-    getUniqueId(): string {
+    getDriverId(): string {
         return driverUniqueId;
     }
 

@@ -71,7 +71,7 @@ const activityTab = (
     databaseName: string | null
 ): IPinnableTabSlot => {
     const t = i18next.t.bind(i18next);
-    const cid = (id: string) => `${id}-${session.info.uniqueId}`;
+    const cid = (id: string) => `${id}-${session.info.connectionId}`;
 
     let activityRows: ActivityRecord[] = [];
     let snapshotSize = 30 + 1;

@@ -20,7 +20,7 @@ import { RichContainer, RichNode } from "@renderer/components/RichContent";
 
 const roleCleanupTab = (session: IDatabaseSession): IPinnableTabSlot => {
     const t = i18next.t.bind(i18next);
-    const cid = cidFactory("tools-role-cleanup", session.info.uniqueId);
+    const cid = cidFactory("tools-role-cleanup", session.info.connectionId);
     const versionNumber = versionToNumber(session.getVersion() ?? "0.0.0");
 
     let targetOwner: string | null = null;

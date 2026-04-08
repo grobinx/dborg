@@ -45,7 +45,7 @@ interface ConnectionsOwnProps extends ConnectionProps {
 
 const ConnectionContentInner: React.FC<ConnectionsOwnProps> = (props) => {
     const { session, children, tabsItemID, ...other } = props;
-    const { selectedView } = useSessionState(session.info.uniqueId);
+    const { selectedView } = useSessionState(session.info.connectionId);
     const { queueMessage } = useMessages();
     const [orientation] = useSetting("dborg", "general.layout.orientation");
     const runtimeContext = useSlotRuntimeContext({});
@@ -197,21 +197,21 @@ export const ConnectionButtons: React.FC<{ session: IDatabaseSession }> = ({ ses
 
     React.useEffect(() => {
         const metadataStartHandle = (message: Messages.SessionGetMetadataStart) => {
-            if (message.connectionId !== session.info.uniqueId) {
+            if (message.connectionId !== session.info.connectionId) {
                 return;
             }
             setGettingMetadata(true);
         };
 
         const metadataEndHandle = (message: Messages.SessionGetMetadataEnd) => {
-            if (message.connectionId !== session.info.uniqueId) {
+            if (message.connectionId !== session.info.connectionId) {
                 return;
             }
             setGettingMetadata(false);
         };
 
         const queueTaskUpdateHandle = (message: QueueTaskMessage) => {
-            if (message.queueId !== session.info.uniqueId) {
+            if (message.queueId !== session.info.connectionId) {
                 return;
             }
             
@@ -283,7 +283,7 @@ export const ConnectionButtons: React.FC<{ session: IDatabaseSession }> = ({ ses
             {session.info.driver.implements.includes("metadata") && (
                 <Tooltip title={t("refresh-metadata", "Refresh metadata")}>
                     <ToolButton
-                        onClick={() => queueMessage(Messages.REFRESH_METADATA, { connectionId: session.info.uniqueId })}
+                        onClick={() => queueMessage(Messages.REFRESH_METADATA, { connectionId: session.info.connectionId })}
                         disabled={gettingMetadata}
                         color="main"
                         size="small"
@@ -294,7 +294,7 @@ export const ConnectionButtons: React.FC<{ session: IDatabaseSession }> = ({ ses
             )}
             <Tooltip title={t("disconnect", "Close connection")}>
                 <ToolButton
-                    onClick={() => disconnectFromDatabase(session.info.uniqueId)}
+                    onClick={() => disconnectFromDatabase(session.info.connectionId)}
                     color="main"
                     size="small"
                 >
@@ -312,7 +312,7 @@ export const ConnectionLabel: React.FC<{ session: IDatabaseSession }> = ({ sessi
 
     React.useEffect(() => {
         const handleQueryExecuting = (message: { to: string; from: string; status: boolean }) => {
-            if (message.to !== session.info.uniqueId) {
+            if (message.to !== session.info.connectionId) {
                 return; // Ignoruj wiadomości, które nie są skierowane do tego połączenia
             }
 
@@ -332,7 +332,7 @@ export const ConnectionLabel: React.FC<{ session: IDatabaseSession }> = ({ sessi
         return () => {
             unsubscribe(SQL_RESULT_SQL_QUERY_EXECUTING, handleQueryExecuting);
         };
-    }, [session.info.uniqueId]);
+    }, [session.info.connectionId]);
 
     return (
         <TabPanelLabel>

@@ -50,7 +50,7 @@ export function rolesTab(session: IDatabaseSession): IPinnableTabSlot {
     let loadingProgress: number | null = null;
     const versionNumber = versionToNumber(session.getVersion() || "0.0.0");
 
-    const cid = (id: string) => `${id}-${session.info.uniqueId}`;
+    const cid = (id: string) => `${id}-${session.info.connectionId}`;
 
     async function getRoleStats(roleName: string): Promise<RoleStatsRecord> {
         const sql = `
