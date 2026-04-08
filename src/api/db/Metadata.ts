@@ -1,6 +1,38 @@
 /** Structure describing multiple databases */
 export type DatabasesMetadata = Record<string, DatabaseMetadata>;
 
+/** Options for collecting metadata */
+export interface MetadataCollectionOptions {
+    /** relation statistics collected */
+    relationStats?: boolean;
+    /** relation column statistics collected */
+    relationColumnStats?: boolean;
+    /** routine identifiers collected from source */
+    routineIdentifiers?: boolean;
+    /** index statistics collected */
+    indexStats?: boolean;
+    /** system objects collected */
+    systemObjects?: boolean;
+    /** built-in objects collected */
+    builtInObjects?: boolean;
+    /** constraints collected (fk, pk, unique, check) */
+    constraints?: boolean;
+    /** permissions collected */
+    permissions?: boolean;
+}
+
+/** Structure describing metadata */
+export interface Metadata {
+    /** Version of the metadata */
+    version: string;
+    /** Updated date of the metadata */
+    date: string;
+    /** Options used for collecting metadata */
+    collected: MetadataCollectionOptions;
+    /** Databases metadata */
+    databases: DatabasesMetadata;
+}
+
 export interface MetadataBase {
     /** Unique identifier of the object */
     id: string;
@@ -436,6 +468,9 @@ export interface TypeMetadata extends OwnedMetadataBase {
     /** Attributes (for composite types) */
     attributes?: ColumnMetadata[];
 }
+
+//export type MetadataCollectorOptions = {
+
 
 export interface IMetadataCollector {
     getMetadata(progress?: (current: string) => void, force?: boolean): Promise<DatabasesMetadata>;

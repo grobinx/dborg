@@ -11,7 +11,7 @@ export function resultsTabsId(session: IDatabaseSession): string {
     return session.profile.sch_id + ":" + session.info.connectionId + ":results-tabs";
 }
 
-export interface IDatabaseSession extends api.BaseConnection {
+export interface IDatabaseSession extends api.BaseConnection, api.IMetadataCollector {
     info: api.ConnectionInfo; // Connection information
     profile: ProfileRecord; // Profile information
     settings: Map<string, Record<string, any>>; // Profile settings (loaded from user settings folder)

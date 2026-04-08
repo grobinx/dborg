@@ -22,9 +22,6 @@ const driverVersion: Version = {
     }
 }
 
-const driver_extend_info = "driver:extend_info";
-const driver_extend_info_default = false;
-
 const driver_pool = "driver:pool";
 const driver_pool_default = false;
 
@@ -33,6 +30,21 @@ const driver_fetch_record_count_default = 100;
 
 const driver_max_statement_rows = "driver:max_statement_rows";
 const driver_max_statement_rows_default = 1000;
+
+const driver_metadata_relation_stats = "driver:metadata_relation_stats";
+const driver_metadata_relation_stats_default = true;
+const driver_metadata_relation_column_stats = "driver:metadata_relation_column_stats";
+const driver_metadata_relation_column_stats_default = true;
+const driver_metadata_routine_indentifiers = "driver:metadata_routine_identifiers";
+const driver_metadata_routine_indentifiers_default = true;
+const driver_metadata_index_stats = "driver:metadata_index_stats";
+const driver_metadata_index_stats_default = true;
+const driver_metadata_system_objects = "driver:metadata_system_objects";
+const driver_metadata_system_objects_default = false;
+const driver_metadata_constraints = "driver:metadata_constraints";
+const driver_metadata_constraints_default = true;
+const driver_metadata_permissions = "driver:metadata_permissions";
+const driver_metadata_permissions_default = true;
 
 const application_name_default = "ORBADA for PostgreSQL";
 
