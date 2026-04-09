@@ -125,7 +125,7 @@ export function init(): void {
             })
         }
     );
-    handleWithLocalResult(
+    ipcMain.handle(
         EVENT_CONNECTION_USER_DATA_GET,
         async (_: IpcMainInvokeEvent, uniqueId: string, property: string): Promise<InvokeResult> => {
             return handleResult(async () => {
@@ -198,7 +198,7 @@ export function init(): void {
             })
         }
     );
-    ipcMain.handle(
+    handleWithLocalResult(
         EVENT_CONNECTION_GET_METADATA,
         async (event: IpcMainInvokeEvent, uniqueId: string, force: boolean): Promise<InvokeResult> => {
             return handleResult(async () => {
@@ -333,7 +333,7 @@ export const preload = {
         close: (uniqueId: string): Promise<void> => invokeResult(ipcRenderer.invoke(EVENT_CONNECTION_CLOSE, uniqueId)),
         userData: {
             get: (uniqueId: string, property: string): Promise<unknown> => 
-                invokeResult(invokeViaLocalResult(EVENT_CONNECTION_USER_DATA_GET, uniqueId, property)),
+                invokeResult(ipcRenderer.invoke(EVENT_CONNECTION_USER_DATA_GET, uniqueId, property)),
             set: (uniqueId: string, property: string, value: unknown): Promise<void> => invokeResult(ipcRenderer.invoke(EVENT_CONNECTION_USER_DATA_SET, uniqueId, property, value)),
         },
         store: (uniqueId: string, sql: string): Promise<api.StatementResult> => invokeResult(ipcRenderer.invoke(EVENT_CONNECTION_STORE, uniqueId, sql)),
@@ -361,7 +361,7 @@ export const preload = {
             ipcRenderer.on(EVENT_CONNECTION_GET_METADATA_PROGRESS, listener);
 
             try {
-                return await invokeResult(ipcRenderer.invoke(EVENT_CONNECTION_GET_METADATA, uniqueId, force));
+                return await invokeResult(invokeViaLocalResult(EVENT_CONNECTION_GET_METADATA, uniqueId, force));
             }
             finally {
                 ipcRenderer.removeListener(EVENT_CONNECTION_GET_METADATA_PROGRESS, listener);
