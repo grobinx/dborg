@@ -1,22 +1,21 @@
 import * as api from '../../../../src/api/db';
 import Version, { versionToNumber } from '../../../../src/api/version';
 import pg from 'pg';
-import fs from 'fs/promises';
 import { createReadStream, createWriteStream } from 'fs';
 import * as readline from 'readline';
 import { Readable } from 'stream';
 import { pipeline } from 'stream/promises';
 import zlib from 'zlib';
-import { version } from '../../../../src/api/consts';
 
 const METADATA_ARCHIVE_FORMAT = 'dborg-metadata-ndjson-v1';
 const NOT_ARCHIVE_ERROR = '__NOT_DBORG_METADATA_ARCHIVE__';
 
 export class MetadataCollector implements api.IMetadataCollector {
-    private databases: api.DatabasesMetadata = {};
+    private metadata: api.Metadata = {};
     private inited = false;
     private version?: Version;
     private client: pg.Client | undefined;
+    private collectionOptions?: api.MetadataCollectionOptions;
 
     setVersion(version: Version): void {
         this.version = version;
@@ -26,36 +25,25 @@ export class MetadataCollector implements api.IMetadataCollector {
         this.client = client;
     }
 
-    async restoreMetadata(fileName: string): Promise<api.DatabasesMetadata> {
+    setCollectionOptions(options: api.MetadataCollectionOptions): void {
+        this.collectionOptions = options;
+    }
+
+    async restoreMetadata(fileName: string): Promise<api.Metadata> {
         try {
-            this.databases = await this.restoreMetadataArchive(fileName);
+            this.metadata = await this.restoreMetadataArchive(fileName);
         } catch (error) {
             if (!(error instanceof Error) || error.message !== NOT_ARCHIVE_ERROR) {
                 throw error;
             }
-            this.databases = await this.restoreMetadataLegacy(fileName);
         }
 
         this.inited = true;
-        return this.databases;
+        return this.metadata;
     }
 
     async storeMetadata(fileName: string): Promise<void> {
         await this.storeMetadataArchive(fileName);
-    }
-
-    private async restoreMetadataLegacy(fileName: string): Promise<api.DatabasesMetadata> {
-        const packed = await fs.readFile(fileName);
-        const json = zlib.gunzipSync(packed).toString('utf-8');
-        const parsed = JSON.parse(json);
-
-        if (!parsed._version || parsed._version !== version.release) {
-            throw new Error(
-                `Incompatible metadata version: ${parsed._version ?? 'unknown'} (expected ${version.release})`
-            );
-        }
-
-        return parsed.databases ?? parsed;
     }
 
     private async storeMetadataArchive(fileName: string): Promise<void> {
@@ -70,14 +58,14 @@ export class MetadataCollector implements api.IMetadataCollector {
         yield `${JSON.stringify({
             kind: 'manifest',
             format: METADATA_ARCHIVE_FORMAT,
-            version: version.release,
-            date: Date.now()
+            version: api.METADATA_VERSION,
+            date: this.metadata.date ?? Date.now(),
+            collected: this.metadata.collected
         })}\n`;
 
-        for (const [databaseName, database] of Object.entries(this.databases)) {
+        for (const [databaseName, database] of Object.entries(this.metadata.databases ?? {})) {
             const databaseData: Record<string, unknown> = { ...database };
             delete databaseData.schemas;
-            delete databaseData.session;
 
             yield `${JSON.stringify({
                 kind: 'database',
@@ -102,8 +90,12 @@ export class MetadataCollector implements api.IMetadataCollector {
         return typeof value === 'object' && value !== null;
     }
 
-    private async restoreMetadataArchive(fileName: string): Promise<api.DatabasesMetadata> {
-        const databases: api.DatabasesMetadata = {};
+    private async restoreMetadataArchive(fileName: string): Promise<api.Metadata> {
+        const metadata: api.Metadata = {
+            version: api.METADATA_VERSION,
+            date: Date.now(),
+            databases: {}
+        };
         const input = createReadStream(fileName).pipe(zlib.createGunzip());
         const rl = readline.createInterface({
             input,
@@ -149,19 +141,24 @@ export class MetadataCollector implements api.IMetadataCollector {
 
             if (!manifestLoaded) {
                 const format = typeof parsedLine.format === 'string' ? parsedLine.format : '';
-                const archiveVersion = typeof parsedLine.version === 'number' ? parsedLine.version : 'unknown';
+                const archiveVersion = typeof parsedLine.version === 'number' ? parsedLine.version : undefined;
+                const date = typeof parsedLine.date === 'number' ? parsedLine.date : Date.now();
+                const collected = typeof parsedLine.collected === 'object' && parsedLine.collected !== null ? parsedLine.collected : undefined;
 
                 if (kind !== 'manifest' || format !== METADATA_ARCHIVE_FORMAT) {
                     throw new Error(NOT_ARCHIVE_ERROR);
                 }
 
-                if (archiveVersion !== version.release) {
+                if (archiveVersion !== api.METADATA_VERSION) {
                     throw new Error(
-                        `Incompatible metadata version: ${archiveVersion} (expected ${version.release})`
+                        `Incompatible metadata version: ${archiveVersion} (expected ${api.METADATA_VERSION})`
                     );
                 }
 
                 manifestLoaded = true;
+                metadata.version = archiveVersion;
+                metadata.date = date;
+                metadata.collected = collected;
                 continue;
             }
 
@@ -173,8 +170,8 @@ export class MetadataCollector implements api.IMetadataCollector {
                     throw new Error(`Corrupted metadata archive at line ${lineNumber}`);
                 }
 
-                const existingSchemas = databases[databaseName]?.schemas ?? {};
-                databases[databaseName] = {
+                const existingSchemas = metadata.databases?.[databaseName]?.schemas ?? {};
+                metadata.databases![databaseName] = {
                     ...(data as Omit<api.DatabaseMetadata, 'schemas'>),
                     schemas: existingSchemas
                 } as api.DatabaseMetadata;
@@ -191,7 +188,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                     throw new Error(`Corrupted metadata archive at line ${lineNumber}`);
                 }
 
-                const database = databases[databaseName];
+                const database = metadata.databases?.[databaseName];
                 if (!database) {
                     throw new Error(
                         `Corrupted metadata archive. Missing database entry for schema ${databaseName}.${schemaName}`
@@ -209,17 +206,17 @@ export class MetadataCollector implements api.IMetadataCollector {
             throw new Error(NOT_ARCHIVE_ERROR);
         }
 
-        return databases;
+        return metadata;
     }
 
-    async getMetadata(progress?: (current: string) => void, force?: boolean): Promise<api.DatabasesMetadata> {
+    async getMetadata(progress?: (current: string) => void, force?: boolean): Promise<api.Metadata> {
         if (!this.inited || force) {
             if (!this.client) {
                 throw new Error("Client is not set");
             }
             await this.initialize(progress);
         }
-        return this.databases;
+        return this.metadata;
     }
 
     async updateObject(progress?: (current: string) => void, schemaName?: string, objectName?: string): Promise<void> {
@@ -241,20 +238,33 @@ export class MetadataCollector implements api.IMetadataCollector {
     }
 
     async initialize(progress?: (current: string) => void): Promise<void> {
-        this.databases = {};
+        this.metadata = {
+            version: api.METADATA_VERSION,
+            date: Date.now(),
+            databases: {},
+            collected: this.collectionOptions,
+        };
 
         await this.updateDatabases(progress);
         await this.updateSchemas(progress);
         await this.updateRelations(progress);
-        await this.updateRelationsStats(progress);
+        if (this.collectionOptions?.relationStats) {
+            await this.updateRelationsStats(progress);
+        }
         await this.updateRoutines(progress);
         await this.updateColumns(progress);
-        await this.updateColumnsStats(progress);
-        await this.updateForeignKeys(progress);
+        if (this.collectionOptions?.relationColumnStats) {
+            await this.updateColumnsStats(progress);
+        }
         await this.updateIndexes(progress);
-        await this.updateIndexesStats(progress);
-        await this.updatePrimaryKeys(progress);
-        await this.updateConstraints(progress);
+        if (this.collectionOptions?.indexStats) {
+            await this.updateIndexesStats(progress);
+        }
+        if (this.collectionOptions?.constraints) {
+            await this.updateForeignKeys(progress);
+            await this.updatePrimaryKeys(progress);
+            await this.updateConstraints(progress);
+        }
         await this.updateTypes(progress);
         await this.updateSequence(progress);
 
@@ -281,6 +291,11 @@ export class MetadataCollector implements api.IMetadataCollector {
                     d.datname = current_database() as connected,
                     pg_catalog.shobj_description(d.oid, 'pg_database') as description,
                     d.datistemplate as template
+                    ${this.collectionOptions?.permissions ? `, pg_catalog.json_build_object(
+                        'create', pg_catalog.has_database_privilege(current_user, d.oid, 'CREATE'),
+                        'connect', pg_catalog.has_database_privilege(current_user, d.oid, 'CONNECT'),
+                        'temp', pg_catalog.has_database_privilege(current_user, d.oid, 'TEMPORARY')
+                    ) as permissions` : ''}
                 from pg_catalog.pg_database d
                where (d.datname = $1 or $1 is null)`,
             [name]
@@ -288,17 +303,19 @@ export class MetadataCollector implements api.IMetadataCollector {
 
         const exists = new Set<string>();
 
+        this.metadata.databases = this.metadata.databases ?? {};
+
         for (const row of rows as api.DatabaseMetadata[]) {
             exists.add(row.name);
 
-            if (this.databases[row.name]) {
-                this.databases[row.name] = {
-                    ...this.databases[row.name],
+            if (this.metadata.databases[row.name]) {
+                this.metadata.databases[row.name] = {
+                    ...this.metadata.databases[row.name],
                     ...row,
                 };
             }
             else {
-                this.databases[row.name] = {
+                this.metadata.databases[row.name] = {
                     ...row,
                     schemas: {},
                     builtInRelations: {},
@@ -309,16 +326,16 @@ export class MetadataCollector implements api.IMetadataCollector {
         }
 
         if (!name) {
-            this.removeUnused(this.databases, exists);
+            this.removeUnused(this.metadata.databases, exists);
         }
     }
 
     private connectedDatabase(): api.DatabaseMetadata {
-        const databaseName = Object.values(this.databases).find(db => db.connected)?.name;
+        const databaseName = Object.values(this.metadata.databases ?? {}).find(db => db.connected)?.name;
         if (!databaseName) {
             throw new Error("No connected database found");
         }
-        const database = this.databases[databaseName];
+        const database = this.metadata.databases?.[databaseName];
         if (!database) {
             throw new Error(`Database ${databaseName} not found`);
         }
@@ -338,11 +355,12 @@ export class MetadataCollector implements api.IMetadataCollector {
                     pg_catalog.pg_get_userbyid(n.nspowner) as owner, 
                     pg_catalog.obj_description(n.oid, 'pg_namespace') as description,
                     n.nspname = any (current_schemas(true)) as default,
-                    n.nspname = any (array['pg_catalog', 'information_schema', 'pg_toast']) as catalog,
-                    pg_catalog.json_build_object(
+                    n.nspname = any (array['pg_catalog', 'information_schema', 'pg_toast']) as catalog
+                    ${this.collectionOptions?.permissions ? 
+                        `, pg_catalog.json_build_object(
                         'create', pg_catalog.has_schema_privilege(current_user, n.oid, 'CREATE'),
                         'usage', pg_catalog.has_schema_privilege(current_user, n.oid, 'USAGE')
-                    ) as permissions
+                    ) as permissions` : ''}
                 from pg_catalog.pg_namespace n
                where (n.nspname = $1 or $1 is null)
                and n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'`,
@@ -407,19 +425,19 @@ export class MetadataCollector implements api.IMetadataCollector {
                     when c.relkind = 'p' then 'partitioned'
                     when c.relkind = 't' then 'temporary'
                     when c.relkind = 'm' then 'materialized'
-                end as kind,
-                pg_catalog.json_build_object(
+                end as kind
+                ${this.collectionOptions?.permissions ? `, pg_catalog.json_build_object(
                     'select', pg_catalog.has_table_privilege(current_user, c.oid, 'SELECT'),
                     'insert', pg_catalog.has_table_privilege(current_user, c.oid, 'INSERT'),
                     'update', pg_catalog.has_table_privilege(current_user, c.oid, 'UPDATE'),
                     'delete', pg_catalog.has_table_privilege(current_user, c.oid, 'DELETE')
-                ) as permissions,
-                ids.identifiers
+                ) as permissions` : ''}
+                ${this.collectionOptions?.identifiers ? `, ids.identifiers` : ''}
             from pg_catalog.pg_class c
                 join pg_catalog.pg_namespace n on c.relnamespace = n.oid
                 left join pg_catalog.pg_description d on d.classoid = 'pg_class'::regclass and d.objoid = c.oid and d.objsubid = 0
                 left join pg_catalog.pg_inherits inh on c.oid = inh.inhrelid
-                left join lateral (
+                ${this.collectionOptions?.identifiers ? `left join lateral (
                     select array_agg(distinct lower(m[1]) order by lower(m[1])) as identifiers
                     from regexp_matches(
                             pg_catalog.pg_get_viewdef(c.oid, true),
@@ -429,7 +447,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                     where lower(m[1]) not in (select word from kw)
                         and m[1] not in ('', '_')
                         and c.relkind in ('v', 'm')  -- tylko dla widoków
-                ) ids on true
+                ) ids on true` : ''}
             where c.relkind in ('r', 'f', 'p', 't', 'v', 'm')
             and n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
             and (n.nspname = $1 or $1 is null)
@@ -577,18 +595,18 @@ export class MetadataCollector implements api.IMetadataCollector {
                     when ${v11OrHigher ? "f.prokind = 'a'" : "f.proisagg"} then 'aggregate'
                     when ${v11OrHigher ? "f.prokind = 'w'" : "f.proiswindow"} then 'window'
                     ${v11OrHigher ? "when f.prokind in ('f', 'p') then 'regular'" : "else 'regular'"}
-                end as kind,
-                json_build_object(
+                end as kind
+                ${this.collectionOptions?.permissions ? `, pg_catalog.json_build_object(
                     'execute', has_function_privilege(f.oid, 'EXECUTE')
-                ) AS permissions,
+                ) AS permissions` : ''},
                 pg_catalog.pg_get_function_result(f.oid) as "returnType",
                 d.description as description,
                 (select json_agg(row_to_json(a))
                     from (select f.oid::bigint *100 +n id, n as no, f.proargnames[n] as name, pg_catalog.format_type(f.proargtypes[n -1], -1) as "dataType",
                                 case f.proargmodes[n] when 'o' then 'out' when 'b' then 'inout' else 'in' end as mode,
                                 trim((regexp_split_to_array(pg_get_expr(f.proargdefaults, 0), '[\t,](?=(?:[^\'']|\''[^\'']*\'')*$)'))[case when f.pronargs -n > f.pronargdefaults then null else f.pronargdefaults -(f.pronargs -n +1) +1 end]) as "defaultValue"
-                            from pg_catalog.generate_series(1, f.pronargs::int) n) a) as arguments,
-                ids.identifiers,
+                            from pg_catalog.generate_series(1, f.pronargs::int) n) a) as arguments
+                ${this.collectionOptions?.identifiers ? `, ids.identifiers` : ''},
                 json_build_object(
                     'is_security_definer', f.prosecdef,
                     'execute_as', CASE WHEN f.prosecdef THEN 'definer' ELSE 'invoker' END,
@@ -605,7 +623,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                 left join pg_catalog.pg_namespace n on f.pronamespace = n.oid
                 left join pg_catalog.pg_type t on f.prorettype = t.oid
                 left join pg_catalog.pg_description d on d.classoid = f.tableoid and d.objoid = f.oid and d.objsubid = 0
-                left join lateral (
+                ${this.collectionOptions?.identifiers ? `left join lateral (
                     select array_agg(distinct lower(m[1]) order by lower(m[1])) as identifiers
                     from regexp_matches(
                             -- użyj prosrc, jeśli wolisz bez deklaracji; możesz zamienić na pg_get_functiondef(f.oid)
@@ -615,7 +633,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                         ) as m
                     where lower(m[1]) not in (select word from kw)  -- odfiltruj słowa kluczowe i języki
                         and m[1] not in ('', '_')
-                    ) ids on true
+                    ) ids on true` : ''}
             where (n.nspname = $1 or $1 is null)
                 and (f.proname = $2 or $2 is null)
                 and n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
@@ -698,12 +716,12 @@ export class MetadataCollector implements api.IMetadataCollector {
                             'defaultValue', pg_catalog.pg_get_expr(def.adbin, def.adrelid),
                             'foreignKey', exists (select from pg_catalog.pg_constraint where conrelid = att.attrelid and contype='f' and att.attnum = any(conkey)),
                             'primaryKey', exists (select from pg_catalog.pg_constraint where conrelid = att.attrelid and contype='p' and att.attnum = any(conkey)),
-                            'unique', exists (select from pg_catalog.pg_constraint where conrelid = att.attrelid and contype='u' and att.attnum = any(conkey)),
-                            'permissions', 
-                            json_build_object(
-                                'select', pg_catalog.has_column_privilege(current_user, cl.oid, att.attnum, 'SELECT'),
-                                'update', pg_catalog.has_column_privilege(current_user, cl.oid, att.attnum, 'UPDATE')
-                            ),
+                            'unique', exists (select from pg_catalog.pg_constraint where conrelid = att.attrelid and contype='u' and att.attnum = any(conkey))
+                            ${this.collectionOptions?.permissions ? `, 'permissions', 
+                                json_build_object(
+                                    'select', pg_catalog.has_column_privilege(current_user, cl.oid, att.attnum, 'SELECT'),
+                                    'update', pg_catalog.has_column_privilege(current_user, cl.oid, att.attnum, 'UPDATE')
+                                )` : ''},
                             'description', des.description
                         ) order by att.attnum) as columns
                 from pg_catalog.pg_attribute att
@@ -1102,10 +1120,10 @@ export class MetadataCollector implements api.IMetadataCollector {
                         a.attrelid = t.typrelid and a.attnum > 0
                     order by 
                         a.attnum
-                )) as attributes,
-                json_build_object(
+                )) as attributes
+                ${this.collectionOptions?.permissions ? `, pg_catalog.json_build_object(
                     'usage', has_type_privilege(t.oid, 'USAGE')
-                ) as permissions
+                ) as permissions` : ''}
             from
                 pg_type t
                 join pg_namespace n on t.typnamespace = n.oid
@@ -1188,12 +1206,12 @@ export class MetadataCollector implements api.IMetadataCollector {
                 s.seqmax as max,
                 s.seqstart as start,
                 s.seqcache as cache,
-                s.seqcycle as cycled,
-                json_build_object(
+                s.seqcycle as cycled
+                ${this.collectionOptions?.permissions ? `, pg_catalog.json_build_object(
                     'select', has_sequence_privilege(seq.oid, 'SELECT'),
                     'usage', has_sequence_privilege(seq.oid, 'USAGE'),
                     'update', has_sequence_privilege(seq.oid, 'UPDATE')
-                ) as permissions
+                ) as permissions` : ''}
             from
                 pg_class seq
                 join pg_namespace n on seq.relnamespace = n.oid

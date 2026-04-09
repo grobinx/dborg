@@ -1,4 +1,5 @@
-/** Structure describing multiple databases */
+export const METADATA_VERSION = 11;
+
 export type DatabasesMetadata = Record<string, DatabaseMetadata>;
 
 /** Options for collecting metadata */
@@ -7,8 +8,8 @@ export interface MetadataCollectionOptions {
     relationStats?: boolean;
     /** relation column statistics collected */
     relationColumnStats?: boolean;
-    /** routine identifiers collected from source */
-    routineIdentifiers?: boolean;
+    /** routine and view identifiers collected from source */
+    identifiers?: boolean;
     /** index statistics collected */
     indexStats?: boolean;
     /** system objects collected */
@@ -24,13 +25,13 @@ export interface MetadataCollectionOptions {
 /** Structure describing metadata */
 export interface Metadata {
     /** Version of the metadata */
-    version: string;
+    version?: number;
     /** Updated date of the metadata */
-    date: string;
+    date?: number;
     /** Options used for collecting metadata */
-    collected: MetadataCollectionOptions;
+    collected?: MetadataCollectionOptions;
     /** Databases metadata */
-    databases: DatabasesMetadata;
+    databases?: Record<string, DatabaseMetadata>;
 }
 
 export interface MetadataBase {
@@ -55,8 +56,20 @@ export interface OwnedMetadataBase extends MetadataBase {
     modified?: string | null;
 }
 
+export interface DatabasePermissions {
+    /** User have permission for connect */
+    connect?: boolean | null;
+    /** User have permission for create schema */
+    create?: boolean | null;
+    /** User have permission for temporary tables */
+    temp?: boolean | null;
+}
+
 /** Main structure describing the database */
 export interface DatabaseMetadata extends OwnedMetadataBase {
+    /** Permissions assigned to the database */
+    permissions?: DatabasePermissions;
+
     /** To this database are you connected */
     connected?: boolean | null;
 
@@ -473,6 +486,6 @@ export interface TypeMetadata extends OwnedMetadataBase {
 
 
 export interface IMetadataCollector {
-    getMetadata(progress?: (current: string) => void, force?: boolean): Promise<DatabasesMetadata>;
+    getMetadata(progress?: (current: string) => void, force?: boolean): Promise<Metadata>;
     updateObject(progress?: (current: string) => void, schemaName?: string, objectName?: string): Promise<void>;
 }

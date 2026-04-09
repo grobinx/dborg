@@ -191,7 +191,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
     useEffect(() => {
         const initMetadata = () => {
             if (session.metadata && !databaseMetadataRef.current) {
-                databaseMetadataRef.current = Object.values(session.metadata).find((db) => db.connected) || null;
+                databaseMetadataRef.current = Object.values(session.metadata.databases ?? {}).find((db) => db.connected) || null;
                 addHoverProvider();
             };
         }

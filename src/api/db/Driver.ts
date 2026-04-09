@@ -1,6 +1,6 @@
 import Version from "../version";
 import { ColumnDataType } from "./DataType";
-import { DatabasesMetadata } from "./Metadata";
+import { Metadata } from "./Metadata";
 
 /**
  * (Query) Result column information
@@ -152,7 +152,7 @@ export type PropertyInfo = {
     /**
      * Default value for property
      */
-    default?: string
+    default?: string,
     /**
      * Property flags
      * @see PropertyFlag
@@ -360,7 +360,7 @@ export interface BaseConnection {
      */
     cancel(): Promise<void>;
 
-    getMetadata(progress?: (current: string) => void, force?: boolean): Promise<DatabasesMetadata>;
+    getMetadata(progress?: (current: string) => void, force?: boolean): Promise<Metadata>;
 
     updateObject(progress?: (current: string) => void, schemaName?: string, objectName?: string): Promise<void>;
 

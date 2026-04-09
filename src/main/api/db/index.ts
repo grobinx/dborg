@@ -348,7 +348,7 @@ export const preload = {
             isEnd: (connectionId: string, uniqueId: string): Promise<boolean> => invokeResult(ipcRenderer.invoke(EVENT_CONNECTION_CURSOR_IS_END, connectionId, uniqueId)),
             cancel: (connectionId: string, uniqueId: string): Promise<void> => invokeResult(ipcRenderer.invoke(EVENT_CONNECTION_CURSOR_CANCEL, connectionId, uniqueId)),
         },
-        getMetadata: async (uniqueId: string, progress?: (current: string) => void, force?: boolean): Promise<api.DatabasesMetadata> => {
+        getMetadata: async (uniqueId: string, progress?: (current: string) => void, force?: boolean): Promise<api.Metadata> => {
             const listener = (_event: IpcRendererEvent, eUniqueId: string, current: string): void => {
                 if (eUniqueId !== uniqueId) {
                     return;

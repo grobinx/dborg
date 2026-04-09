@@ -8,7 +8,7 @@ import {
     SaveDialogOptions, SaveDialogReturnValue, Size 
 } from "electron"
 import { 
-    CommandResult, ConnectionInfo, Cursor, CursorInfo, DatabasesMetadata, 
+    CommandResult, ConnectionInfo, Cursor, CursorInfo, CursorFetchMaxRowsMode, Metadata, SessionContext, TSettings, WindowState,
     DriverInfo, Properties, QueryResult, StatementResult 
 } from "src/api/db"
 import { FileChangeEvent } from "src/main/api/dborg-file"
@@ -108,7 +108,7 @@ declare global {
                         isEnd: (connectionId: string, uniqueId: string) => Promise<boolean>,
                         cancel: (connectionId: string, uniqueId: string) => Promise<void>,
                     },
-                    getMetadata: (uniqueId: string, progress?: (current: string) => void, force?: boolean) => Promise<DatabasesMetadata>,
+                    getMetadata: (uniqueId: string, progress?: (current: string) => void, force?: boolean) => Promise<Metadata>,
                     updateObject: (uniqueId: string, progress?: (current: string) => void, schemaName?: string, objectName?: string) => Promise<void>,
                 },
                 internal: {

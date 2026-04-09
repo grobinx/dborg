@@ -15,7 +15,7 @@ export interface IDatabaseSession extends api.BaseConnection, api.IMetadataColle
     info: api.ConnectionInfo; // Connection information
     profile: ProfileRecord; // Profile information
     settings: Map<string, Record<string, any>>; // Profile settings (loaded from user settings folder)
-    metadata?: api.DatabasesMetadata | undefined; // Metadata of the database
+    metadata?: api.Metadata | undefined; // Metadata of the database
 
     getVersion(): string | undefined; // Get the version of the database
 
@@ -148,7 +148,7 @@ class DatabaseSession implements IDatabaseSession {
     info: api.ConnectionInfo; // Connection information
     profile: ProfileRecord; // Profile information
     settings: Map<string, Record<string, any>> = new Map();
-    metadata: api.DatabasesMetadata | undefined; // Metadata of the database
+    metadata: api.Metadata | undefined; // Metadata of the database
     metadataInitialized: boolean;
     private readonly queue: QueueTask<IDatabaseSession>;
 
@@ -234,7 +234,7 @@ class DatabaseSession implements IDatabaseSession {
         return this.info.context;
     }
 
-    async getMetadata(progress?: (current: string) => void, force?: boolean): Promise<api.DatabasesMetadata> {
+    async getMetadata(progress?: (current: string) => void, force?: boolean): Promise<api.Metadata> {
         if (this.info.driver.implements.includes("metadata")) {
             if (this.metadataInitialized && !force) {
                 return this.metadata!;

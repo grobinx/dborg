@@ -6,10 +6,10 @@ import pg from 'pg';
 import PgCursor from 'pg-cursor';
 import logo from '../../resources/postgresql-logo.svg';
 import { DRIVER_UNIQUE_ID } from '../../common/consts';
-import { MetadataCollector } from './MetadataService';
 import path from 'path';
 import fs from 'fs/promises';
 import { DBORG_DATA_PATH, dataPath } from '../../../../src/main/api/dborg-path';
+import { MetadataCollector } from './MetadataCollector';
 
 const driverVersion: Version = {
     major: 1,
@@ -31,20 +31,33 @@ const driver_fetch_record_count_default = 100;
 const driver_max_statement_rows = "driver:max_statement_rows";
 const driver_max_statement_rows_default = 1000;
 
-const driver_metadata_relation_stats = "driver:metadata_relation_stats";
-const driver_metadata_relation_stats_default = true;
-const driver_metadata_relation_column_stats = "driver:metadata_relation_column_stats";
-const driver_metadata_relation_column_stats_default = true;
-const driver_metadata_routine_indentifiers = "driver:metadata_routine_identifiers";
-const driver_metadata_routine_indentifiers_default = true;
-const driver_metadata_index_stats = "driver:metadata_index_stats";
-const driver_metadata_index_stats_default = true;
-const driver_metadata_system_objects = "driver:metadata_system_objects";
-const driver_metadata_system_objects_default = false;
-const driver_metadata_constraints = "driver:metadata_constraints";
-const driver_metadata_constraints_default = true;
-const driver_metadata_permissions = "driver:metadata_permissions";
-const driver_metadata_permissions_default = true;
+const driver_collector_relationStats = "driver:collector_relation_stats";
+export const driver_collector_relationStats_default = false;
+const driver_collector_relationColumnStats = "driver:collector_relation_column_stats";
+export const driver_collector_relationColumnStats_default = false;
+const driver_collector_identifiers = "driver:collector_identifiers";
+export const driver_collector_identifiers_default = false;
+const driver_collector_indexStats = "driver:collector_index_stats";
+export const driver_collector_indexStats_default = false;
+const driver_collector_systemObjects = "driver:collector_system_objects";
+export const driver_collector_systemObjects_default = false;
+const driver_collector_builtInObjects = "driver:collector_built_in_objects";
+export const driver_collector_builtInObjects_default = false;
+const driver_collector_constraints = "driver:collector_constraints";
+export const driver_collector_constraints_default = false;
+const driver_collector_permissions = "driver:collector_permissions";
+export const driver_collector_permissions_default = false;
+
+const defaultCollectionOptions: api.MetadataCollectionOptions = {
+    relationStats: driver_collector_relationStats_default,
+    relationColumnStats: driver_collector_relationColumnStats_default,
+    identifiers: driver_collector_identifiers_default,
+    indexStats: driver_collector_indexStats_default,
+    systemObjects: driver_collector_systemObjects_default,
+    builtInObjects: driver_collector_builtInObjects_default,
+    constraints: driver_collector_constraints_default,
+    permissions: driver_collector_permissions_default,
+};
 
 const application_name_default = "ORBADA for PostgreSQL";
 
@@ -393,8 +406,8 @@ export class Connection extends driver.Connection {
     private pool: boolean;
     private fetchRecordCount: number;
     private maxStatementRows: number;
-    private metadata: MetadataCollector;
-    private metadataPromise: Promise<api.DatabasesMetadata> | null = null;
+    private metadataCollector: MetadataCollector;
+    private metadataPromise: Promise<api.Metadata> | null = null;
     private pid: string | undefined;
     private metadataFileName: string | undefined;
     private context: api.SessionContext | undefined;
@@ -409,7 +422,17 @@ export class Connection extends driver.Connection {
         this.pool = client instanceof pg.Pool;
         this.fetchRecordCount = this.properties[driver_fetch_record_count] as number ?? driver_fetch_record_count_default;
         this.maxStatementRows = this.properties[driver_max_statement_rows] as number ?? driver_max_statement_rows_default;
-        this.metadata = new MetadataCollector();
+        this.metadataCollector = new MetadataCollector();
+        this.metadataCollector.setCollectionOptions({
+            relationStats: this.properties[driver_collector_relationStats] as boolean ?? driver_collector_relationStats_default,
+            relationColumnStats: this.properties[driver_collector_relationColumnStats] as boolean ?? driver_collector_relationColumnStats_default,
+            identifiers: this.properties[driver_collector_identifiers] as boolean ?? driver_collector_identifiers_default,
+            indexStats: this.properties[driver_collector_indexStats] as boolean ?? driver_collector_indexStats_default,
+            systemObjects: this.properties[driver_collector_systemObjects] as boolean ?? driver_collector_systemObjects_default,
+            builtInObjects: this.properties[driver_collector_builtInObjects] as boolean ?? driver_collector_builtInObjects_default,
+            constraints: this.properties[driver_collector_constraints] as boolean ?? driver_collector_constraints_default,
+            permissions: this.properties[driver_collector_permissions] as boolean ?? driver_collector_permissions_default,
+        });
         this.setMetadataFileName();
     }
 
@@ -698,7 +721,7 @@ export class Connection extends driver.Connection {
             + "_metadata";
     }
 
-    async getMetadata(progress?: (current: string) => void, force?: boolean): Promise<api.DatabasesMetadata> {
+    async getMetadata(progress?: (current: string) => void, force?: boolean): Promise<api.Metadata> {
         if (!this.metadataPromise || force) {
             let client: pg.Client | undefined;
 
@@ -709,7 +732,7 @@ export class Connection extends driver.Connection {
                         const filePath = path.join(dataPath(DBORG_DATA_PATH), "metadata", this.metadataFileName);
                         if (await fs.access(filePath).then(() => true).catch(() => false)) {
                             try {
-                                return await this.metadata.restoreMetadata(filePath);
+                                return await this.metadataCollector.restoreMetadata(filePath);
                             } catch (e) {
                                 console.error("Restoring metadata failed:", e);
                             }
@@ -717,16 +740,16 @@ export class Connection extends driver.Connection {
                     }
 
                     const client = new pg.Client(this.properties);
-                    this.metadata.setVersion(await this.getVersion());
+                    this.metadataCollector.setVersion(await this.getVersion());
                     await client.connect();
-                    this.metadata.setClient(client);
-                    const metadata = await this.metadata.getMetadata(progress, force);
+                    this.metadataCollector.setClient(client);
+                    const metadata = await this.metadataCollector.getMetadata(progress, force);
 
                     // Zapisujemy metadane do pliku po ich pobraniu
                     if (this.metadataFileName) {
                         const filePath = path.join(dataPath(DBORG_DATA_PATH), "metadata");
                         await fs.mkdir(filePath, { recursive: true });
-                        this.metadata.storeMetadata(path.join(filePath, this.metadataFileName)).catch((e) => console.error("Storing metadata failed:", e));
+                        this.metadataCollector.storeMetadata(path.join(filePath, this.metadataFileName)).catch((e) => console.error("Storing metadata failed:", e));
                     }
 
                     return metadata;
@@ -748,8 +771,8 @@ export class Connection extends driver.Connection {
         const client = new pg.Client(this.properties);
         try {
             await client.connect();
-            this.metadata.setClient(client);
-            return await this.metadata.updateObject(progress, schemaName, objectName);
+            this.metadataCollector.setClient(client);
+            return await this.metadataCollector.updateObject(progress, schemaName, objectName);
         }
         finally {
             await client.end();
@@ -856,6 +879,21 @@ export class Driver extends driver.Driver {
                 properties: [
                     { name: driver_fetch_record_count, title: "Fetch record count", type: "number", description: `Set the number of records fetch by the cursor at once, default ${driver_fetch_record_count_default}` },
                     { name: driver_max_statement_rows, title: "Max statement rows", type: "number", description: `Set the number of records fetched by a user SQL query, default is ${driver_max_statement_rows_default}`, flags: ["max-fetch-size"] },
+                ]
+            },
+            {
+                name: "driver-metadata-collector",
+                title: "Driver metadata collector",
+                description: "Settings for driver metadata collector",
+                properties: [
+                    { name: driver_collector_constraints, title: "Collect constraints", type: "boolean", description: "Collect table constraints (primary keys, foreign keys, unique constraints), default is " + (driver_collector_constraints_default ? "true" : "false"), default: driver_collector_constraints_default ? "true" : "false" },
+                    { name: driver_collector_permissions, title: "Collect permissions", type: "boolean", description: "Collect object permissions (grants), default is " + (driver_collector_permissions_default ? "true" : "false"), default: driver_collector_permissions_default ? "true" : "false" },
+                    { name: driver_collector_relationStats, title: "Collect relation statistics", type: "boolean", description: "Collect relation statistics, default is " + (driver_collector_relationStats_default ? "true" : "false"), default: driver_collector_relationStats_default ? "true" : "false" },
+                    { name: driver_collector_relationColumnStats, title: "Collect relation column statistics", type: "boolean", description: "Collect relation column statistics, default is " + (driver_collector_relationColumnStats_default ? "true" : "false"), default: driver_collector_relationColumnStats_default ? "true" : "false" },
+                    { name: driver_collector_identifiers, title: "Collect identifiers", type: "boolean", description: "Collect routine and view identifiers from source, default is " + (driver_collector_identifiers_default ? "true" : "false"), default: driver_collector_identifiers_default ? "true" : "false" },
+                    { name: driver_collector_indexStats, title: "Collect index statistics", type: "boolean", description: "Collect index statistics, default is " + (driver_collector_indexStats_default ? "true" : "false"), default: driver_collector_indexStats_default ? "true" : "false" },
+                    { name: driver_collector_systemObjects, title: "Collect system objects", type: "boolean", description: "Collect system objects, default is " + (driver_collector_systemObjects_default ? "true" : "false"), default: driver_collector_systemObjects_default ? "true" : "false" },
+                    { name: driver_collector_builtInObjects, title: "Collect built-in objects", type: "boolean", description: "Collect built-in objects, default is " + (driver_collector_builtInObjects_default ? "true" : "false"), default: driver_collector_builtInObjects_default ? "true" : "false" },
                 ]
             }
         ];

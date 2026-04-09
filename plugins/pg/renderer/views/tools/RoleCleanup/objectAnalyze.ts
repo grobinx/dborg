@@ -1,5 +1,5 @@
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
-import { RelationMetadata, RoutineMetadata, SchemaMetadata, SequenceMetadata, TypeMetadata, DatabaseMetadata, DatabasesMetadata } from "src/api/db";
+import { DatabaseMetadata, Metadata, RelationMetadata, RoutineMetadata, SchemaMetadata, SequenceMetadata, TypeMetadata } from "../../../../../../src/api/db";
 import { t } from "i18next";
 
 export type RiskLevel = "low" | "medium" | "high" | "critical";
@@ -44,8 +44,11 @@ export class ObjectSafetyAnalyzer {
         });
     }
 
-    private prepareIdentifierCache(metadata: DatabasesMetadata): void {
-        const database = Object.values(metadata).find(db => db.connected);
+    private prepareIdentifierCache(metadata: Metadata): void {
+        if (!metadata?.databases) {
+            return;
+        }
+        const database = Object.values(metadata.databases).find(db => db.connected);
 
         if (!database) {
             return;
@@ -593,7 +596,7 @@ export class ObjectSafetyAnalyzer {
             // Pobierz metadane z sesji
             const metadata = await this.session.getMetadata();
 
-            if (!metadata || Object.keys(metadata).length === 0) {
+            if (!metadata || Object.keys(metadata.databases ?? {}).length === 0) {
                 return {
                     found: false,
                     error: t("error-metadata-fetch", "Could not fetch metadata from database")
@@ -601,7 +604,7 @@ export class ObjectSafetyAnalyzer {
             }
 
             // Pobierz pierwszą bazę danych do której jesteś podłączony
-            const database = Object.values(metadata).find(db => db.connected);
+            const database = Object.values(metadata.databases ?? {}).find(db => db.connected);
 
             if (!database) {
                 return {

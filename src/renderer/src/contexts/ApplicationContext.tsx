@@ -307,7 +307,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                     connectionId: session.info.connectionId,
                     progress: current,
                 } as Messages.SessionGetMetadataProgress);
-            }, force).then((metadata: api.DatabasesMetadata) => {
+            }, force).then((metadata: api.Metadata) => {
                 session.metadata = metadata;
                 queueMessage(Messages.SESSION_GET_METADATA_SUCCESS, {
                     connectionId: session.info.connectionId,

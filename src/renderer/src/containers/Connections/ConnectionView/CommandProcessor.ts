@@ -1,7 +1,7 @@
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { Definition, Interpreter } from "@renderer/utils/SqlParser/interpreter";
 import { Tokenizer } from "@renderer/utils/SqlParser/tokenizer";
-import { DatabasesMetadata, DatabaseMetadata, RelationType, RoutineType } from "src/api/db/Metadata";
+import { DatabaseMetadata, RelationType, RoutineType, Metadata } from "../../../../../../src/api/db/Metadata";
 
 export type ObjectType = "relation" | "routine" | "schema" | null;
 
@@ -17,7 +17,7 @@ export interface GridResult {
 }
 
 export class CommandProcessor {
-    private static createDefinition(metadata: DatabasesMetadata): Definition<GridResult> {
+    private static createDefinition(metadata: Metadata): Definition<GridResult> {
         const definition: Definition<GridResult> = {
             name: "orbada_editor_commands",
             references: {
@@ -77,7 +77,7 @@ export class CommandProcessor {
                         { type: "wild_identifier", key: "schema", optional: true },
                     ],
                     action(values) {
-                        return MCP.getSchemas(metadata, values.schema ?? null);
+                        return MCP.getSchemas(metadata.databases ?? {}, values.schema ?? null);
                     },
                 },
                 {
@@ -90,7 +90,7 @@ export class CommandProcessor {
                         { type: "reference", name: "schema_or_object", optional: true, key: "soo" },
                     ],
                     action(values) {
-                        return MCP.getRelations(metadata, values.soo?.schema ?? null, values.soo?.object ?? null);
+                        return MCP.getRelations(metadata.databases ?? {}, values.soo?.schema ?? null, values.soo?.object ?? null);
                     },
                 },
                 {
@@ -103,7 +103,7 @@ export class CommandProcessor {
                         { type: "reference", name: "schema_or_object", optional: true, key: "soo" },
                     ],
                     action(values) {
-                        return MCP.getRoutines(metadata, values.soo?.schema ?? null, values.soo?.object ?? null);
+                        return MCP.getRoutines(metadata.databases ?? {}, values.soo?.schema ?? null, values.soo?.object ?? null);
                     },
                 },
                 {
@@ -122,31 +122,31 @@ export class CommandProcessor {
                     ],
                     action(values) {
                         if (!values.soo?.schema && values.soo?.object) {
-                            const isSchema = MCP.isSchema(metadata, values.soo.object);
+                            const isSchema = MCP.isSchema(metadata.databases ?? {}, values.soo.object);
                             if (isSchema === "one") {
-                                return MCP.getObjects(metadata, values.soo.object, null);
+                                return MCP.getObjects(metadata.databases ?? {}, values.soo.object, null);
                             } else if (isSchema === "many") {
-                                return MCP.getSchemas(metadata, values.soo.object);
+                                return MCP.getSchemas(metadata.databases ?? {}, values.soo.object);
                             } else {
-                                const isObject = MCP.isObject(metadata, null, values.soo.object);
+                                const isObject = MCP.isObject(metadata.databases ?? {}, null, values.soo.object);
                                 if (isObject) {
                                     if (isObject === "relation") {
-                                        return MCP.getColumns(metadata, null, values.soo.object);
+                                        return MCP.getColumns(metadata.databases ?? {}, null, values.soo.object);
                                     } else if (isObject === "routine") {
-                                        return MCP.getArguments(metadata, null, values.soo.object);
+                                        return MCP.getArguments(metadata.databases ?? {}, null, values.soo.object);
                                     } else if (isObject === "many") {
-                                        return MCP.getObjects(metadata, null, values.soo.object);
+                                        return MCP.getObjects(metadata.databases ?? {}, null, values.soo.object);
                                     }
                                 }
                             }
                         } else if (values.soo?.schema && values.soo?.object) {
-                            const isObject = MCP.isObject(metadata, values.soo.schema, values.soo.object);
+                            const isObject = MCP.isObject(metadata.databases ?? {}, values.soo.schema, values.soo.object);
                             if (isObject === "relation") {
-                                return MCP.getColumns(metadata, values.soo.schema, values.soo.object);
+                                return MCP.getColumns(metadata.databases ?? {}, values.soo.schema, values.soo.object);
                             } else if (isObject === "routine") {
-                                return MCP.getArguments(metadata, values.soo.schema, values.soo.object);
+                                return MCP.getArguments(metadata.databases ?? {}, values.soo.schema, values.soo.object);
                             } else if (isObject === "many") {
-                                return MCP.getObjects(metadata, values.soo.schema, values.soo.object);
+                                return MCP.getObjects(metadata.databases ?? {}, values.soo.schema, values.soo.object);
                             }
                         }
                         return null;
@@ -158,15 +158,15 @@ export class CommandProcessor {
         return definition;
     }
 
-    static processCommand(command: string, metadata: DatabasesMetadata): { columns: ColumnDefinition[]; rows: any[] } | null {
+    static processCommand(command: string, metadata: Metadata): { columns: ColumnDefinition[]; rows: any[] } | null {
         const tokens = new Tokenizer(command).tokenize();
         const definition = MCP.createDefinition(metadata);
         const interpreter = new Interpreter(tokens, definition);
         return interpreter.interpret();
     }
 
-    private static isSchema(metadata: DatabasesMetadata, name: string): "one" | "many" | false {
-        const matchingSchemas = MCP.getConnectedDatabases(metadata).flatMap(db =>
+    private static isSchema(metadata: Metadata, name: string): "one" | "many" | false {
+        const matchingSchemas = MCP.getConnectedDatabases(metadata.databases ?? {}).flatMap(db =>
             Object.values(db.schemas).filter(schema => Interpreter.maskMatch(name, schema.name))
         );
         if (matchingSchemas.length === 0) {
@@ -178,8 +178,8 @@ export class CommandProcessor {
         }
     }
 
-    private static isObject(metadata: DatabasesMetadata, schemaName: string | null, objectName: string): "one" | "many" | "relation" | "routine" | false {
-        const matchingObjects = MCP.getConnectedDatabases(metadata).flatMap(db =>
+    private static isObject(metadata: Metadata, schemaName: string | null, objectName: string): "one" | "many" | "relation" | "routine" | false {
+        const matchingObjects = MCP.getConnectedDatabases(metadata.databases ?? {}).flatMap(db =>
             Object.values(db.schemas)
                 .filter(schema => Interpreter.maskMatch(schemaName, schema.name))
                 .flatMap(schema => {
@@ -212,8 +212,8 @@ export class CommandProcessor {
     }
 
 
-    private static getConnectedDatabases(metadata: DatabasesMetadata): DatabaseMetadata[] {
-        return Object.values(metadata).filter(db => db.connected);
+    private static getConnectedDatabases(metadata: Metadata): DatabaseMetadata[] {
+        return Object.values(metadata.databases ?? {}).filter(db => db.connected);
     }
 
     private static getHelp(definition: Definition): { columns: ColumnDefinition[]; rows: any[] } {
@@ -234,7 +234,7 @@ export class CommandProcessor {
         return { columns, rows };
     }
 
-    private static getSchemas(metadata: DatabasesMetadata, schemaName?: string | null): { columns: ColumnDefinition[]; rows: any[] } {
+    private static getSchemas(metadata: Metadata, schemaName?: string | null): { columns: ColumnDefinition[]; rows: any[] } {
         const columns: ColumnDefinition[] = [
             { key: "database", label: "Database", dataType: "string" },
             { key: "schema", label: "Schema", dataType: "string" },
@@ -257,7 +257,7 @@ export class CommandProcessor {
         return { columns, rows };
     }
 
-    private static getRelations(metadata: DatabasesMetadata, schemaName: string | null, objectName: string | null, type?: RelationType): { columns: ColumnDefinition[]; rows: any[] } {
+    private static getRelations(metadata: Metadata, schemaName: string | null, objectName: string | null, type?: RelationType): { columns: ColumnDefinition[]; rows: any[] } {
         const columns: ColumnDefinition[] = [
             { key: "database", label: "Database", dataType: "string" },
             { key: "schema", label: "Schema", dataType: "string" },
@@ -294,7 +294,7 @@ export class CommandProcessor {
         return { columns, rows };
     }
 
-    private static getRoutines(metadata: DatabasesMetadata, schemaName: string | null, objectName: string | null, type?: RoutineType): { columns: ColumnDefinition[]; rows: any[] } {
+    private static getRoutines(metadata: Metadata, schemaName: string | null, objectName: string | null, type?: RoutineType): { columns: ColumnDefinition[]; rows: any[] } {
         const columns: ColumnDefinition[] = [
             { key: "database", label: "Database", dataType: "string" },
             { key: "schema", label: "Schema", dataType: "string" },
@@ -338,7 +338,7 @@ export class CommandProcessor {
     }
 
     private static getObjects(
-        metadata: DatabasesMetadata,
+        metadata: Metadata,
         schemaName: string | null,
         objectName: string | null,
     ): { columns: ColumnDefinition[]; rows: any[] } {
@@ -398,7 +398,7 @@ export class CommandProcessor {
         return { columns, rows };
     }
 
-    private static getArguments(metadata: DatabasesMetadata, schemaName: string | null, routineName: string | null): { columns: ColumnDefinition[]; rows: any[] } {
+    private static getArguments(metadata: Metadata, schemaName: string | null, routineName: string | null): { columns: ColumnDefinition[]; rows: any[] } {
         const columns: ColumnDefinition[] = [
             { key: "database", label: "Database", dataType: "string" },
             { key: "schema", label: "Schema", dataType: "string" },
@@ -457,7 +457,7 @@ export class CommandProcessor {
         return { columns, rows };
     }
 
-    private static getColumns(metadata: DatabasesMetadata, schemaName: string | null, relationName: string | null): { columns: ColumnDefinition[]; rows: any[] } {
+    private static getColumns(metadata: Metadata, schemaName: string | null, relationName: string | null): { columns: ColumnDefinition[]; rows: any[] } {
         const columns: ColumnDefinition[] = [
             { key: "database", label: "Database", dataType: "string" },
             { key: "schema", label: "Schema", dataType: "string" },

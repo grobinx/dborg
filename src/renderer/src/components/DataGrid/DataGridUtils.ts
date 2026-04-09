@@ -145,7 +145,7 @@ export const queryToDataGridColumns = (resultColumns: api.ColumnInfo[]): ColumnD
     return columns;
 }
 
-export const fillInternalColumnInfo = (metadata: api.DatabasesMetadata, columns: ColumnDefinition[]): ColumnDefinition[] => {
+export const fillInternalColumnInfo = (metadata: api.Metadata, columns: ColumnDefinition[]): ColumnDefinition[] => {
     // Jeśli nie ma żadnego numerycznego ID, pomiń całą operację
     const hasNumericIds = columns.some(c => c.info?.table && typeof c.info.table === 'number');
     if (!hasNumericIds) return columns;
@@ -161,7 +161,7 @@ export const fillInternalColumnInfo = (metadata: api.DatabasesMetadata, columns:
     // Buduj mapę tylko dla potrzebnych ID
     const tableIdMap = new Map<number, { catalogName: string, schemaName: string, tableName: string, primaryKeyFields?: string[] }>();
 
-    for (const [catalogName, database] of Object.entries(metadata)) {
+    for (const [catalogName, database] of Object.entries(metadata.databases ?? {})) {
         if (tableIdMap.size === idsToFind.size) break; // Znaleźliśmy wszystkie
 
         for (const [schemaName, schema] of Object.entries(database.schemas)) {

@@ -140,7 +140,7 @@ export abstract class Connection implements api.Connection {
         return Driver.getConnection(connectionId)?.cursors[uniqueId];
     }
 
-    async getMetadata(_progress?: (current: string) => void, _force?: boolean): Promise<api.DatabasesMetadata> {
+    async getMetadata(_progress?: (current: string) => void, _force?: boolean): Promise<api.Metadata> {
         return {};
     }
 

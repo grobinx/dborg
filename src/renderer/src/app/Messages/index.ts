@@ -1,4 +1,4 @@
-import { DatabasesMetadata } from "src/api/db";
+import { Metadata } from "../../../../../src/api/db";
 import { ProfileRecord } from "../../../../api/entities";
 
 /**
@@ -137,7 +137,7 @@ export type SessionGetMetadataError = {
 export const SESSION_GET_METADATA_SUCCESS = "session:get-metadata:success";
 export type SessionGetMetadataSuccess = {
     connectionId: string; // Unique identifier for the connection
-    metadata: DatabasesMetadata; // Metadata retrieved from the database
+    metadata: Metadata; // Metadata retrieved from the database
 }
 export const REFRESH_METADATA = "refresh-metadata";
 export type RefreshMetadata = {
