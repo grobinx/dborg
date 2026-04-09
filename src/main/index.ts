@@ -51,6 +51,8 @@ function createWindow(): BrowserWindow {
     return mainWindow
 }
 
+startLocalResultServer();
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
@@ -59,8 +61,6 @@ app.whenReady().then(async () => {
 
     // Set app user model id for windows
     electronApp.setAppUserModelId('dborg');
-
-    startLocalResultServer();
 
     // Default open or close DevTools by F12 in development
     // and ignore CommandOrControl + R in production.
@@ -99,7 +99,7 @@ app.whenReady().then(async () => {
                     accelerator: 'Alt+F4',
                     click: () => {
                         mainWindow.close();
-                     }
+                    }
                 },
                 // inne pozycje...
             ]

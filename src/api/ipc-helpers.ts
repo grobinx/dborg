@@ -89,12 +89,17 @@ export async function invokeViaLocalResult(channel: string, ...args: any[]) {
     const headers: HeadersInit | undefined = TOKEN ? { 'x-dborg-token': TOKEN } : undefined;
 
     while (true) {
-        const resp = await fetch(url, { headers });
-        if (resp.status === 204) {
-            // long-poll timeout — spróbuj ponownie
-            await new Promise(r => setTimeout(r, 50));
-            continue;
+        try {
+            const resp = await fetch(url, { headers });
+            if (resp.status === 204) {
+                // long-poll timeout — spróbuj ponownie
+                await new Promise(r => setTimeout(r, 50));
+                continue;
+            }
+            return await resp.json();
+        } catch (err) {
+            console.error('Error fetching local result:', err);
+            return { type: 'error', error: { message: 'Failed to fetch result from local server' } };
         }
-        return await resp.json();
     }
 }

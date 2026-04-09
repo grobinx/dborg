@@ -17,6 +17,31 @@ export function startLocalResultServer(): void {
     const app = express();
     app.use(express.json());
 
+    // --- CORS middleware for local result requests (allow local renderer origins) ---
+    app.use((req, res, next) => {
+        const origin = String(req.headers.origin || '');
+
+        // Allow only local dev/origins — echo back origin when it looks local
+        if (origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1') || origin.startsWith('http://[::1]')) {
+            res.setHeader('Access-Control-Allow-Origin', origin);
+            res.setHeader('Vary', 'Origin');
+        } else {
+            // fallback during development; change to specific origin in production if needed
+            res.setHeader('Access-Control-Allow-Origin', '*');
+        }
+
+        res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-dborg-token');
+        res.setHeader('Access-Control-Max-Age', '3600');
+
+        if (req.method === 'OPTIONS') {
+            res.status(204).end();
+            return;
+        }
+        next();
+    });
+    // --- end CORS middleware ---
+
     interface TokenHeaders {
         'x-dborg-token'?: string;
     }
