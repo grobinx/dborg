@@ -4,7 +4,8 @@ import * as driver from './Driver';
 import * as api from '../../../api/db';
 import { ipcMain, ipcRenderer, IpcMainInvokeEvent, IpcRendererEvent } from "electron";
 import internal from '../../core/db/internal';
-import { handleResult, invokeResult, InvokeResult } from '../../../api/ipc-helpers';
+import { handleResult, invokeResult, InvokeResult, invokeViaLocalResult } from '../../../api/ipc-helpers';
+import { handleWithLocalResult } from '../../../../src/api/rpc-http';
 
 // Driver events
 const EVENT_DRIVER_GET_DRIVERS = "dborg:database:driver:getDrivers";
@@ -124,7 +125,7 @@ export function init(): void {
             })
         }
     );
-    ipcMain.handle(
+    handleWithLocalResult(
         EVENT_CONNECTION_USER_DATA_GET,
         async (_: IpcMainInvokeEvent, uniqueId: string, property: string): Promise<InvokeResult> => {
             return handleResult(async () => {
@@ -331,7 +332,8 @@ export const preload = {
         getContext: (uniqueId: string, reload: boolean): Promise<api.SessionContext | undefined> => invokeResult(ipcRenderer.invoke(EVENT_CONNECTION_CONTEXT_GET, uniqueId, reload)),
         close: (uniqueId: string): Promise<void> => invokeResult(ipcRenderer.invoke(EVENT_CONNECTION_CLOSE, uniqueId)),
         userData: {
-            get: (uniqueId: string, property: string): Promise<unknown> => invokeResult(ipcRenderer.invoke(EVENT_CONNECTION_USER_DATA_GET, uniqueId, property)),
+            get: (uniqueId: string, property: string): Promise<unknown> => 
+                invokeResult(invokeViaLocalResult(EVENT_CONNECTION_USER_DATA_GET, uniqueId, property)),
             set: (uniqueId: string, property: string, value: unknown): Promise<void> => invokeResult(ipcRenderer.invoke(EVENT_CONNECTION_USER_DATA_SET, uniqueId, property, value)),
         },
         store: (uniqueId: string, sql: string): Promise<api.StatementResult> => invokeResult(ipcRenderer.invoke(EVENT_CONNECTION_STORE, uniqueId, sql)),
