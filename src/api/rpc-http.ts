@@ -72,18 +72,13 @@ export function fulfillResult(id: string, payload: InvokeResult) {
  * - bezpośrednio `InvokeResult` (gdy używałeś `handleResult` wewnątrz handlera)
  * - dowolny zwykły wynik / Promise — zostanie opakowany przez `handleResult`
  */
-export function handleWithLocalResult(channel: string, handler: (...args: any[]) => Promise<any> | any) {
+export function handleWithLocalResult(channel: string, handler: (...args: any[]) => Promise<InvokeResult> | InvokeResult) {
     ipcMain.handle(channel, (_event: IpcMainInvokeEvent, ...args: any[]) => {
         const id = genId();
         (async () => {
             try {
                 const out = await handler(_event, ...args);
-                if (out && typeof out === 'object' && 'type' in out && (out.type === 'result' || out.type === 'error')) {
-                    fulfillResult(id, out as InvokeResult);
-                } else {
-                    const wrapped = await handleResult(Promise.resolve(out));
-                    fulfillResult(id, wrapped);
-                }
+                fulfillResult(id, out);
             } catch (err) {
                 const wrapped = await handleResult(Promise.reject(err));
                 fulfillResult(id, wrapped);
