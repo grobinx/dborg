@@ -242,7 +242,11 @@ class DatabaseSession implements IDatabaseSession {
             const version = versionToNumber(this.getVersion() ?? "0.0.0");
             const supportVersion = versionToNumber(this.info.driver.supports.minVersion || "0.0.0");
             if (version >= supportVersion) {
-                this.metadata = await window.dborg.database.connection.getMetadata(this.info.connectionId, progress, force);
+                this.metadata = await window.dborg.database.connection.getMetadata(
+                    this.info.connectionId, 
+                    progress, 
+                    force
+                );
                 this.metadataInitialized = true;
             }
         }
