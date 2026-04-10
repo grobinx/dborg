@@ -38,6 +38,8 @@ export interface ProfileParametersProps extends StackProps {
         checkBoxField?: CheckboxProps,
     },
     search?: string,
+    groupIndex?: number,
+    showSchemaFields?: boolean,
 }
 
 interface ProfileParametersOwnProps extends ProfileParametersProps {
@@ -72,7 +74,7 @@ const SchemaParametersProperties = styled(Stack, {
 
 const SchemaParameters: React.FC<ProfileParametersOwnProps> = (props) => {
     //const theme = useTheme();
-    const { schemaRef, schema, slotProps, search, ...other } = useThemeProps({ name: 'SchemaParameters', props });
+    const { schemaRef, schema, slotProps, search, groupIndex, showSchemaFields, ...other } = useThemeProps({ name: 'SchemaParameters', props });
     const { drivers } = useDatabase();
     const [properties, setProperties] = React.useState<Properties>(schema.properties ?? {});
     const driver = drivers.list.find((value) => value.driverId === schema.driverUniqueId);
@@ -155,6 +157,10 @@ const SchemaParameters: React.FC<ProfileParametersOwnProps> = (props) => {
     }
 
     React.useEffect(() => {
+        setSearchProperties(searchList(search ?? '', driver?.properties));
+    }, [groupIndex]);
+
+    React.useEffect(() => {
         const debouncedSearch = debounce(() => {
             setSearchProperties(searchList(search ?? '', driver?.properties));
         }, searchDelay);
@@ -166,13 +172,17 @@ const SchemaParameters: React.FC<ProfileParametersOwnProps> = (props) => {
         setSchemaName(schemaPatternToName(schemaPattern, properties));
     }, [properties, schemaPattern])
 
+    const groupsToRender = typeof groupIndex === 'number'
+        ? (driver?.properties?.[groupIndex] ? [driver.properties[groupIndex]] : [])
+        : (driver?.properties ?? []);
+
     const propertyInputs: React.ReactElement =
         <>
             <SchemaParametersDriver key="driver" {...slotProps?.schemaDriver}>
                 <DriverSummary driver={driver} />
                 <Box flexGrow={1} />
             </SchemaParametersDriver>
-            {(search === undefined || search === '') &&
+            {(showSchemaFields ?? true) && (search === undefined || search === '') &&
                 <SchemaParametersGroup key="schema" {...slotProps?.schemaGroup}>
                     <Typography variant="h5" {...slotProps?.groupName}>
                         {t("schema-fields", "Schema properties")}
@@ -194,10 +204,24 @@ const SchemaParameters: React.FC<ProfileParametersOwnProps> = (props) => {
                     </SchemaParametersProperties>
                 </SchemaParametersGroup>
             }
-            {driver?.properties.map((group) => {
+            {groupsToRender.map((group) => {
                 const filtered = group.properties.filter(property => !searchProperties.length || searchProperties.includes(property.name));
                 if (!filtered.length) {
-                    return;
+                    return (
+                        <SchemaParametersGroup key={group.title} {...slotProps?.schemaGroup}>
+                            <Typography variant="h5" {...slotProps?.groupName}>
+                                {group.title}
+                            </Typography>
+                            {group.description &&
+                                <Typography variant="description" {...slotProps?.groupDescription}>
+                                    {group.description}
+                                </Typography>
+                            }
+                            <SchemaParametersProperties {...slotProps?.groupProperties}>
+                                {t("no-properties", "No properties match the search")}
+                            </SchemaParametersProperties>
+                        </SchemaParametersGroup>
+                    );
                 }
                 return (
                     <SchemaParametersGroup key={group.title} {...slotProps?.schemaGroup}>

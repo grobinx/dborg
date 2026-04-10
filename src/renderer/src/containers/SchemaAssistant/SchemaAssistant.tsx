@@ -74,12 +74,6 @@ const SchemaAssistantContent = styled(Box, {
     alignItems: "flex-start",
 }));
 
-const steps: { key: string, label: string }[] = [
-    { key: "select-db-driver", label: "Select driver" },
-    { key: "schema-properties", label: "Connection settings" },
-    { key: "summary", label: "Summary" }
-]
-
 const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
     const { hidden, className, slotProps, ...other } = useThemeProps({ name: 'SchemaAssistant', props });
     const { t } = useTranslation();
@@ -95,12 +89,38 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
     const { selectedContainer } = useContainers();
     const [assistantMode, setAssistantMode] = React.useState<"new" | "edit" | "clone">("new");
     const { testConnection, connectToDatabase, getProfile, createProfile, updateProfile } = useProfiles();
+    const selectedDriver = schemaParams.driverUniqueId ? drivers.find(schemaParams.driverUniqueId) : undefined;
+    const propertyGroups = selectedDriver?.properties ?? [];
+
+    const steps = React.useMemo((): { key: string, label: string }[] => {
+        return [
+            { key: "select-db-driver", label: "Select driver" },
+            ...propertyGroups.map((group, index) => ({
+                key: `schema-properties-group-${index + 1}`,
+                label: group.title,
+            })),
+            { key: "summary", label: "Summary" }
+        ];
+    }, [propertyGroups]);
+
+    const firstGroupStep = 1;
+    const lastGroupStep = propertyGroups.length;
+    const summaryStep = lastGroupStep + 1;
+    const isGroupStep = activeStep >= firstGroupStep && activeStep <= lastGroupStep;
+    const currentGroupIndex = activeStep - firstGroupStep;
+    const isLastGroupStep = activeStep === lastGroupStep;
+
+    React.useEffect(() => {
+        if (activeStep >= steps.length) {
+            setActiveStep(Math.max(steps.length - 1, 0));
+        }
+    }, [activeStep, steps.length]);
 
     const handleOnSelectDriver = (driverUniqueId: string): void => {
         if (schemaParams.driverUniqueId !== driverUniqueId) {
             setSchemaParams({ driverUniqueId: driverUniqueId, driver: drivers.find(driverUniqueId) });
         }
-        setActiveStep(activeStep + 1);
+        setActiveStep(firstGroupStep);
     };
 
     const handleBack = (): void => {
@@ -134,7 +154,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
                 properties: schema.sch_properties,
                 driver: drivers.list.find((value) => value.driverId === schema.sch_drv_unique_id),
             });
-            setActiveStep(1);
+            setActiveStep(firstGroupStep);
             setAssistantMode("edit");
         }
         catch (error) {
@@ -155,7 +175,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
                 properties: schema.sch_properties,
                 driver: drivers.list.find((value) => value.driverId === schema.sch_drv_unique_id),
             });
-            setActiveStep(1);
+            setActiveStep(firstGroupStep);
             setAssistantMode("clone");
         }
         catch (error) {
@@ -164,6 +184,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
     }, []);
 
     const handleEndEditSchemaMessage = React.useCallback(() => {
+        queueMessage(Messages.SET_PROFILE_ID, undefined);
         queueMessage(Messages.SWITCH_CONTAINER, "profile-list");
     }, []);
 
@@ -279,7 +300,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
                     {(assistantMode === "clone") && t("schema-assistant-clone", "Profile clone assistant")}
                 </Typography>
                 <Stack flexGrow={1} />
-                {activeStep === 1 &&
+                {isGroupStep &&
                     <Box sx={{ display: "flex", alignItems: "center", gap: 4 }}>
                         <InputDecorator indicator={false}>
                             <SearchField
@@ -305,15 +326,31 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
                 {...slotProps?.assistantContent}
             >
                 {activeStep === 0 && <DriverSelect onSelected={handleOnSelectDriver} />}
-                {activeStep === 1 && schemaParams.driverUniqueId && <SchemaParameters schema={schemaParams} schemaRef={schemaRef} search={search} />}
-                {activeStep === 2 && schemaParams.uniqueId && <SchemaSummary schema={schemaParams} />}
+                {isGroupStep && schemaParams.driverUniqueId && <SchemaParameters schema={schemaParams} schemaRef={schemaRef} search={search} groupIndex={currentGroupIndex} showSchemaFields={currentGroupIndex === 0} />}
+                {activeStep === summaryStep && schemaParams.uniqueId && <SchemaSummary schema={schemaParams} />}
             </SchemaAssistantContent>
             <SchemaAssistantButtons className="SchemaAssistant-buttons" {...slotProps?.assistantButtons}>
-                <Button disabled={activeStep === 0 || assistantMode !== "new"} onClick={handleBack} key="back">
-                    {t("back", "Back")}
-                </Button>
+                {activeStep !== summaryStep &&
+                    <Button disabled={activeStep <= 1} onClick={handleBack} key="previous">
+                        {t("previous", "Previous")}
+                    </Button>
+                }
                 <Box flexGrow={1} />
-                {(activeStep === 1) &&
+                {(isGroupStep && !isLastGroupStep) &&
+                    <Button
+                        {...slotProps?.button}
+                        onClick={() => {
+                            if (schemaRef.current) {
+                                setSchemaParams(schemaRef.current.getSchema());
+                            }
+                            setActiveStep(activeStep + 1);
+                        }}
+                        key="next"
+                    >
+                        {t("next", "Next")}
+                    </Button>
+                }
+                {(isGroupStep && isLastGroupStep) &&
                     <Button
                         {...slotProps?.button}
                         onClick={() => {
@@ -327,7 +364,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
                         {t("text-connection", "Test connection")}
                     </Button>
                 }
-                {(activeStep === 1) &&
+                {(isGroupStep && isLastGroupStep) &&
                     <Button
                         {...slotProps?.button}
                         onClick={() => {
@@ -341,7 +378,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
                         {t("save", "Save")}
                     </Button>
                 }
-                {(activeStep === 2) && ([
+                {(activeStep === summaryStep) && ([
                     < Button
                         {...slotProps?.button}
                         onClick={() => connectToDatabase(schemaParams.uniqueId!)}
