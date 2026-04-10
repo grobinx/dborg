@@ -118,6 +118,8 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
     const isGroupStep = activeStep >= firstGroupStep && activeStep <= lastGroupStep;
     const currentGroupIndex = activeStep - firstGroupStep;
     const isLastGroupStep = activeStep === lastGroupStep;
+    const safeStepIndex = Math.min(Math.max(activeStep, 0), Math.max(steps.length - 1, 0));
+    const currentStep = steps[safeStepIndex] ?? { key: "summary", label: "Summary" };
 
     React.useEffect(() => {
         if (activeStep >= steps.length) {
@@ -333,7 +335,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
             </SchemaAssistantTitle>
             <SchemaAssistantStepper className="SchemaAssistant-stepper" {...slotProps?.assistantStepper}>
                 <Typography variant="h6" {...slotProps?.stepperTitle}>
-                    {(activeStep + 1) + "/" + steps.length + " - " + t(steps[activeStep].key, steps[activeStep].label)}
+                    {(safeStepIndex + 1) + "/" + steps.length + " - " + t(currentStep.key, currentStep.label)}
                 </Typography>
             </SchemaAssistantStepper>
             <SchemaAssistantContent
