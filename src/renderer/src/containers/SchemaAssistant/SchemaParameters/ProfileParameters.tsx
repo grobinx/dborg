@@ -179,7 +179,8 @@ const SchemaParameters: React.FC<ProfileParametersOwnProps> = (props) => {
 
     const searchResultProperties = allProperties.filter(property => searchProperties.includes(property.name));
 
-    const renderProperty = (property: PropertyInfo): React.ReactElement => {
+    const RenderProperty = (props: { property: PropertyInfo }): React.ReactElement => {
+        const { property } = props;
         if (property.type === "string") {
             return (
                 <DriverPropertyString
@@ -284,16 +285,16 @@ const SchemaParameters: React.FC<ProfileParametersOwnProps> = (props) => {
                     </Typography>
                     <SchemaParametersProperties {...slotProps?.groupProperties}>
                         {searchResultProperties.length > 0
-                            ? searchResultProperties.map(renderProperty)
+                            ? searchResultProperties.map((property, index) => <RenderProperty property={property} key={index} />)
                             : t("no-properties", "No properties match the search")}
                     </SchemaParametersProperties>
                 </SchemaParametersGroup>
             }
-            {!isSearchActive && groupsToRender.map((group) => {
+            {!isSearchActive && groupsToRender.map((group, index) => {
                 const filtered = group.properties.filter(property => !searchProperties.length || searchProperties.includes(property.name));
                 if (!filtered.length) {
                     return (
-                        <SchemaParametersGroup key={group.title} {...slotProps?.schemaGroup}>
+                        <SchemaParametersGroup key={index} {...slotProps?.schemaGroup}>
                             <Typography variant="h5" {...slotProps?.groupName}>
                                 {group.title}
                             </Typography>
@@ -309,7 +310,7 @@ const SchemaParameters: React.FC<ProfileParametersOwnProps> = (props) => {
                     );
                 }
                 return (
-                    <SchemaParametersGroup key={group.title} {...slotProps?.schemaGroup}>
+                    <SchemaParametersGroup key={index} {...slotProps?.schemaGroup}>
                         <Typography variant="h5" {...slotProps?.groupName}>
                             {group.title}
                         </Typography>
@@ -319,7 +320,7 @@ const SchemaParameters: React.FC<ProfileParametersOwnProps> = (props) => {
                             </Typography>
                         }
                         <SchemaParametersProperties {...slotProps?.groupProperties}>
-                            {filtered.map(renderProperty)}
+                            {filtered.map((property, index) => <RenderProperty property={property} key={index} />)}
                         </SchemaParametersProperties>
                     </SchemaParametersGroup>
                 )
