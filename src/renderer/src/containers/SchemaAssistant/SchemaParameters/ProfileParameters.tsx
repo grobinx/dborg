@@ -157,10 +157,6 @@ const SchemaParameters: React.FC<ProfileParametersOwnProps> = (props) => {
     }
 
     React.useEffect(() => {
-        setSearchProperties(searchList(search ?? '', driver?.properties));
-    }, [groupIndex]);
-
-    React.useEffect(() => {
         const debouncedSearch = debounce(() => {
             setSearchProperties(searchList(search ?? '', driver?.properties));
         }, searchDelay);
@@ -172,9 +168,86 @@ const SchemaParameters: React.FC<ProfileParametersOwnProps> = (props) => {
         setSchemaName(schemaPatternToName(schemaPattern, properties));
     }, [properties, schemaPattern])
 
+    const isSearchActive = (search ?? '').trim() !== '';
+    const allProperties = React.useMemo((): PropertyInfo[] => {
+        return driver?.properties?.flatMap(group => group.properties) ?? [];
+    }, [driver]);
+
     const groupsToRender = typeof groupIndex === 'number'
         ? (driver?.properties?.[groupIndex] ? [driver.properties[groupIndex]] : [])
         : (driver?.properties ?? []);
+
+    const searchResultProperties = allProperties.filter(property => searchProperties.includes(property.name));
+
+    const renderProperty = (property: PropertyInfo): React.ReactElement => {
+        if (property.type === "string") {
+            return (
+                <DriverPropertyString
+                    key={property.name}
+                    property={property}
+                    value={properties[property.name]}
+                    onChange={handlePropertyChange}
+                />
+            )
+        }
+        if (property.type === "number") {
+            return (
+                <DriverPropertyNumber
+                    key={property.name}
+                    property={property}
+                    value={properties[property.name]}
+                    onChange={handlePropertyChange}
+                />
+            )
+        }
+        if (property.type === "password") {
+            return (
+                <DriverPropertyPassword
+                    key={property.name}
+                    property={property}
+                    value={properties[property.name]}
+                    onChange={handlePropertyChange}
+                    usePassword={schemaUsePassword}
+                    onChangeUsePassword={value => {
+                        setSchemaUsePassword(value);
+                        if (value === "save") {
+                            Promise.resolve().then(() => {
+                                if (passwordRef.current) {
+                                    passwordRef.current.focus();
+                                }
+                            });
+                        }
+                    }}
+                    passwordRef={passwordRef}
+                />
+            )
+        }
+        if (property.type === "file") {
+            return (
+                <DriverPropertyFile
+                    key={property.name}
+                    property={property}
+                    value={properties[property.name]}
+                    onChange={handlePropertyChange}
+                />
+            )
+        }
+        if (property.type === "boolean") {
+            return (
+                <DriverPropertyBoolean
+                    key={property.name}
+                    property={property}
+                    value={properties[property.name]}
+                    onChange={handlePropertyChange}
+                />
+            )
+        }
+        return (
+            <Typography key={property.name}>
+                {property.title}
+            </Typography>
+        )
+    }
 
     const propertyInputs: React.ReactElement =
         <>
@@ -204,7 +277,19 @@ const SchemaParameters: React.FC<ProfileParametersOwnProps> = (props) => {
                     </SchemaParametersProperties>
                 </SchemaParametersGroup>
             }
-            {groupsToRender.map((group) => {
+            {isSearchActive &&
+                <SchemaParametersGroup key="search-results" {...slotProps?.schemaGroup}>
+                    <Typography variant="h5" {...slotProps?.groupName}>
+                        {t("search-results", "Search results")}
+                    </Typography>
+                    <SchemaParametersProperties {...slotProps?.groupProperties}>
+                        {searchResultProperties.length > 0
+                            ? searchResultProperties.map(renderProperty)
+                            : t("no-properties", "No properties match the search")}
+                    </SchemaParametersProperties>
+                </SchemaParametersGroup>
+            }
+            {!isSearchActive && groupsToRender.map((group) => {
                 const filtered = group.properties.filter(property => !searchProperties.length || searchProperties.includes(property.name));
                 if (!filtered.length) {
                     return (
@@ -234,75 +319,7 @@ const SchemaParameters: React.FC<ProfileParametersOwnProps> = (props) => {
                             </Typography>
                         }
                         <SchemaParametersProperties {...slotProps?.groupProperties}>
-                            {filtered.map(property => {
-                                if (property.type === "string") {
-                                    return (
-                                        <DriverPropertyString
-                                            key={property.name}
-                                            property={property}
-                                            value={properties[property.name]}
-                                            onChange={handlePropertyChange}
-                                        />
-                                    )
-                                }
-                                if (property.type === "number") {
-                                    return (
-                                        <DriverPropertyNumber
-                                            key={property.name}
-                                            property={property}
-                                            value={properties[property.name]}
-                                            onChange={handlePropertyChange}
-                                        />
-                                    )
-                                }
-                                if (property.type === "password") {
-                                    return (
-                                        <DriverPropertyPassword
-                                            key={property.name}
-                                            property={property}
-                                            value={properties[property.name]}
-                                            onChange={handlePropertyChange}
-                                            usePassword={schemaUsePassword}
-                                            onChangeUsePassword={value => {
-                                                setSchemaUsePassword(value);
-                                                if (value === "save") {
-                                                    Promise.resolve().then(() => {
-                                                        if (passwordRef.current) {
-                                                            passwordRef.current.focus();
-                                                        }
-                                                    });
-                                                }
-                                            }}
-                                            passwordRef={passwordRef}
-                                        />
-                                    )
-                                }
-                                if (property.type === "file") {
-                                    return (
-                                        <DriverPropertyFile
-                                            key={property.name}
-                                            property={property}
-                                            value={properties[property.name]}
-                                            onChange={handlePropertyChange}
-                                        />
-                                    )
-                                }
-                                if (property.type === "boolean") {
-                                    return (
-                                        <DriverPropertyBoolean
-                                            key={property.name}
-                                            property={property}
-                                            value={properties[property.name]}
-                                            onChange={handlePropertyChange}
-                                        />
-                                    )
-                                }
-                                return (
-                                    <Typography>
-                                        {property.title}
-                                    </Typography>
-                                )
-                            })}
+                            {filtered.map(renderProperty)}
                         </SchemaParametersProperties>
                     </SchemaParametersGroup>
                 )

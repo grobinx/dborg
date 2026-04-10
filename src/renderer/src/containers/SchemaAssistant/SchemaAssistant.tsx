@@ -91,8 +91,17 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
     const { testConnection, connectToDatabase, getProfile, createProfile, updateProfile } = useProfiles();
     const selectedDriver = schemaParams.driverUniqueId ? drivers.find(schemaParams.driverUniqueId) : undefined;
     const propertyGroups = selectedDriver?.properties ?? [];
+    const isSearchActive = search.trim() !== '';
 
     const steps = React.useMemo((): { key: string, label: string }[] => {
+        if (isSearchActive) {
+            return [
+                { key: "select-db-driver", label: "Select driver" },
+                { key: "schema-properties", label: "Connection settings" },
+                { key: "summary", label: "Summary" }
+            ];
+        }
+
         return [
             { key: "select-db-driver", label: "Select driver" },
             ...propertyGroups.map((group, index) => ({
@@ -101,10 +110,10 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
             })),
             { key: "summary", label: "Summary" }
         ];
-    }, [propertyGroups]);
+    }, [isSearchActive, propertyGroups]);
 
     const firstGroupStep = 1;
-    const lastGroupStep = propertyGroups.length;
+    const lastGroupStep = isSearchActive ? 1 : propertyGroups.length;
     const summaryStep = lastGroupStep + 1;
     const isGroupStep = activeStep >= firstGroupStep && activeStep <= lastGroupStep;
     const currentGroupIndex = activeStep - firstGroupStep;
@@ -115,6 +124,12 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
             setActiveStep(Math.max(steps.length - 1, 0));
         }
     }, [activeStep, steps.length]);
+
+    React.useEffect(() => {
+        if (isSearchActive && activeStep > firstGroupStep && activeStep !== summaryStep) {
+            setActiveStep(firstGroupStep);
+        }
+    }, [isSearchActive, activeStep, summaryStep]);
 
     const handleOnSelectDriver = (driverUniqueId: string): void => {
         if (schemaParams.driverUniqueId !== driverUniqueId) {
@@ -326,7 +341,7 @@ const SchemaAssistant: React.FC<SchemaAssistantOwnProps> = (props) => {
                 {...slotProps?.assistantContent}
             >
                 {activeStep === 0 && <DriverSelect onSelected={handleOnSelectDriver} />}
-                {isGroupStep && schemaParams.driverUniqueId && <SchemaParameters schema={schemaParams} schemaRef={schemaRef} search={search} groupIndex={currentGroupIndex} showSchemaFields={currentGroupIndex === 0} />}
+                {isGroupStep && schemaParams.driverUniqueId && <SchemaParameters schema={schemaParams} schemaRef={schemaRef} search={search} groupIndex={isSearchActive ? undefined : currentGroupIndex} showSchemaFields={isSearchActive || currentGroupIndex === 0} />}
                 {activeStep === summaryStep && schemaParams.uniqueId && <SchemaSummary schema={schemaParams} />}
             </SchemaAssistantContent>
             <SchemaAssistantButtons className="SchemaAssistant-buttons" {...slotProps?.assistantButtons}>
