@@ -179,12 +179,11 @@ const SchemaParameters: React.FC<ProfileParametersOwnProps> = (props) => {
 
     const searchResultProperties = allProperties.filter(property => searchProperties.includes(property.name));
 
-    const RenderProperty = (props: { property: PropertyInfo }): React.ReactElement => {
-        const { property } = props;
+    const renderProperty = (property: PropertyInfo, key: string): React.ReactElement => {
         if (property.type === "string") {
             return (
                 <DriverPropertyString
-                    key={property.name}
+                    key={key}
                     property={property}
                     value={properties[property.name]}
                     onChange={handlePropertyChange}
@@ -194,7 +193,7 @@ const SchemaParameters: React.FC<ProfileParametersOwnProps> = (props) => {
         if (property.type === "number") {
             return (
                 <DriverPropertyNumber
-                    key={property.name}
+                    key={key}
                     property={property}
                     value={properties[property.name]}
                     onChange={handlePropertyChange}
@@ -204,7 +203,7 @@ const SchemaParameters: React.FC<ProfileParametersOwnProps> = (props) => {
         if (property.type === "password") {
             return (
                 <DriverPropertyPassword
-                    key={property.name}
+                    key={key}
                     property={property}
                     value={properties[property.name]}
                     onChange={handlePropertyChange}
@@ -226,7 +225,7 @@ const SchemaParameters: React.FC<ProfileParametersOwnProps> = (props) => {
         if (property.type === "file") {
             return (
                 <DriverPropertyFile
-                    key={property.name}
+                    key={key}
                     property={property}
                     value={properties[property.name]}
                     onChange={handlePropertyChange}
@@ -236,7 +235,7 @@ const SchemaParameters: React.FC<ProfileParametersOwnProps> = (props) => {
         if (property.type === "boolean") {
             return (
                 <DriverPropertyBoolean
-                    key={property.name}
+                    key={key}
                     property={property}
                     value={properties[property.name]}
                     onChange={handlePropertyChange}
@@ -244,7 +243,7 @@ const SchemaParameters: React.FC<ProfileParametersOwnProps> = (props) => {
             )
         }
         return (
-            <Typography key={property.name}>
+            <Typography key={key}>
                 {property.title}
             </Typography>
         )
@@ -285,7 +284,7 @@ const SchemaParameters: React.FC<ProfileParametersOwnProps> = (props) => {
                     </Typography>
                     <SchemaParametersProperties {...slotProps?.groupProperties}>
                         {searchResultProperties.length > 0
-                            ? searchResultProperties.map((property, index) => <RenderProperty property={property} key={index} />)
+                            ? searchResultProperties.map((property, index) => renderProperty(property, `search-${property.name}-${index}`))
                             : t("no-properties", "No properties match the search")}
                     </SchemaParametersProperties>
                 </SchemaParametersGroup>
@@ -320,7 +319,7 @@ const SchemaParameters: React.FC<ProfileParametersOwnProps> = (props) => {
                             </Typography>
                         }
                         <SchemaParametersProperties {...slotProps?.groupProperties}>
-                            {filtered.map((property, index) => <RenderProperty property={property} key={index} />)}
+                            {filtered.map((property, propertyIndex) => renderProperty(property, `group-${index}-${property.name}-${propertyIndex}`))}
                         </SchemaParametersProperties>
                     </SchemaParametersGroup>
                 )
