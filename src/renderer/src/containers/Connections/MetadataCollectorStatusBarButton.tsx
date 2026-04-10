@@ -62,7 +62,7 @@ const MetadataCollectorStatusBarButton: React.FC = () => {
                 ...prev,
                 [message.connectionId]: {
                     status: "error",
-                    name: prev[message.connectionId].name,
+                    name: prev[message.connectionId]?.name,
                     progress: message.error,
                 },
             }));
@@ -73,7 +73,7 @@ const MetadataCollectorStatusBarButton: React.FC = () => {
                 ...prev,
                 [message.connectionId]: {
                     status: "success",
-                    name: prev[message.connectionId].name,
+                    name: prev[message.connectionId]?.name,
                     progress: t("ready", "Ready"),
                 },
             }));
@@ -84,8 +84,8 @@ const MetadataCollectorStatusBarButton: React.FC = () => {
                 ...prev,
                 [message.connectionId]: {
                     status: "end",
-                    name: prev[message.connectionId].name,
-                    progress: prev[message.connectionId].progress,
+                    name: prev[message.connectionId]?.name,
+                    progress: prev[message.connectionId]?.progress,
                 },
             }));
 

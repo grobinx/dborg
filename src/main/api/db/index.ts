@@ -198,7 +198,7 @@ export function init(): void {
             })
         }
     );
-    ipcMain.handle(
+    handleWithLocalResult(
         EVENT_CONNECTION_GET_METADATA,
         async (event: IpcMainInvokeEvent, uniqueId: string, force: boolean): Promise<InvokeResult> => {
             return handleResult(async () => {
@@ -361,7 +361,7 @@ export const preload = {
             ipcRenderer.on(EVENT_CONNECTION_GET_METADATA_PROGRESS, listener);
 
             try {
-                return await invokeResult(ipcRenderer.invoke(EVENT_CONNECTION_GET_METADATA, uniqueId, force));
+                return await invokeResult(invokeViaLocalResult(EVENT_CONNECTION_GET_METADATA, uniqueId, force));
             }
             finally {
                 ipcRenderer.removeListener(EVENT_CONNECTION_GET_METADATA_PROGRESS, listener);
