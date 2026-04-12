@@ -1,7 +1,5 @@
 export const METADATA_VERSION = 11;
 
-export type DatabasesMetadata = Record<string, DatabaseMetadata>;
-
 /** Options for collecting metadata */
 export interface MetadataCollectionOptions {
     /** relation statistics collected */

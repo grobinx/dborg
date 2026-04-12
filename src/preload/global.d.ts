@@ -3,13 +3,13 @@
 // loaded in tsconfig.web.json
 
 import { OnMovedFn, OnResizedFn, OnStateFn } from "@api/electron"
-import { 
-    Dialog, MessageBoxOptions, MessageBoxReturnValue, OpenDialogOptions, OpenDialogReturnValue, Rectangle, 
-    SaveDialogOptions, SaveDialogReturnValue, Size 
+import {
+    Dialog, MessageBoxOptions, MessageBoxReturnValue, OpenDialogOptions, OpenDialogReturnValue, Rectangle,
+    SaveDialogOptions, SaveDialogReturnValue, Size
 } from "electron"
-import { 
+import {
     CommandResult, ConnectionInfo, Cursor, CursorInfo, CursorFetchMaxRowsMode, Metadata, SessionContext, TSettings, WindowState,
-    DriverInfo, Properties, QueryResult, StatementResult 
+    DriverInfo, Properties, QueryResult, StatementResult
 } from "src/api/db"
 import { FileChangeEvent } from "src/main/api/dborg-file"
 
@@ -107,6 +107,12 @@ declare global {
                         close: (connectionId: string, uniqueId: string) => Promise<void>,
                         isEnd: (connectionId: string, uniqueId: string) => Promise<boolean>,
                         cancel: (connectionId: string, uniqueId: string) => Promise<void>,
+                    },
+                    metadata: {
+                        getDatabaseList: (connectionId: string, filter?: DatabaseFilter) => Promise<MetadataDatabaseQuery[]>,
+                        getDatabase: (connectionId: string, id: string | IdentityOptions) => Promise<MetadataDatabaseQuery | undefined>,
+                        getSchemaList: (connectionId: string, databaseId: string, filter?: SchemaFilter) => Promise<MetadataSchemaQuery[]>,
+                        getSchema: (connectionId: string, databaseId: string, id: string | IdentityOptions) => Promise<MetadataSchemaQuery | undefined>,
                     },
                     getMetadata: (uniqueId: string, progress?: (current: string) => void, force?: boolean) => Promise<Metadata>,
                     updateObject: (uniqueId: string, progress?: (current: string) => void, schemaName?: string, objectName?: string) => Promise<void>,
