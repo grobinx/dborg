@@ -5,6 +5,7 @@ import { uuidv7 } from "uuidv7";
 import sqlite3 from 'sqlite3';
 import * as sqlParser from 'node-sql-parser';
 import logo from '../../resources/sqlite-logo.svg';
+import { MetadataCollector } from './MetadataCollector';
 
 const driverVersion: Version = {
     major: 1,
@@ -203,6 +204,8 @@ export class Connection extends driver.Connection {
     private maxStatementRows: number;
     private version: Version<"major" | "minor" | "patch" | "toString"> | undefined;
     private context: api.SessionContext | undefined;
+    private metadataCollector: MetadataCollector;
+    private metadataPromise: Promise<api.Metadata> | null = null;
 
     constructor(properties: api.Properties, driver: Driver, client: sqlite3.Database, uniqueId?: string) {
         super(driver);
@@ -212,6 +215,7 @@ export class Connection extends driver.Connection {
         this.client = client;
         this.fetchRecordCount = this.properties[driver_fetch_record_count] as number ?? driver_fetch_record_count_default;
         this.maxStatementRows = this.properties[driver_max_statement_rows] as number ?? driver_max_statement_rows_default;
+        this.metadataCollector = new MetadataCollector();
     }
 
     getConnectionId(): string {
@@ -490,6 +494,7 @@ export class Connection extends driver.Connection {
 
     async cancel(): Promise<void> {
     }
+
 }
 
 export class Driver extends driver.Driver {
