@@ -18,10 +18,12 @@ export interface EntityFilter<T extends OwnedMetadataBase> {
     filter?: Partial<Omit<T, "name" | "owner">>;
 }
 
-export type MetadataSummary = Omit<Metadata, "databases">;
+export interface MetadataDetails extends Omit<Metadata, "databases"> {
+    databaseCount: number;
+}
 
 /** Interface for querying metadata */
-export interface MetadataQueryApi extends MetadataSummary {
+export interface MetadataQueryApi extends MetadataDetails {
     /** Get a list of databases, optionally filtered by the provided criteria */
     getDatabaseList(filter?: DatabaseFilter): Promise<DatabaseQueryApi[]>;
     /** Get a full specific database by its name or identity */
@@ -29,11 +31,11 @@ export interface MetadataQueryApi extends MetadataSummary {
 }
 
 export const createMetadataQueryApi = async (connectionId: string): Promise<MetadataQueryApi> => {
-    const metadata: MetadataSummary = await window.dborg.database.connection.metadata.getMetadata(connectionId);
+    const metadata: MetadataDetails = await window.dborg.database.connection.metadata.getMetadata(connectionId);
     return {
         ...metadata,
         getDatabaseList: async (filter?: DatabaseFilter) => {
-            const databaseList: DatabaseSummary[] = await window.dborg.database.connection.metadata.getDatabaseList(connectionId, filter);
+            const databaseList: DatabaseDetails[] = await window.dborg.database.connection.metadata.getDatabaseList(connectionId, filter);
             return databaseList.map(db => createDatabaseQueryApi(connectionId, db));
         },
         getDatabase: async (id: string | IdentityOptions) => {
@@ -46,44 +48,54 @@ export const createMetadataQueryApi = async (connectionId: string): Promise<Meta
     };
 };
 
-export type DatabaseSummary = Omit<DatabaseMetadata, "schemas" | "builtInRelations" | "builtInTypes" | "builtInRoutines">;
-export interface DatabaseFilter extends EntityFilter<DatabaseSummary> { }
+export interface DatabaseDetails extends Omit<DatabaseMetadata, "schemas" | "builtInRelations" | "builtInTypes" | "builtInRoutines"> {
+    schemaCount: number;
+    builtInRelationCount: number;
+    builtInTypeCount: number;
+    builtInRoutineCount: number;
+}
+export interface DatabaseFilter extends EntityFilter<DatabaseDetails> { }
 
 /** Interface for querying database metadata */
-export interface DatabaseQueryApi extends DatabaseSummary {
+export interface DatabaseQueryApi extends DatabaseDetails {
     /** Get a list of schemas, optionally filtered by the provided criteria */
     getSchemaList(filter?: SchemaFilter): Promise<SchemaQueryApi[]>;
     /** Get a full specific schema by its name or identity */
     getSchema(id: string | IdentityOptions): Promise<SchemaQueryApi | undefined>;
 }
 
-export const createDatabaseQueryApi = (connectionId: string, metadata: DatabaseSummary): DatabaseQueryApi => {
+const createDatabaseQueryApi = (connectionId: string, database: DatabaseDetails): DatabaseQueryApi => {
     return {
-        ...metadata,
+        ...database,
         getSchemaList: async (filter?: SchemaFilter) => {
-            const schemaList: SchemaSummary[] = await window.dborg.database.connection.metadata.getSchemaList(connectionId, metadata.id, filter);
-            return schemaList.map(schema => createMetadataSchemaQuery(connectionId, schema));
+            const schemaList: SchemaDetails[] = await window.dborg.database.connection.metadata.getSchemaList(connectionId, database.id, filter);
+            return schemaList.map(schema => createMetadataSchemaQuery(connectionId, database.id, schema));
         },
         getSchema: async (id: string | IdentityOptions) => {
-            const schema = await window.dborg.database.connection.metadata.getSchema(connectionId, metadata.id, id);
+            const schema = await window.dborg.database.connection.metadata.getSchema(connectionId, database.id, id);
             if (schema) {
-                return createMetadataSchemaQuery(connectionId, schema);
+                return createMetadataSchemaQuery(connectionId, database.id, schema);
             }
             return undefined;
         }
     };
 };
 
-export type SchemaSummary = Omit<SchemaMetadata, "relations" | "routines" | "packages" | "sequences" | "types">;
-export interface SchemaFilter extends EntityFilter<SchemaSummary> { }
+export interface SchemaDetails extends Omit<SchemaMetadata, "relations" | "routines" | "packages" | "sequences" | "types"> {
+    relationCount: number;
+    routineCount: number;
+    packageCount: number;
+    sequenceCount: number;
+    typeCount: number;
+}
+export interface SchemaFilter extends EntityFilter<SchemaDetails> { }
 
-export interface SchemaQueryApi extends SchemaSummary {
+export interface SchemaQueryApi extends SchemaDetails {
     /**
      * Get a list of relations, optionally filtered by the provided criteria
      * @param filter - The filter criteria to apply
-     * @param include - The keys of the relation metadata to include in the result
      */
-    getRelationList(filter?: RelationFilter, include?: RelationInclude[]): Promise<Partial<RelationQueryApi>[]>;
+    getRelationList(filter?: RelationFilter): Promise<Partial<RelationQueryApi>[]>;
     /**
      * Get a full specific relation by its name or identity
      * @param id - The id or identity of the relation
@@ -93,9 +105,8 @@ export interface SchemaQueryApi extends SchemaSummary {
     /**
      * Get a list of routines, optionally filtered by the provided criteria
      * @param filter - The filter criteria to apply
-     * @param include - The keys of the routine metadata to include in the result
      */
-    getRoutineList(filter?: RoutineFilter, include?: RoutineInclude[]): Promise<Partial<RoutineQueryApi>[]>;
+    getRoutineList(filter?: RoutineFilter): Promise<Partial<RoutineQueryApi>[]>;
     /**
      * Get a full specific routine by its name or identity
      * @param id - The id or identity of the routine
@@ -103,20 +114,248 @@ export interface SchemaQueryApi extends SchemaSummary {
     getRoutine(id: string | IdentityOptions): Promise<RoutineQueryApi | undefined>;
 }
 
-export const createMetadataSchemaQuery = (connectionId: string, metadata: SchemaSummary): SchemaQueryApi => {
-    return new MetadataSchemaQuery(connectionId, metadata);
+const createMetadataSchemaQuery = (connectionId: string, databaseId: string, schema: SchemaDetails): SchemaQueryApi => {
+    return {
+        ...schema,
+        getRelationList: async (filter?: RelationFilter) => {
+            const relationList: RelationDetails[] = await window.dborg.database.connection.metadata.getRelationList(connectionId, databaseId, schema.id, filter);
+            return relationList.map(relation => {
+                const result: Partial<RelationQueryApi> = { ...relation };
+                return result;
+            });
+        },
+        getRelation: async (id: string | IdentityOptions) => {
+            const relation = await window.dborg.database.connection.metadata.getRelation(connectionId, databaseId, schema.id, id);
+            if (relation) {
+                return createMetadataRelationQuery(connectionId, databaseId, schema.id, relation);
+            }
+            return undefined;
+        },
+        getRoutineList: async (filter?: RoutineFilter) => {
+            const routineList: RoutineDetails[] = await window.dborg.database.connection.metadata.getRoutineList(connectionId, databaseId, schema.id, filter);
+            return routineList.map(routine => {
+                const result: Partial<RoutineQueryApi> = { ...routine };
+                return result;
+            });
+        },
+        getRoutine: async (id: string | IdentityOptions) => {
+            const routine = await window.dborg.database.connection.metadata.getRoutine(connectionId, databaseId, schema.id, id);
+            if (routine) {
+                return createMetadataRoutineQuery(connectionId, databaseId, schema.id, routine);
+            }
+            return undefined;
+        }
+    };
 };
 
 export type RelationDetails = RelationMetadata;
 export interface RelationFilter extends EntityFilter<RelationDetails> { }
-export type RelationInclude = "columns" | "constraints" | "foreignKeys" | "indexes" | "stats" | "identifiers";
 
 export interface RelationQueryApi extends RelationDetails {
 }
 
+const createMetadataRelationQuery = (connectionId: string, databaseId: string, schemaId: string | undefined, relation: RelationDetails): RelationQueryApi => {
+    return {
+        ...relation
+    };
+};
+
 export type RoutineDetails = RoutineMetadata;
 export interface RoutineFilter extends EntityFilter<RoutineDetails> { }
-export type RoutineInclude = "arguments" | "identifiers";
 
 export interface RoutineQueryApi extends RoutineDetails {
+}
+
+const createMetadataRoutineQuery = (connectionId: string, databaseId: string, schemaId: string | undefined, routine: RoutineDetails): RoutineQueryApi => {
+    return {
+        ...routine
+    };
+}
+
+const testFilterString = (value: string, filter: string | RegExp): boolean => {
+    if (typeof filter === "string") {
+        return value === filter;
+    } else {
+        return filter.test(value);
+    }
+}
+
+const matchFilter = <T extends OwnedMetadataBase>(item: T, filter?: EntityFilter<T>): boolean => {
+    if (!filter) return true;
+    if (filter.name && !testFilterString(item.name, filter.name)) return false;
+    if (filter.owner && item.owner && !testFilterString(item.owner, filter.owner)) return false;
+    if (filter.filter) {
+        for (const key in filter.filter) {
+            const value = (item as any)[key];
+            const filterValue = (filter.filter as any)[key];
+            if (value !== filterValue) return false;
+        }
+    }
+    return true;
+}
+
+const matchId = <T extends OwnedMetadataBase>(item: T, id: string | IdentityOptions): boolean => {
+    if (typeof id === "string") {
+        return item.id === id;
+    }
+    if (id.name && item.name !== id.name) return false;
+    if (id.identity && item.identity !== id.identity) return false;
+    return true;
+}
+
+const metadataToDetails = (metadata: Metadata): MetadataDetails => {
+    const { databases, ...metadataSummary } = metadata;
+    return {
+        databaseCount: Object.keys(databases ?? {}).length,
+        ...metadataSummary
+    };
+}
+
+export const getMetadata = (metadata: Metadata): MetadataDetails => {
+    return metadataToDetails(metadata);
+}
+
+const metadataDatabaseToDetails = (metadata: DatabaseMetadata): DatabaseDetails => {
+    const { schemas, builtInRelations, builtInTypes, builtInRoutines, ...dbMetadata } = metadata;
+    return {
+        ...dbMetadata,
+        schemaCount: Object.keys(schemas ?? {}).length,
+        builtInRelationCount: Object.keys(builtInRelations ?? {}).length,
+        builtInTypeCount: Object.keys(builtInTypes ?? {}).length,
+        builtInRoutineCount: Object.keys(builtInRoutines ?? {}).length,
+    };
+}
+
+export const getMetadataDatabaseList = (metadata: Metadata, filter?: DatabaseFilter): DatabaseDetails[] => {
+    return Object.values(metadata.databases ?? {})
+        .filter(db => matchFilter(db, filter))
+        .map(db => metadataDatabaseToDetails(db));
+}
+
+export const getMetadataDatabase = (metadata: Metadata, id: string | IdentityOptions): DatabaseDetails | undefined => {
+    const database = Object.values(metadata.databases ?? {}).find(db => matchId(db, id));
+
+    if (!database) return undefined;
+
+    return metadataDatabaseToDetails(database);
+}
+
+const metadataSchemaToDetails = (metadata: SchemaMetadata): SchemaDetails => {
+    const { relations, routines, packages, sequences, types, ...schemaMetadata } = metadata;
+    return {
+        ...schemaMetadata,
+        relationCount: Object.keys(relations ?? {}).length,
+        routineCount: Object.keys(routines ?? {}).length,
+        packageCount: Object.keys(packages ?? {}).length,
+        sequenceCount: Object.keys(sequences ?? {}).length,
+        typeCount: Object.keys(types ?? {}).length,
+    };
+}
+
+export const getMetadataSchemaList = (metadata: Metadata, databaseId: string, filter?: SchemaFilter): SchemaDetails[] => {
+    const database = Object.values(metadata.databases ?? {}).find(db => db.id === databaseId);
+    if (!database) return [];
+    return Object.values(database.schemas ?? {})
+        .filter(schema => matchFilter(schema, filter))
+        .map(schema => metadataSchemaToDetails(schema));
+}
+
+export const getMetadataSchema = (metadata: Metadata, databaseId: string, id: string | IdentityOptions): SchemaDetails | undefined => {
+    const database = Object.values(metadata.databases ?? {}).find(db => db.id === databaseId);
+    if (!database) return undefined;
+    const schema = Object.values(database.schemas ?? {}).find(schema => matchId(schema, id));
+    if (!schema) return undefined;
+    return metadataSchemaToDetails(schema);
+}
+
+const metadataRelationToDetails = (metadata: RelationMetadata): RelationDetails => {
+    const { columns, constraints, foreignKeys, indexes, stats, identifiers, ...relationMetadata } = metadata;
+    return {
+        ...relationMetadata,
+        columns: columns ?? [],
+        constraints: constraints ?? [],
+        foreignKeys: foreignKeys ?? [],
+        indexes: indexes ?? [],
+        stats: stats ?? {},
+        identifiers: identifiers ?? []
+    };
+}
+
+export const getMetadataRelationList = (metadata: Metadata, databaseId: string, schemaId: string | undefined, filter?: RelationFilter): RelationDetails[] => {
+    const database = Object.values(metadata.databases ?? {}).find(db => db.id === databaseId);
+    if (!database) return [];
+    if (schemaId) {
+        const schema = Object.values(database.schemas ?? {}).find(schema => schema.id === schemaId);
+        if (!schema) return [];
+        return Object.values(schema.relations ?? {})
+            .filter(relation => matchFilter(relation, filter))
+            .map(relation => metadataRelationToDetails(relation));
+    } else {
+        return Object.values(database.builtInRelations ?? {})
+            .filter(relation => matchFilter(relation, filter))
+            .map(relation => metadataRelationToDetails(relation));
+    }
+}
+
+export const getMetadataRelation = (metadata: Metadata, databaseId: string, schemaId: string | undefined, id: string | IdentityOptions): RelationDetails | undefined => {
+    const database = Object.values(metadata.databases ?? {}).find(db => db.id === databaseId);
+    if (!database) return undefined;
+    if (schemaId) {
+        const schema = Object.values(database.schemas ?? {}).find(schema => schema.id === schemaId);
+        if (!schema) return undefined;
+        const relation = Object.values(schema.relations ?? {}).find(relation => matchId(relation, id));
+        if (!relation) return undefined;
+        return metadataRelationToDetails(relation);
+    } else {
+        const relation = Object.values(database.builtInRelations ?? {}).find(relation => matchId(relation, id));
+        if (!relation) return undefined;
+        return metadataRelationToDetails(relation);
+    }
+}
+
+const metadataRoutineToDetails = (metadata: RoutineMetadata): RoutineDetails => {
+    const { arguments: args, identifiers, ...routineMetadata } = metadata;
+    return {
+        ...routineMetadata,
+        arguments: args ?? [],
+        identifiers: identifiers ?? []
+    };
+}
+
+export const getMetadataRoutineList = (metadata: Metadata, databaseId: string, schemaId: string | undefined, filter?: RoutineFilter): RoutineDetails[] => {
+    const database = Object.values(metadata.databases ?? {}).find(db => db.id === databaseId);
+    if (!database) return [];
+    if (schemaId) {
+        const schema = Object.values(database.schemas ?? {}).find(schema => schema.id === schemaId);
+        if (!schema) return [];
+        return Object.values(schema.routines ?? {})
+            .flatMap(routines => Object.values(routines))
+            .filter(routine => matchFilter(routine, filter))
+            .map(routine => metadataRoutineToDetails(routine));
+    } else {
+        return Object.values(database.builtInRoutines ?? {})
+            .flatMap(routines => Object.values(routines))
+            .filter(routine => matchFilter(routine, filter))
+            .map(routine => metadataRoutineToDetails(routine));
+    }
+}
+
+export const getMetadataRoutine = (metadata: Metadata, databaseId: string, schemaId: string | undefined, id: string | IdentityOptions): RoutineDetails | undefined => {
+    const database = Object.values(metadata.databases ?? {}).find(db => db.id === databaseId);
+    if (!database) return undefined;
+    if (schemaId) {
+        const schema = Object.values(database.schemas ?? {}).find(schema => schema.id === schemaId);
+        if (!schema) return undefined;
+        const routine = Object.values(schema.routines ?? {})
+            .flatMap(routines => Object.values(routines))
+            .find(routine => matchId(routine, id));
+        if (!routine) return undefined;
+        return metadataRoutineToDetails(routine);
+    } else {
+        const routine = Object.values(database.builtInRoutines ?? {})
+            .flatMap(routines => Object.values(routines))
+            .find(routine => matchId(routine, id));
+        if (!routine) return undefined;
+        return metadataRoutineToDetails(routine);
+    }
 }

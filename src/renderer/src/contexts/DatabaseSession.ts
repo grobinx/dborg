@@ -6,6 +6,7 @@ import { queueMessage } from "./MessageContext";
 import { getProfileSettings, PROFILE_UPDATE_MESSAGE, storeProfileSettings } from "./ProfilesContext";
 import { DataGridChangesManager, DataGridChangesOptions } from "@renderer/components/DataGrid/DataGridChangesManager";
 import { versionToNumber } from "../../../../src/api/version";
+import { createMetadataQueryApi, MetadataQueryApi } from "../../../../src/api/db/MetadataQuery";
 
 export function resultsTabsId(session: IDatabaseSession): string {
     return session.profile.sch_id + ":" + session.info.connectionId + ":results-tabs";
@@ -16,6 +17,7 @@ export interface IDatabaseSession extends api.BaseConnection, api.IMetadataColle
     profile: ProfileRecord; // Profile information
     settings: Map<string, Record<string, any>>; // Profile settings (loaded from user settings folder)
     metadata?: api.Metadata | undefined; // Metadata of the database
+    metadataQuery?: MetadataQueryApi | undefined; 
 
     getVersion(): string | undefined; // Get the version of the database
 
@@ -149,6 +151,7 @@ class DatabaseSession implements IDatabaseSession {
     profile: ProfileRecord; // Profile information
     settings: Map<string, Record<string, any>> = new Map();
     metadata: api.Metadata | undefined; // Metadata of the database
+    metadataQuery?: MetadataQueryApi | undefined;
     metadataInitialized: boolean;
     private readonly queue: QueueTask<IDatabaseSession>;
 
@@ -248,6 +251,20 @@ class DatabaseSession implements IDatabaseSession {
                     force
                 );
                 this.metadataInitialized = true;
+                this.metadataQuery = await createMetadataQueryApi(this.info.connectionId);
+                console.log(this.metadataQuery);
+                const dbList = await this.metadataQuery.getDatabaseList();
+                console.log(dbList);
+                dbList.forEach(async db => {
+                    const schemas = await db.getSchemaList();
+                    console.log(`Schemas in ${db.name}:`, schemas);
+                    schemas.forEach(async schema => {
+                        const relations = await schema.getRelationList();
+                        console.log(`Relations in ${db.name}.${schema.name}:`, relations);
+                        const routines = await schema.getRoutineList();
+                        console.log(`Routines in ${db.name}.${schema.name}:`, routines);
+                    });
+                });
             }
         }
         return this.metadata ?? {};
