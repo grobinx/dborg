@@ -11,6 +11,7 @@ import {
     CommandResult, ConnectionInfo, Cursor, CursorInfo, CursorFetchMaxRowsMode, Metadata, SessionContext, TSettings, WindowState,
     DriverInfo, Properties, QueryResult, StatementResult
 } from "src/api/db"
+import { DatabaseSummary, MetadataSummary, SchemaSummary } from "src/api/db/MetadataQuery"
 import { FileChangeEvent } from "src/main/api/dborg-file"
 
 declare global {
@@ -109,10 +110,11 @@ declare global {
                         cancel: (connectionId: string, uniqueId: string) => Promise<void>,
                     },
                     metadata: {
-                        getDatabaseList: (connectionId: string, filter?: DatabaseFilter) => Promise<MetadataDatabaseQuery[]>,
-                        getDatabase: (connectionId: string, id: string | IdentityOptions) => Promise<MetadataDatabaseQuery | undefined>,
-                        getSchemaList: (connectionId: string, databaseId: string, filter?: SchemaFilter) => Promise<MetadataSchemaQuery[]>,
-                        getSchema: (connectionId: string, databaseId: string, id: string | IdentityOptions) => Promise<MetadataSchemaQuery | undefined>,
+                        getMetadata: (connectionId: string) => Promise<MetadataSummary>,
+                        getDatabaseList: (connectionId: string, filter?: DatabaseFilter) => Promise<DatabaseSummary[]>,
+                        getDatabase: (connectionId: string, id: string | IdentityOptions) => Promise<DatabaseSummary | undefined>,
+                        getSchemaList: (connectionId: string, databaseId: string, filter?: SchemaFilter) => Promise<SchemaSummary[]>,
+                        getSchema: (connectionId: string, databaseId: string, id: string | IdentityOptions) => Promise<SchemaSummary | undefined>,
                     },
                     getMetadata: (uniqueId: string, progress?: (current: string) => void, force?: boolean) => Promise<Metadata>,
                     updateObject: (uniqueId: string, progress?: (current: string) => void, schemaName?: string, objectName?: string) => Promise<void>,

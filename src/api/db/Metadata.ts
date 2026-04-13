@@ -1,3 +1,6 @@
+import internal from "src/main/core/db/internal";
+import { DatabaseFilter, DatabaseSummary, EntityFilter, IdentityOptions } from "./MetadataQuery";
+
 export const METADATA_VERSION = 11;
 
 /** Options for collecting metadata */
@@ -30,6 +33,53 @@ export interface Metadata {
     collected?: MetadataCollectionOptions;
     /** Databases metadata */
     databases?: Record<string, DatabaseMetadata>;
+}
+
+const testFilterString = (value: string, filter: string | RegExp): boolean => {
+    if (typeof filter === "string") {
+        return value === filter;
+    } else {
+        return filter.test(value);
+    }
+}
+
+const matchFilter = <T extends OwnedMetadataBase>(item: T, filter: EntityFilter<T>): boolean => {
+    if (filter.name && !testFilterString(item.name, filter.name)) return false;
+    if (filter.owner && item.owner && !testFilterString(item.owner, filter.owner)) return false;
+    if (filter.filter) {
+        for (const key in filter.filter) {
+            const value = (item as any)[key];
+            const filterValue = (filter.filter as any)[key];
+            if (value !== filterValue) return false;
+        }
+    }
+    return true;
+}
+
+export const getMetadataDatabaseList = (metadata: Metadata, filter?: DatabaseFilter): DatabaseSummary[] => {
+    const databases = Object.values(metadata.databases ?? {})
+        .filter(db => matchFilter(db, filter ?? {}))
+        .map(db => {
+            const { schemas, builtInRelations, builtInTypes, builtInRoutines, ...dbMetadata } = db;
+            return dbMetadata as DatabaseSummary;
+        });
+    return databases;
+}
+
+export const getMetadataDatabase = (metadata: Metadata, id: string | IdentityOptions): DatabaseSummary | undefined => {
+    const database = Object.values(metadata.databases ?? {}).find(db => {
+        if (typeof id === "string") {
+            return db.id === id;
+        }
+        if (id.name && db.name !== id.name) return false;
+        if (id.identity && db.identity !== id.identity) return false;
+        return true;
+    });
+    
+    if (!database) return undefined;
+
+    const { schemas, builtInRelations, builtInTypes, builtInRoutines, ...dbMetadata } = database;
+    return dbMetadata as DatabaseSummary;
 }
 
 export interface MetadataBase {

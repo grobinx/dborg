@@ -6,7 +6,7 @@ import { ipcMain, ipcRenderer, IpcMainInvokeEvent, IpcRendererEvent } from "elec
 import internal from '../../core/db/internal';
 import { handleResult, invokeResult, InvokeResult, invokeViaLocalResult } from '../../../api/ipc-helpers';
 import { handleWithLocalResult } from '../../../../src/api/rpc-http';
-import { DatabaseFilter, DatabaseQueryMetadata, IdentityOptions, IMetadataDatabaseQuery, IMetadataSchemaQuery, MetadataDatabaseQuery, SchemaFilter } from '../../../../src/api/db/MetadataQuery';
+import { DatabaseFilter, DatabaseSummary, IdentityOptions } from '../../../../src/api/db/MetadataQuery';
 
 // Driver events
 const EVENT_DRIVER_GET_DRIVERS = "dborg:database:driver:getDrivers";
@@ -316,13 +316,12 @@ export function init(): void {
     ipcMain.handle(
         EVENT_METADATA_QUERY_GET_DATABASE_LIST,
         async (_: IpcMainInvokeEvent, connectionId: string, filter?: DatabaseFilter): Promise<InvokeResult> => {
-            return handleResult<DatabaseQueryMetadata[]>(async () => {
+            return handleResult<DatabaseSummary[]>(async () => {
                 const foundConnection = driver.Driver.getConnection(connectionId);
                 if (!foundConnection) {
                     throw ConnectionError(connectionId);
                 }
-                const metadataQuery = await foundConnection.getMetadata();
-                return await metadataQuery.getDatabaseList(filter);
+                return api.getMetadataDatabaseList(await foundConnection.getMetadata(), filter);
             })
         }
     );
@@ -330,13 +329,12 @@ export function init(): void {
     ipcMain.handle(
         EVENT_METADATA_QUERY_GET_DATABASE,
         async (_: IpcMainInvokeEvent, connectionId: string, id: string | IdentityOptions): Promise<InvokeResult> => {
-            return handleResult<DatabaseQueryMetadata | undefined>(async () => {
+            return handleResult<DatabaseSummary | undefined>(async () => {
                 const foundConnection = driver.Driver.getConnection(connectionId);
                 if (!foundConnection) {
                     throw ConnectionError(connectionId);
                 }
-                const metadataQuery = await foundConnection.getMetadata();
-                return await metadataQuery.getDatabase(id);
+                return api.getMetadataDatabase(await foundConnection.getMetadata(), id);
             })
         }
     );
@@ -383,8 +381,8 @@ export const preload = {
             cancel: (connectionId: string, uniqueId: string): Promise<void> => invokeResult(ipcRenderer.invoke(EVENT_CONNECTION_CURSOR_CANCEL, connectionId, uniqueId)),
         },
         metadata: {
-            getDatabaseList: async (connectionId: string, filter?: DatabaseFilter): Promise<DatabaseQueryMetadata[]> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_DATABASE_LIST, connectionId, filter)),
-            getDatabase: (connectionId: string, id: string | IdentityOptions): Promise<DatabaseQueryMetadata | undefined> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_DATABASE, connectionId, id)),
+            getDatabaseList: async (connectionId: string, filter?: DatabaseFilter): Promise<DatabaseSummary[]> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_DATABASE_LIST, connectionId, filter)),
+            getDatabase: (connectionId: string, id: string | IdentityOptions): Promise<DatabaseSummary | undefined> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_DATABASE, connectionId, id)),
         },
         getMetadata: async (uniqueId: string, progress?: (current: string) => void, force?: boolean): Promise<api.Metadata> => {
             const listener = (_event: IpcRendererEvent, eUniqueId: string, current: string): void => {
