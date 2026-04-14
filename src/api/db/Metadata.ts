@@ -490,3 +490,9 @@ export interface IMetadataCollector {
     getMetadata(progress?: (current: string) => void, force?: boolean): Promise<Metadata>;
     updateObject(progress?: (current: string) => void, schemaName?: string, objectName?: string): Promise<void>;
 }
+
+export interface IMetadataMainCollector extends IMetadataCollector {
+}
+
+export interface IMetadataSessionCollector extends IMetadataCollector {
+}
