@@ -10,12 +10,13 @@ export interface IdentityOptions {
 
 /** Options for filtering metadata entities */
 export interface EntityFilter<T extends OwnedMetadataBase> {
+    id?: string | string[];
     /** The name of the metadata entity */
-    name?: string | RegExp;
+    name?: string | string[] | RegExp;
     /** The owner of the metadata entity */
-    owner?: string | RegExp;
+    owner?: string | string[] | RegExp;
     /** Additional properties to filter by, where the key is the property name and the value is the expected value or a regular expression to match against the property's value. */
-    filter?: Partial<Omit<T, "name" | "owner">>;
+    filter?: Partial<Omit<T, "id" | "name" | "owner">>;
 }
 
 export interface MetadataDetails extends Omit<Metadata, "databases"> {
@@ -172,25 +173,45 @@ const createMetadataRoutineQuery = (connectionId: string, databaseId: string, sc
     };
 }
 
-const testFilterString = (value: string, filter: string | RegExp): boolean => {
+/**
+ * Test value against filter (string, array of strings, or regex)
+ * Optimized for performance with early exits
+ */
+const testFilterValue = (value: string, filter: string | string[] | RegExp): boolean => {
     if (typeof filter === "string") {
-        return value === filter;
-    } else {
-        return filter.test(value);
+        return value === filter; // Fastest: exact string comparison
     }
+    if (Array.isArray(filter)) {
+        return filter.includes(value); // O(n) but faster than map/filter for small arrays
+    }
+    return filter.test(value); // RegExp test
 }
 
+/**
+ * Match item against filter criteria
+ * Optimized with early exit strategy and minimal allocations
+ */
 const matchFilter = <T extends OwnedMetadataBase>(item: T, filter?: EntityFilter<T>): boolean => {
     if (!filter) return true;
-    if (filter.name && !testFilterString(item.name, filter.name)) return false;
-    if (filter.owner && item.owner && !testFilterString(item.owner, filter.owner)) return false;
+
+    if (filter.id !== undefined && !testFilterValue(item.id, filter.id)) return false;
+
+    if (filter.name !== undefined && !testFilterValue(item.name, filter.name)) return false;
+
+    if (filter.owner !== undefined && (!item.owner || !testFilterValue(item.owner, filter.owner))) return false;
+
     if (filter.filter) {
+        // Only iterate if filter.filter has keys
         for (const key in filter.filter) {
-            const value = (item as any)[key];
-            const filterValue = (filter.filter as any)[key];
-            if (value !== filterValue) return false;
+            // Avoid unnecessary casting, direct property access
+            const itemValue = (item as Record<string, unknown>)[key];
+            const filterValue = (filter.filter as Record<string, unknown>)[key];
+
+            // Early exit on mismatch
+            if (itemValue !== filterValue) return false;
         }
     }
+
     return true;
 }
 
