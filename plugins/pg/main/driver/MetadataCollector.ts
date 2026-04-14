@@ -271,14 +271,6 @@ export class MetadataCollector implements api.IMetadataCollector {
         this.inited = true;
     }
 
-    private removeUnused(from: Record<string, any>, exists: Set<string>): void {
-        for (const key in from) {
-            if (!exists.has(key)) {
-                delete from[key];
-            }
-        }
-    }
-
     async updateDatabases(progress?: (current: string) => void, name?: string): Promise<void> {
         if (progress) {
             progress("databases");
@@ -301,13 +293,9 @@ export class MetadataCollector implements api.IMetadataCollector {
             [name]
         );
 
-        const exists = new Set<string>();
-
         this.metadata.databases = this.metadata.databases ?? {};
 
         for (const row of rows as api.DatabaseMetadata[]) {
-            exists.add(row.name);
-
             if (this.metadata.databases[row.name]) {
                 this.metadata.databases[row.name] = {
                     ...this.metadata.databases[row.name],
@@ -323,10 +311,6 @@ export class MetadataCollector implements api.IMetadataCollector {
                     builtInTypes: {},
                 }
             }
-        }
-
-        if (!name) {
-            this.removeUnused(this.metadata.databases, exists);
         }
     }
 
@@ -367,11 +351,7 @@ export class MetadataCollector implements api.IMetadataCollector {
             [name]
         );
 
-        const exists = new Set<string>();
-
         for (const row of rows as api.SchemaMetadata[]) {
-            exists.add(row.name);
-
             if (database.schemas[row.name]) {
                 database.schemas[row.name] = {
                     ...database.schemas[row.name],
@@ -391,10 +371,6 @@ export class MetadataCollector implements api.IMetadataCollector {
 
         if (rows.length === 0 && name) {
             delete database.schemas[name];
-        }
-
-        if (!name) {
-            this.removeUnused(database.schemas, exists);
         }
     }
 
@@ -457,23 +433,17 @@ export class MetadataCollector implements api.IMetadataCollector {
             [schemaName, name]
         );
 
-        const exists = new Set<string>();
         let schema: api.SchemaMetadata | undefined;
         let schema_name: string | undefined;
 
         for (const row of rows as api.RelationMetadata[]) {
             if (schema_name !== row["schema_name"]) {
-                if (!name && schema) {
-                    this.removeUnused(schema.relations, exists);
-                }
-                exists.clear();
                 schema = database.schemas[row["schema_name"]];
                 schema_name = row["schema_name"];
             }
 
             delete row["schema_name"];
             if (schema) {
-                exists.add(row.name);
                 if (schema.relations[row.name]) {
                     schema.relations[row.name] = {
                         ...schema.relations[row.name],
@@ -497,10 +467,6 @@ export class MetadataCollector implements api.IMetadataCollector {
             for (const schema of Object.values(database.schemas).filter(s => s.default)) {
                 delete schema.relations[name];
             }
-        }
-
-        if (!name && schema) {
-            this.removeUnused(schema.relations, exists);
         }
     }
 
@@ -642,23 +608,17 @@ export class MetadataCollector implements api.IMetadataCollector {
             [schemaName, name]
         );
 
-        const exists = new Set<string>();
         let schema: api.SchemaMetadata | undefined;
         let schema_name: string | undefined;
 
         for (const row of rows as api.RoutineMetadata[]) {
             if (schema_name !== row["schema_name"]) {
-                if (!name && schema) {
-                    this.removeUnused(schema.routines!, exists);
-                }
-                exists.clear();
                 schema = database.schemas[row["schema_name"]];
                 schema_name = row["schema_name"];
             }
 
             delete row["schema_name"];
             if (schema) {
-                exists.add(row.name);
                 if (schema.routines![row.name]) {
                     schema.routines![row.name] = [
                         ...schema.routines![row.name],
@@ -683,10 +643,6 @@ export class MetadataCollector implements api.IMetadataCollector {
             for (const schema of Object.values(database.schemas).filter(s => s.default)) {
                 delete schema.routines![name];
             }
-        }
-
-        if (!name && schema) {
-            this.removeUnused(schema.routines!, exists);
         }
     }
 
@@ -1141,23 +1097,17 @@ export class MetadataCollector implements api.IMetadataCollector {
             [schemaName, name]
         );
 
-        const exists = new Set<string>();
         let schema: api.SchemaMetadata | undefined;
         let schema_name: string | undefined;
 
         for (const row of rows as api.TypeMetadata[]) {
             if (schema_name !== row["schema_name"]) {
-                if (!name && schema) {
-                    this.removeUnused(schema.types!, exists);
-                }
-                exists.clear();
                 schema = database.schemas[row["schema_name"]];
                 schema_name = row["schema_name"];
             }
 
             delete row["schema_name"];
             if (schema) {
-                exists.add(row.name);
                 if (schema.types![row.name]) {
                     schema.types![row.name] = {
                         ...schema.types![row.name],
@@ -1226,23 +1176,17 @@ export class MetadataCollector implements api.IMetadataCollector {
             [schemaName, name]
         );
 
-        const exists = new Set<string>();
         let schema: api.SchemaMetadata | undefined;
         let schema_name: string | undefined;
 
         for (const row of rows as api.SequenceMetadata[]) {
             if (schema_name !== row["schema_name"]) {
-                if (!name && schema) {
-                    this.removeUnused(schema.sequences!, exists);
-                }
-                exists.clear();
                 schema = database.schemas[row["schema_name"]];
                 schema_name = row["schema_name"];
             }
 
             delete row["schema_name"];
             if (schema) {
-                exists.add(row.name);
                 if (schema.sequences![row.name]) {
                     schema.sequences![row.name] = {
                         ...schema.sequences![row.name],
