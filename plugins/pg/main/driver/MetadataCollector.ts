@@ -347,7 +347,8 @@ export class MetadataCollector implements api.IMetadataCollector {
                     ) as permissions` : ''}
                 from pg_catalog.pg_namespace n
                where (n.nspname = $1 or $1 is null)
-               and n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'`,
+               and n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
+               ${this.collectionOptions?.systemObjects ? '' : `and n.nspname not in ('pg_catalog', 'information_schema')`}`,
             [name]
         );
 
@@ -426,6 +427,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                 ) ids on true` : ''}
             where c.relkind in ('r', 'f', 'p', 't', 'v', 'm')
             and n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
+            ${this.collectionOptions?.systemObjects ? '' : `and n.nspname not in ('pg_catalog', 'information_schema')`}
             and (n.nspname = $1 or $1 is null)
             and (c.relname = $2 or $2 is null)
             and inh.inhrelid is null
@@ -503,6 +505,7 @@ export class MetadataCollector implements api.IMetadataCollector {
     LEFT JOIN pg_statio_all_tables st ON st.relid = c.oid
     WHERE c.relkind IN ('r','f','p','t','v','m')
       AND n.nspname NOT ILIKE 'pg_toast%' AND n.nspname NOT ILIKE 'pg_temp%'
+      ${this.collectionOptions?.systemObjects ? '' : `and n.nspname not in ('pg_catalog', 'information_schema')`}
       AND ($1::text IS NULL OR n.nspname = $1)
       AND ($2::text IS NULL OR c.relname = $2)
     ORDER BY schema_name, relation_name
@@ -603,6 +606,7 @@ export class MetadataCollector implements api.IMetadataCollector {
             where (n.nspname = $1 or $1 is null)
                 and (f.proname = $2 or $2 is null)
                 and n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
+                ${this.collectionOptions?.systemObjects ? '' : `and n.nspname not in ('pg_catalog', 'information_schema')`}
             ${v11OrHigher ? "and f.prokind in ('a', 'w', 'f', 'p')" : ""}
             order by schema_name, name`,
             [schemaName, name]
@@ -689,6 +693,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                 where att.attnum > 0
                     and cl.relkind in ('r', 'f', 'p', 't', 'v', 'm')
                     and na.nspname not ilike 'pg_toast%' and na.nspname not ilike 'pg_temp%'
+                    ${this.collectionOptions?.systemObjects ? '' : `and na.nspname not in ('pg_catalog', 'information_schema')`}
                     and na.nspname = $1
                     and (cl.relname = $2 or $2 is null)
                     and inh.inhrelid is null
@@ -732,6 +737,8 @@ export class MetadataCollector implements api.IMetadataCollector {
     FROM pg_stats st
     WHERE ($1::text IS NULL OR st.schemaname = $1)
       AND ($2::text IS NULL OR st.tablename = $2)
+      and st.schemaname not ilike 'pg_toast%' and st.schemaname not ilike 'pg_temp%'
+      and ${this.collectionOptions?.systemObjects ? '' : `and st.schemaname not in ('pg_catalog', 'information_schema')`}
     ORDER BY st.schemaname, st.tablename, st.attname
     `,
                 [schema.name, name ?? null]
@@ -800,6 +807,7 @@ export class MetadataCollector implements api.IMetadataCollector {
             where
                 con.contype = 'f'
                 and n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
+                ${this.collectionOptions?.systemObjects ? '' : `and n.nspname not in ('pg_catalog', 'information_schema')`}
                 and inh.inhrelid is null
                 and (n.nspname = $1 or $1 is null)
                 and (cl.relname = $2 or $2 is null)
@@ -863,6 +871,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                     left join pg_catalog.pg_inherits inh on ct.oid = inh.inhrelid
                 where
                     n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
+                    ${this.collectionOptions?.systemObjects ? '' : `and n.nspname not in ('pg_catalog', 'information_schema')`}
                     and inh.inhrelid is null
                     and (n.nspname = $1 or $1 is null)
                     and (ct.relname = $2 or $2 is null)
@@ -905,6 +914,7 @@ export class MetadataCollector implements api.IMetadataCollector {
     LEFT JOIN pg_stat_all_indexes si ON si.indexrelid = ix.indexrelid
     LEFT JOIN pg_statio_all_indexes st ON st.indexrelid = ix.indexrelid
     WHERE n.nspname NOT ILIKE 'pg_toast%' AND n.nspname NOT ILIKE 'pg_temp%'
+      ${this.collectionOptions?.systemObjects ? '' : `and n.nspname not in ('pg_catalog', 'information_schema')`}
       AND ($1::text IS NULL OR n.nspname = $1)
       AND ($2::text IS NULL OR ct.relname = $2)
     ORDER BY schema_name, relation_name, index_name
@@ -957,6 +967,7 @@ export class MetadataCollector implements api.IMetadataCollector {
             where
                 con.contype = 'p'
                 and n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
+                ${this.collectionOptions?.systemObjects ? '' : `and n.nspname not in ('pg_catalog', 'information_schema')`}
                 and inh.inhrelid is null
                 and (n.nspname = $1 or $1 is null)
                 and (cl.relname = $2 or $2 is null)
@@ -1013,6 +1024,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                     left join pg_catalog.pg_inherits inh on ct.oid = inh.inhrelid
                 where
                     n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
+                    ${this.collectionOptions?.systemObjects ? '' : `and n.nspname not in ('pg_catalog', 'information_schema')`}
                     and con.contype not in ('p', 'f', 'u') 
                     and inh.inhrelid is null
                     and (n.nspname = $1 or $1 is null)
@@ -1087,6 +1099,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                 left join pg_catalog.pg_type te on te.oid = t.typelem
             where
                 n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
+                ${this.collectionOptions?.systemObjects ? '' : `and n.nspname not in ('pg_catalog', 'information_schema')`}
                 and t.typtype in ('b', 'c', 'd', 'e', 'p', 'r', 'm')
                 and c.oid is null
                 and te.oid is null
@@ -1169,6 +1182,7 @@ export class MetadataCollector implements api.IMetadataCollector {
             where
                 seq.relkind = 'S'
                 and n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
+                ${this.collectionOptions?.systemObjects ? '' : `and n.nspname not in ('pg_catalog', 'information_schema')`}
                 and (n.nspname = $1 or $1 is null)
                 and (seq.relname = $2 or $2 is null)
             order by
