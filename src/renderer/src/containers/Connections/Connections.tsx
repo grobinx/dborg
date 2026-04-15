@@ -6,8 +6,8 @@ import { ConnectionButtons, ConnectionContent, ConnectionLabel } from "./Connect
 import { useSessions } from "@renderer/contexts/ApplicationContext";
 
 const ConnectionsRoot = styled(Box, {
-    name: 'Connections', // The component name
-    slot: 'root', // The slot name
+    name: 'Connections', 
+    slot: 'root', 
 })(() => ({
     display: 'flex',
     flexDirection: 'column',
@@ -22,7 +22,6 @@ export interface ConnectionsProps extends StackProps {
 }
 
 interface ConnectionsOwnProps extends ConnectionsProps {
-    // Add any additional props you need here
     children?: React.ReactNode;
 }
 
@@ -35,15 +34,19 @@ const Connections: React.FC<ConnectionsOwnProps> = (props) => {
             {...other}
             className={(className ?? "") + " Connections-root"}
         >
-            <TabsPanel itemID="connections-tabs-panel" className="connections-tabs-panel" tabPosition="bottom">
+            <TabsPanel 
+                itemID="connections-tabs-panel" 
+                className="connections-tabs-panel" 
+                tabPosition="bottom"
+            >
                 {sessions?.map(session => {
                     return (
                         <TabPanel
                             key={session.info.connectionId}
                             itemID={session.info.connectionId}
-                            label={<ConnectionLabel key={session.info.connectionId} session={session} />} // Przekazanie listeners do ConnectionLabel
-                            content={<ConnectionContent key={session.info.connectionId} session={session}>{children}</ConnectionContent>} // Przekazanie listeners do ConnectionContent
-                            buttons={<ConnectionButtons key={session.info.connectionId} session={session} />} // Przekazanie listeners do ConnectionButtons
+                            label={<ConnectionLabel key={session.info.connectionId} session={session} />} 
+                            content={<ConnectionContent key={session.info.connectionId} session={session}>{children}</ConnectionContent>} 
+                            buttons={<ConnectionButtons key={session.info.connectionId} session={session} />} 
                         />
                     );
                 })}
