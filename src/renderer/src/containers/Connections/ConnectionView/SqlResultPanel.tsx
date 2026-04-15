@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, use } from "react";
 import { ColumnDefinition, DataGridActionContext, DataGridContext, DataGridStatus, TableCellPosition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IDatabaseSession, IDatabaseSessionCursor } from "@renderer/contexts/DatabaseSession";
 import { useTranslation } from "react-i18next";
@@ -207,6 +207,12 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
     useEffect(() => {
         executingRef.current = executing ?? false;
     }, [executing]);
+
+    useEffect(() => {
+        if (!tabIsActive && dataGridRef.current) {
+            dataGridRef.current.focus();
+        }
+    }, [tabIsActive]);
 
     useEffect(() => {
         if (session.info.driver.maxFetchSizeProperty && session.info.driver.properties[session.info.driver.maxFetchSizeProperty]) {

@@ -83,7 +83,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
     const editorFocusedRef = useRef(false);
     const currentFragmentRef = useRef<string | null>(null);
     const currentSqlAstRef = useRef<AstComponent[] | null>(null);
-    const { tabIsActiveRef } = useTabs(tabsItemID, itemID, () => {
+    const { tabIsActiveRef, tabIsActive } = useTabs(tabsItemID, itemID, () => {
         if (editorInstance) {
             editorInstance.focus();
         }
@@ -98,6 +98,12 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
     useEffect(() => {
         editorInstanceRef.current = editorInstance;
     }, [editorInstance]);
+
+    useEffect(() => {
+        if (tabIsActive && editorInstance) {
+            editorInstance.focus();
+        }
+    }, [tabIsActive, editorInstance]);
 
     const addHoverProvider = () => {
         if (hoverProviderRef.current || !editorFocusedRef.current) {
