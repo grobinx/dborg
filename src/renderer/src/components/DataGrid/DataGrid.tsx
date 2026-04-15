@@ -746,8 +746,6 @@ export const DataGrid = <T extends object>({
     const [fontSize, setFontSize] = useState(settingFontSize);
     const [dialogContent, setDialogContent] = useState<React.ReactNode | null>(null);
 
-    useImperativeHandle(ref, () => dataGridActionContext);
-
     const classes = React.useMemo(() => {
         return clsx(
             `mode-${mode}`,
@@ -1384,6 +1382,8 @@ export const DataGrid = <T extends object>({
         canPivot,
         userData
     ]);
+
+    useImperativeHandle(ref, () => dataGridActionContext);
 
     useEffect(() => {
         if (mode === "data" && adjustWidthExecuted && actionManager.current && displayData.length > 0 && startRow >= 0) {

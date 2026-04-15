@@ -211,7 +211,9 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
         const unsubscribeGetMetadataSuccess = subscribe(Messages.SESSION_GET_METADATA_SUCCESS, metadataSuccessHandler);
         const unsubscribeFocus = subscribe(SQL_EDITOR_FOCUS, (message: SqlEditorFocusMessage) => {
             if (message.sessionId === session.info.connectionId && editorInstanceRef.current && tabIsActiveRef.current) {
-                editorInstanceRef.current.focus();
+                setTimeout(() => {
+                    editorInstanceRef.current?.focus();
+                }, 0);
             }
         });
         return () => {
