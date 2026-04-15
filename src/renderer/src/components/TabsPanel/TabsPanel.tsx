@@ -1,5 +1,5 @@
 import React from "react";
-import { styled, Box, Tabs, Tab, useThemeProps, Stack, Paper } from "@mui/material";
+import { styled, Box, Tabs, Tab, useThemeProps, Stack, Paper, List, ListItem } from "@mui/material";
 import TabPanel from "./TabPanel";
 import { useMessages } from "@renderer/contexts/MessageContext";
 import { SWITCH_PANEL_TAB, TAB_PANEL_CHANGED, TAB_PANEL_CLICK, TAB_PANEL_LENGTH, TabPanelChangedMessage, TabPanelClickMessage, TabPanelLengthMessage } from "../../app/Messages";
@@ -11,17 +11,16 @@ export interface TabStructure {
     buttons?: React.ReactNode;
 }
 
-// Styled TabsPanel root container
 const StyledTabsPanel = styled(Stack, {
     name: "TabsPanel",
     slot: "root",
 })(() => ({
+    position: "relative",
     flexDirection: "column",
     height: "100%",
     width: "100%",
 }));
 
-// Styled Tabs header
 const StyledTabsHeader = styled(Box, {
     name: "TabsPanel",
     slot: "header",
@@ -29,7 +28,6 @@ const StyledTabsHeader = styled(Box, {
     flex: 0,
 }));
 
-// Styled Tabs content area
 const StyledTabsContent = styled(Box, {
     name: "TabsPanel",
     slot: "content",
@@ -60,13 +58,79 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
     const [dragOverIndex, setDragOverIndex] = React.useState<number | null>(null);
     const sourceDragIndexRef = React.useRef<number | null>(null);
 
+    const [tabSwitcherOpen, setTabSwitcherOpen] = React.useState(false);
+    const [tabSwitcherIndex, setTabSwitcherIndex] = React.useState(0);
+
+    const rootRef = React.useRef<HTMLDivElement | null>(null);
     const tabsListRef = React.useRef<HTMLDivElement | null>(null);
+    const tabSwitcherStartIndexRef = React.useRef(0);
+    const tabSwitcherOpenRef = React.useRef(false);
+    const tabSwitcherIndexRef = React.useRef(0);
+
+    React.useEffect(() => {
+        tabSwitcherOpenRef.current = tabSwitcherOpen;
+    }, [tabSwitcherOpen]);
+
+    React.useEffect(() => {
+        tabSwitcherIndexRef.current = tabSwitcherIndex;
+    }, [tabSwitcherIndex]);
 
     const handleWheel = (event: React.WheelEvent) => {
         if (tabsListRef.current) {
             tabsListRef.current.scrollLeft += event.deltaY;
         }
     };
+
+    const activateTab = React.useCallback((index: number) => {
+        if (index < 0 || index >= tabs.length) {
+            return;
+        }
+        setActiveTab(index);
+        onActivate?.(tabs[index].props.itemID!);
+    }, [tabs, onActivate]);
+
+    const isFocusInsideTabsPanel = React.useCallback(() => {
+        const root = rootRef.current;
+        const activeElement = document.activeElement;
+        return !!root && !!activeElement && root.contains(activeElement);
+    }, []);
+
+    const openOrMoveTabSwitcher = React.useCallback((direction: 1 | -1) => {
+        if (tabs.length < 2) {
+            return;
+        }
+
+        const baseIndex = tabSwitcherOpenRef.current ? tabSwitcherIndexRef.current : activeTab;
+        const nextIndex = (baseIndex + direction + tabs.length) % tabs.length;
+
+        if (!tabSwitcherOpenRef.current) {
+            tabSwitcherStartIndexRef.current = activeTab;
+        }
+
+        setTabSwitcherIndex(nextIndex);
+        setTabSwitcherOpen(true);
+    }, [tabs.length, activeTab]);
+
+    const commitTabSwitcher = React.useCallback(() => {
+        if (!tabSwitcherOpenRef.current) {
+            return;
+        }
+
+        const targetTab = tabs[tabSwitcherIndexRef.current];
+        if (!targetTab) {
+            setTabSwitcherOpen(false);
+            return;
+        }
+
+        queueMessage(SWITCH_PANEL_TAB, other.itemID, targetTab.props.itemID);
+
+        setTabSwitcherOpen(false);
+    }, [tabs, queueMessage, other.itemID]);
+
+    const cancelTabSwitcher = React.useCallback(() => {
+        setTabSwitcherIndex(tabSwitcherStartIndexRef.current);
+        setTabSwitcherOpen(false);
+    }, []);
 
     React.useEffect(() => {
         const validatedTabs = React.Children.toArray(children).map((child) => {
@@ -113,14 +177,20 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
             });
         });
         setTabsMap(tabsStructures);
-    }, [children]);
+    }, [children, other.itemID]);
 
     React.useEffect(() => {
         if (activeTab >= tabs.length) {
             setActiveTab(Math.max(0, tabs.length - 1));
         }
+        if (tabSwitcherIndex >= tabs.length) {
+            setTabSwitcherIndex(Math.max(0, tabs.length - 1));
+        }
+        if (tabs.length < 2 && tabSwitcherOpen) {
+            setTabSwitcherOpen(false);
+        }
         queueMessage(TAB_PANEL_LENGTH, { tabsItemID: other.itemID, length: tabs.length } as TabPanelLengthMessage);
-    }, [tabs.length]);
+    }, [tabs.length, activeTab, tabSwitcherIndex, tabSwitcherOpen, queueMessage, other.itemID]);
 
     React.useEffect(() => {
         if (activeTab !== null && activeTab < tabs.length) {
@@ -129,7 +199,7 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
                 queueMessage(TAB_PANEL_CHANGED, { tabsItemID: other.itemID, itemID: selectedTab.props.itemID } as TabPanelChangedMessage);
             }
         }
-    }, [activeTab, tabs, other.itemID]);
+    }, [activeTab, tabs, other.itemID, queueMessage]);
 
     const handleTabClick = (index: number) => {
         queueMessage(TAB_PANEL_CLICK, { itemID: tabs[index].props.itemID, tabsItemID: other.itemID } as TabPanelClickMessage);
@@ -140,7 +210,7 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
             if (tabsItemID === other.itemID) {
                 const tabIndex = tabs.findIndex((tab) => tab.props.itemID === itemID);
                 if (tabIndex >= 0) {
-                    setActiveTab(tabIndex);
+                    activateTab(tabIndex);
                 }
             }
         };
@@ -149,7 +219,61 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
         return () => {
             unsubscribe(SWITCH_PANEL_TAB, handleSwitchTabMessage);
         };
-    }, [tabs]);
+    }, [tabs, subscribe, unsubscribe, other.itemID]);
+
+    React.useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            const focusInside = isFocusInsideTabsPanel();
+
+            if (!tabSwitcherOpenRef.current && !focusInside) {
+                return;
+            }
+
+            if (event.key === "Tab" && event.ctrlKey) {
+                event.preventDefault();
+                event.stopPropagation();
+                openOrMoveTabSwitcher(event.shiftKey ? -1 : 1);
+                return;
+            }
+
+            if (!tabSwitcherOpenRef.current) {
+                return;
+            }
+
+            if (event.key === "Escape") {
+                event.preventDefault();
+                event.stopPropagation();
+                cancelTabSwitcher();
+                return;
+            }
+
+            if (event.key === "Enter") {
+                event.preventDefault();
+                event.stopPropagation();
+                commitTabSwitcher();
+            }
+        };
+
+        const handleKeyUp = (event: KeyboardEvent) => {
+            if (!tabSwitcherOpenRef.current) {
+                return;
+            }
+
+            if (event.key === "Control") {
+                event.preventDefault();
+                event.stopPropagation();
+                commitTabSwitcher();
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown, true);
+        window.addEventListener("keyup", handleKeyUp, true);
+
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown, true);
+            window.removeEventListener("keyup", handleKeyUp, true);
+        };
+    }, [isFocusInsideTabsPanel, openOrMoveTabSwitcher, cancelTabSwitcher, commitTabSwitcher]);
 
     const handleDragStart = (event: React.DragEvent, sourceIndex: number) => {
         sourceDragIndexRef.current = sourceIndex;
@@ -195,8 +319,7 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
                 <Tabs
                     value={activeTab < tabs.length ? activeTab : 0}
                     onChange={(_event, newValue: number) => {
-                        setActiveTab(newValue);
-                        onActivate?.(tabs[newValue].props.itemID!);
+                        activateTab(newValue);
                     }}
                     aria-label="Tabs Panel"
                     variant="scrollable"
@@ -256,8 +379,56 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
     );
 
     return (
-        <StyledTabsPanel className={`TabsPanel-root ${className ?? ''}`} {...other}>
+        <StyledTabsPanel
+            ref={rootRef}
+            className={`TabsPanel-root ${className ?? ""}`}
+            {...other}
+        >
             {tabPosition === "top" && tabHeader}
+
+            {tabSwitcherOpen && tabs.length > 1 && (
+                <Paper
+                    sx={{
+                        position: "absolute",
+                        top: tabPosition === "top" ? 52 : 16,
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        zIndex: 1400,
+                        minWidth: 320,
+                        maxWidth: 520,
+                        width: "40%",
+                        pointerEvents: "none",
+                    }}
+                >
+                    <List
+                        aria-label="Tab switcher"
+                    >
+                        {tabs.map((tab, index) => (
+                            <ListItem
+                                key={tab.props.itemID}
+                                disablePadding
+                            >
+                                <Box
+                                    sx={{
+                                        width: "100%",
+                                        px: 8,
+                                        py: 4,
+                                        borderRadius: 1,
+                                        bgcolor: index === tabSwitcherIndex ? "action.selected" : undefined,
+                                        color: index === tabSwitcherIndex ? "text.primary" : "text.secondary",
+                                        fontWeight: index === tabSwitcherIndex ? 600 : 400,
+                                        overflow: "hidden",
+                                        whiteSpace: "nowrap",
+                                        textOverflow: "ellipsis",
+                                    }}
+                                >
+                                    {tabsMap.get(tab.props.itemID!)?.label ?? ""}
+                                </Box>
+                            </ListItem>
+                        ))}
+                    </List>
+                </Paper>
+            )}
 
             <StyledTabsContent
                 className="TabsPanel-content"
