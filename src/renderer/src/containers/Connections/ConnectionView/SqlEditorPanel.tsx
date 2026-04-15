@@ -350,7 +350,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
             actionManager.registerAction(...pluginActions);
         }
 
-        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Tab, () => {
+        editor.addCommand(monaco.KeyCode.F6, () => {
             queueMessage(SQL_RESULT_FOCUS, { sessionId: session.info.connectionId });
         });
 

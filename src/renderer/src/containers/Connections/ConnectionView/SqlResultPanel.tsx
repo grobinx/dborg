@@ -220,7 +220,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
     }, [session, itemID]);
 
     const onMountHandle = (context: DataGridContext<any>) => {
-        context.addCommand("Ctrl+Tab", () => {
+        context.addCommand("F6", () => {
             queueMessage(SQL_EDITOR_FOCUS, { sessionId: session.info.connectionId });
         });
         context.addAction({
