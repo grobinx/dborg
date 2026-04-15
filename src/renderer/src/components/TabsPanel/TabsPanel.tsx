@@ -48,13 +48,12 @@ interface TabsPanelOwnProps extends TabsPanelProps {
 export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
     const {
         children, buttons, className, tabPosition = "top",
-        onMove, onActivate, ...other
+        onMove, onActivate, ref, ...other
     } = useThemeProps({ name: "TabsPanel", props: props });
     const { queueMessage, subscribe, unsubscribe } = useMessages();
 
     const [activeTab, setActiveTab] = React.useState(0);
-    const [tabs, setTabs] = React.useState<React.ReactElement<React.ComponentProps<typeof TabPanel>>[]>([]);
-    const [tabsMap, setTabsMap] = React.useState<Map<string, TabStructure>>(new Map());
+    const activeTabRef = React.useRef(activeTab);
     const [dragOverIndex, setDragOverIndex] = React.useState<number | null>(null);
     const sourceDragIndexRef = React.useRef<number | null>(null);
 
@@ -66,6 +65,9 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
     const tabSwitcherStartIndexRef = React.useRef(0);
     const tabSwitcherOpenRef = React.useRef(false);
     const tabSwitcherIndexRef = React.useRef(0);
+    const tabsRef = React.useRef<React.ReactElement<React.ComponentProps<typeof TabPanel>>[]>([]);
+
+    activeTabRef.current = activeTab;
 
     React.useEffect(() => {
         tabSwitcherOpenRef.current = tabSwitcherOpen;
@@ -82,58 +84,57 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
     };
 
     const activateTab = React.useCallback((index: number) => {
-        if (index < 0 || index >= tabs.length) {
+        if (index < 0 || index >= tabsRef.current.length) {
             return;
         }
         setActiveTab(index);
-        onActivate?.(tabs[index].props.itemID!);
-    }, [tabs, onActivate]);
+        onActivate?.(tabsRef.current[index].props.itemID!);
+    }, [onActivate]);
 
     const isFocusInsideTabsPanel = React.useCallback(() => {
-        const root = rootRef.current;
         const activeElement = document.activeElement;
-        return !!root && !!activeElement && root.contains(activeElement);
+        return !!rootRef.current && !!activeElement && rootRef.current.contains(activeElement);
     }, []);
 
     const openOrMoveTabSwitcher = React.useCallback((direction: 1 | -1) => {
-        if (tabs.length < 2) {
+        const tabsLength = tabsRef.current.length;
+        if (tabsLength < 2) {
             return;
         }
 
-        const baseIndex = tabSwitcherOpenRef.current ? tabSwitcherIndexRef.current : activeTab;
-        const nextIndex = (baseIndex + direction + tabs.length) % tabs.length;
+        const baseIndex = tabSwitcherOpenRef.current ? tabSwitcherIndexRef.current : activeTabRef.current;
+        const nextIndex = (baseIndex + direction + tabsLength) % tabsLength;
 
         if (!tabSwitcherOpenRef.current) {
-            tabSwitcherStartIndexRef.current = activeTab;
+            tabSwitcherStartIndexRef.current = activeTabRef.current;
         }
 
         setTabSwitcherIndex(nextIndex);
         setTabSwitcherOpen(true);
-    }, [tabs.length, activeTab]);
+    }, []);
 
     const commitTabSwitcher = React.useCallback(() => {
         if (!tabSwitcherOpenRef.current) {
             return;
         }
 
-        const targetTab = tabs[tabSwitcherIndexRef.current];
+        const targetTab = tabsRef.current[tabSwitcherIndexRef.current];
         if (!targetTab) {
             setTabSwitcherOpen(false);
             return;
         }
 
         queueMessage(SWITCH_PANEL_TAB, other.itemID, targetTab.props.itemID);
-
         setTabSwitcherOpen(false);
-    }, [tabs, queueMessage, other.itemID]);
+    }, [other.itemID]);
 
     const cancelTabSwitcher = React.useCallback(() => {
         setTabSwitcherIndex(tabSwitcherStartIndexRef.current);
         setTabSwitcherOpen(false);
     }, []);
 
-    React.useEffect(() => {
-        const validatedTabs = React.Children.toArray(children).map((child) => {
+    const tabs = React.useMemo(() => {
+        return React.Children.toArray(children).map((child) => {
             if (!React.isValidElement(child) || child.type !== TabPanel) {
                 throw new Error("TabsPanel children must be of type TabPanel.");
             }
@@ -142,42 +143,49 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
             }
             return child as React.ReactElement<React.ComponentProps<typeof TabPanel>>;
         });
+    }, [children]);
 
-        setTabs(validatedTabs);
-
+    const tabsMap = React.useMemo(() => {
         const tabsStructures = new Map<string, TabStructure>();
-        validatedTabs.forEach((tab) => {
-            const itemID = tab.props.itemID;
+
+        tabs.forEach((tab) => {
+            const itemID = tab.props.itemID!;
             let content = tab.props.content;
             if (React.isValidElement(content)) {
                 content = React.cloneElement(
-                    content as React.ReactElement<{ itemID: string, tabsItemID: string }>,
-                    { itemID: tab.props.itemID, tabsItemID: other.itemID }
+                    content as React.ReactElement<{ itemID: string; tabsItemID: string }>,
+                    { itemID, tabsItemID: other.itemID }
                 );
             }
+
             let label = tab.props.label;
             if (React.isValidElement(label)) {
                 label = React.cloneElement(
-                    label as React.ReactElement<{ itemID: string, tabsItemID: string }>,
-                    { itemID: tab.props.itemID, tabsItemID: other.itemID }
+                    label as React.ReactElement<{ itemID: string; tabsItemID: string }>,
+                    { itemID, tabsItemID: other.itemID }
                 );
             }
-            let buttons = tab.props.buttons;
-            if (React.isValidElement(buttons)) {
-                buttons = React.cloneElement(
-                    buttons as React.ReactElement<{ itemID: string, tabsItemID: string }>,
-                    { itemID: tab.props.itemID, tabsItemID: other.itemID }
+
+            let tabButtons = tab.props.buttons;
+            if (React.isValidElement(tabButtons)) {
+                tabButtons = React.cloneElement(
+                    tabButtons as React.ReactElement<{ itemID: string; tabsItemID: string }>,
+                    { itemID, tabsItemID: other.itemID }
                 );
             }
-            tabsStructures.set(itemID!, {
-                itemID: itemID!,
-                label: label,
-                content: content,
-                buttons: buttons
+
+            tabsStructures.set(itemID, {
+                itemID,
+                label,
+                content,
+                buttons: tabButtons
             });
         });
-        setTabsMap(tabsStructures);
-    }, [children, other.itemID]);
+
+        return tabsStructures;
+    }, [tabs, other.itemID]);
+
+    tabsRef.current = tabs;
 
     React.useEffect(() => {
         if (activeTab >= tabs.length) {
@@ -208,7 +216,7 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
     React.useEffect(() => {
         const handleSwitchTabMessage = (tabsItemID: string, itemID: string) => {
             if (tabsItemID === other.itemID) {
-                const tabIndex = tabs.findIndex((tab) => tab.props.itemID === itemID);
+                const tabIndex = tabsRef.current.findIndex((tab) => tab.props.itemID === itemID);
                 if (tabIndex >= 0) {
                     activateTab(tabIndex);
                 }
@@ -219,9 +227,14 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
         return () => {
             unsubscribe(SWITCH_PANEL_TAB, handleSwitchTabMessage);
         };
-    }, [tabs, subscribe, unsubscribe, other.itemID]);
+    }, [subscribe, unsubscribe, other.itemID]);
 
     React.useEffect(() => {
+        const root = rootRef.current;
+        if (!root) {
+            return;
+        }
+
         const handleKeyDown = (event: KeyboardEvent) => {
             const focusInside = isFocusInsideTabsPanel();
 
@@ -266,14 +279,15 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
             }
         };
 
-        window.addEventListener("keydown", handleKeyDown, true);
-        window.addEventListener("keyup", handleKeyUp, true);
+        // Attach to rootRef instead of window
+        root.addEventListener("keydown", handleKeyDown, false);
+        root.addEventListener("keyup", handleKeyUp, false);
 
         return () => {
-            window.removeEventListener("keydown", handleKeyDown, true);
-            window.removeEventListener("keyup", handleKeyUp, true);
+            root.removeEventListener("keydown", handleKeyDown, false);
+            root.removeEventListener("keyup", handleKeyUp, false);
         };
-    }, [isFocusInsideTabsPanel, openOrMoveTabSwitcher, cancelTabSwitcher, commitTabSwitcher]);
+    }, []);
 
     const handleDragStart = (event: React.DragEvent, sourceIndex: number) => {
         sourceDragIndexRef.current = sourceIndex;
@@ -380,7 +394,14 @@ export const TabsPanel: React.FC<TabsPanelOwnProps> = (props) => {
 
     return (
         <StyledTabsPanel
-            ref={rootRef}
+            ref={(mref) => {
+                rootRef.current = mref;
+                if (typeof ref === "function") {
+                    ref(mref);
+                } else if (ref) {
+                    ref.current = mref;
+                }
+            }}
             className={`TabsPanel-root ${className ?? ""}`}
             {...other}
         >
