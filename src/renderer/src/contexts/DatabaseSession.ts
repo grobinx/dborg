@@ -12,12 +12,12 @@ export function resultsTabsId(session: IDatabaseSession): string {
     return session.profile.sch_id + ":" + session.info.connectionId + ":results-tabs";
 }
 
-export interface IDatabaseSession extends api.BaseConnection, api.IMetadataCollector {
+export interface IDatabaseSession extends api.BaseConnection, api.IMetadataSessionCollector {
     info: api.ConnectionInfo; // Connection information
     profile: ProfileRecord; // Profile information
     settings: Map<string, Record<string, any>>; // Profile settings (loaded from user settings folder)
     metadata?: api.Metadata | undefined; // Metadata of the database
-    metadataQuery?: MetadataQueryApi | undefined; 
+    metadataQuery?: MetadataQueryApi | undefined;
 
     getVersion(): string | undefined; // Get the version of the database
 
@@ -145,13 +145,12 @@ export class DatabaseSessionCursor implements IDatabaseSessionCursor {
 
 class DatabaseSession implements IDatabaseSession {
     private readonly changeManagers: Map<string, DataGridChangesManager<any>> = new Map();
-    private changeManagersOrder: string[] = []; // ← Przechowuje porządek kluczy
+    private changeManagersOrder: string[] = []; 
 
     info: api.ConnectionInfo; // Connection information
     profile: ProfileRecord; // Profile information
     settings: Map<string, Record<string, any>> = new Map();
     metadata: api.Metadata | undefined; // Metadata of the database
-    metadataQuery?: MetadataQueryApi | undefined;
     metadataInitialized: boolean;
     private readonly queue: QueueTask<IDatabaseSession>;
 
@@ -237,6 +236,24 @@ class DatabaseSession implements IDatabaseSession {
         return this.info.context;
     }
 
+    async getMetadataQuery(): Promise<MetadataQueryApi> {
+        const metadataQuery = await createMetadataQueryApi(this.info.connectionId);
+        console.log(metadataQuery);
+        const dbList = await metadataQuery.getDatabaseList();
+        console.log(dbList);
+        dbList.forEach(async db => {
+            const schemas = await db.getSchemaList();
+            console.log(`Schemas in ${db.name}:`, schemas);
+            schemas.forEach(async schema => {
+                const relations = await schema.getRelationList();
+                console.log(`Relations in ${db.name}.${schema.name}:`, relations);
+                const routines = await schema.getRoutineList();
+                console.log(`Routines in ${db.name}.${schema.name}:`, routines);
+            });
+        });
+        return metadataQuery;
+    }
+
     async getMetadata(progress?: (current: string) => void, force?: boolean): Promise<api.Metadata> {
         if (this.info.driver.implements.includes("metadata")) {
             if (this.metadataInitialized && !force) {
@@ -246,25 +263,11 @@ class DatabaseSession implements IDatabaseSession {
             const supportVersion = versionToNumber(this.info.driver.supports.minVersion || "0.0.0");
             if (version >= supportVersion) {
                 this.metadata = await window.dborg.database.connection.getMetadata(
-                    this.info.connectionId, 
-                    progress, 
+                    this.info.connectionId,
+                    progress,
                     force
                 );
                 this.metadataInitialized = true;
-                this.metadataQuery = await createMetadataQueryApi(this.info.connectionId);
-                console.log(this.metadataQuery);
-                const dbList = await this.metadataQuery.getDatabaseList();
-                console.log(dbList);
-                dbList.forEach(async db => {
-                    const schemas = await db.getSchemaList();
-                    console.log(`Schemas in ${db.name}:`, schemas);
-                    schemas.forEach(async schema => {
-                        const relations = await schema.getRelationList();
-                        console.log(`Relations in ${db.name}.${schema.name}:`, relations);
-                        const routines = await schema.getRoutineList();
-                        console.log(`Routines in ${db.name}.${schema.name}:`, routines);
-                    });
-                });
             }
         }
         return this.metadata ?? {};

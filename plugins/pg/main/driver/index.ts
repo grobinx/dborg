@@ -739,7 +739,7 @@ export class Connection extends driver.Connection {
                         }
                     }
 
-                    const client = new pg.Client(this.properties);
+                    client = new pg.Client(this.properties);
                     this.metadataCollector.setVersion(await this.getVersion());
                     await client.connect();
                     this.metadataCollector.setClient(client);

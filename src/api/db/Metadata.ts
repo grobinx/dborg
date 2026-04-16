@@ -1,5 +1,5 @@
 import internal from "src/main/core/db/internal";
-import { DatabaseFilter, DatabaseDetails, EntityFilter, IdentityOptions } from "./MetadataQuery";
+import { DatabaseFilter, DatabaseDetails, EntityFilter, IdentityOptions, MetadataQueryApi } from "./MetadataQuery";
 
 export const METADATA_VERSION = 11;
 
@@ -492,7 +492,11 @@ export interface IMetadataCollector {
 }
 
 export interface IMetadataMainCollector extends IMetadataCollector {
+    getMetadata(progress?: (current: string) => void, force?: boolean): Promise<Metadata>;
 }
 
-export interface IMetadataSessionCollector extends IMetadataCollector {
+export interface IMetadataSessionCollector {
+    getMetadataQuery(): Promise<MetadataQueryApi>;
+    getMetadata(progress?: (current: string) => void, force?: boolean): Promise<Metadata>;
+    updateObject(progress?: (current: string) => void, schemaName?: string, objectName?: string): Promise<void>;
 }
