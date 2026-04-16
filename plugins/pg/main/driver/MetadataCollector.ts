@@ -11,7 +11,7 @@ const METADATA_ARCHIVE_FORMAT = 'dborg-metadata-ndjson-v1';
 const NOT_ARCHIVE_ERROR = '__NOT_DBORG_METADATA_ARCHIVE__';
 
 export class MetadataCollector implements api.IMetadataCollector {
-    private metadata: api.Metadata = {};
+    private metadata: api.Metadata = { status: "pending" };
     private inited = false;
     private version?: Version;
     private client: pg.Client | undefined;
@@ -92,6 +92,7 @@ export class MetadataCollector implements api.IMetadataCollector {
 
     private async restoreMetadataArchive(fileName: string): Promise<api.Metadata> {
         const metadata: api.Metadata = {
+            status: "pending",
             version: api.METADATA_VERSION,
             date: Date.now(),
             databases: {}
@@ -206,6 +207,8 @@ export class MetadataCollector implements api.IMetadataCollector {
             throw new Error(NOT_ARCHIVE_ERROR);
         }
 
+        metadata.status = "ready";
+
         return metadata;
     }
 
@@ -239,6 +242,7 @@ export class MetadataCollector implements api.IMetadataCollector {
 
     async initialize(progress?: (current: string) => void): Promise<void> {
         this.metadata = {
+            status: "collecting",
             version: api.METADATA_VERSION,
             date: Date.now(),
             databases: {},
@@ -269,6 +273,7 @@ export class MetadataCollector implements api.IMetadataCollector {
         await this.updateSequence(progress);
 
         this.inited = true;
+        this.metadata.status = "ready";
     }
 
     async updateDatabases(progress?: (current: string) => void, name?: string): Promise<void> {

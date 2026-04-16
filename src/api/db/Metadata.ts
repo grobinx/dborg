@@ -23,8 +23,23 @@ export interface MetadataCollectionOptions {
     permissions?: boolean;
 }
 
+/** Status of the metadata */
+export type MetadataStatus = 
+    /** Metadata is ready to use */
+    | "ready" 
+    /** Metadata is being collected */
+    | "collecting" 
+    /** Metadata collection is not supported */
+    | "not-supported" 
+    /** An error occurred during metadata collection */
+    | "error" 
+    /** Metadata collection is pending, not yet initialized, waiting for trigger */
+    | "pending";
+
 /** Structure describing metadata */
 export interface Metadata {
+    /** Status of the metadata */
+    status: MetadataStatus;
     /** Version of the metadata */
     version?: number;
     /** Updated date of the metadata */

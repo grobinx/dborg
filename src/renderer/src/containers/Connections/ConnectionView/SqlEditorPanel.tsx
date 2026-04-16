@@ -170,7 +170,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
     useEffect(() => {
         const handleEditorFocus = () => {
             editorFocusedRef.current = true;
-            addHoverProvider();
+            // addHoverProvider();
         };
 
         const handleEditorBlur = () => {
@@ -198,7 +198,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
         const initMetadata = () => {
             if (session.metadata && !databaseMetadataRef.current) {
                 databaseMetadataRef.current = Object.values(session.metadata.databases ?? {}).find((db) => db.connected) || null;
-                addHoverProvider();
+                // addHoverProvider();
             };
         }
         const metadataSuccessHandler = (message: Messages.SessionGetMetadataSuccess) => {
@@ -358,8 +358,13 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
             actionManager.registerAction(...pluginActions);
         }
 
-        editor.addCommand(monaco.KeyCode.F6, () => {
-            queueMessage(SQL_RESULT_FOCUS, { sessionId: session.info.connectionId });
+        actionManager.registerAction({
+            id: "focus-sql-result",
+            label: t("focus-sql-result", "Focus SQL Result"),
+            keySequence: ["F6"],
+            run: () => {
+                queueMessage(SQL_RESULT_FOCUS, { sessionId: session.info.connectionId });
+            },
         });
 
         // Nasłuchiwanie zmian w pozycji kursora

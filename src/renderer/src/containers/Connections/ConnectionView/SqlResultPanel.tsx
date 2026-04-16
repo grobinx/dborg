@@ -474,6 +474,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
         const unsubscribeResultFocus = subscribe(SQL_RESULT_FOCUS, (message: SqlResultFocusMessage) => {
             if (message.sessionId === session.info.connectionId) {
                 setTimeout(() => {
+                    console.log(session.getProfile().sch_name);
                     dataGridRef.current?.focus();
                 }, 0);
             }

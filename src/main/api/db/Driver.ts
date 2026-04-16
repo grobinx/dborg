@@ -141,7 +141,7 @@ export abstract class Connection implements api.Connection {
     }
 
     async getMetadata(_progress?: (current: string) => void, _force?: boolean): Promise<api.Metadata> {
-        return {};
+        return { status: "not-supported" };
     }
 
     async updateObject(_progress?: (current: string) => void, _schemaName?: string, _objectName?: string): Promise<void> {

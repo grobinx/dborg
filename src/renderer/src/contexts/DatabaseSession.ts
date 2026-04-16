@@ -150,15 +150,13 @@ class DatabaseSession implements IDatabaseSession {
     info: api.ConnectionInfo; // Connection information
     profile: ProfileRecord; // Profile information
     settings: Map<string, Record<string, any>> = new Map();
-    metadata: api.Metadata | undefined; // Metadata of the database
-    metadataInitialized: boolean;
+    metadata: api.Metadata; // Metadata of the database
     private readonly queue: QueueTask<IDatabaseSession>;
 
     constructor(info: api.ConnectionInfo) {
         this.info = info;
         this.profile = info.userData.profile as ProfileRecord;
-        this.metadata = undefined;
-        this.metadataInitialized = false;
+        this.metadata = { status: "pending" };
 
         this.queue = new QueueTask<IDatabaseSession>({
             id: this.info.connectionId,
@@ -256,8 +254,8 @@ class DatabaseSession implements IDatabaseSession {
 
     async getMetadata(progress?: (current: string) => void, force?: boolean): Promise<api.Metadata> {
         if (this.info.driver.implements.includes("metadata")) {
-            if (this.metadataInitialized && !force) {
-                return this.metadata!;
+            if (this.metadata.status === "ready" && !force) {
+                return this.metadata;
             }
             const version = versionToNumber(this.getVersion() ?? "0.0.0");
             const supportVersion = versionToNumber(this.info.driver.supports.minVersion || "0.0.0");
@@ -267,10 +265,12 @@ class DatabaseSession implements IDatabaseSession {
                     progress,
                     force
                 );
-                this.metadataInitialized = true;
+                this.metadata.status = "ready";
+                return this.metadata;
             }
         }
-        return this.metadata ?? {};
+        this.metadata.status = "not-supported";
+        return this.metadata;
     }
 
     updateObject(progress?: (current: string) => void, schemaName?: string, objectName?: string): Promise<void> {
