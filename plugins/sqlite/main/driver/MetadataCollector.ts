@@ -7,7 +7,7 @@ const METADATA_ARCHIVE_FORMAT = 'dborg-metadata-ndjson-v1';
 const NOT_ARCHIVE_ERROR = '__NOT_DBORG_METADATA_ARCHIVE__';
 
 export class MetadataCollector implements api.IMetadataCollector {
-    private metadata: api.Metadata = {};
+    private metadata: api.Metadata = { status: "pending" };
     private inited = false;
     private db: sqlite3.Database | undefined;
     private collectionOptions?: api.MetadataCollectionOptions;
@@ -21,13 +21,13 @@ export class MetadataCollector implements api.IMetadataCollector {
         this.collectionOptions = options;
     }
 
-    async restoreMetadata(fileName: string): Promise<api.Metadata> {
+    async restoreMetadata(_fileName: string): Promise<api.Metadata> {
         // SQLite metadata restore not implemented yet
         // Można opcjonalnie zaimplementować jeśli będzie potrzebne
         throw new Error("Metadata restore not implemented for SQLite");
     }
 
-    async storeMetadata(fileName: string): Promise<void> {
+    async storeMetadata(_fileName: string): Promise<void> {
         // SQLite metadata store not implemented yet
         throw new Error("Metadata store not implemented for SQLite");
     }
@@ -64,7 +64,7 @@ export class MetadataCollector implements api.IMetadataCollector {
         return this.metadata;
     }
 
-    async updateObject(progress?: (current: string) => void, schemaName?: string, objectName?: string): Promise<void> {
+    async updateObject(progress?: (current: string) => void, _schemaName?: string, objectName?: string): Promise<void> {
         // SQLite nie ma schematów w tradycyjnym sensie, ale ma attached databases
         if (objectName) {
             await this.updateTables(progress, objectName);
@@ -77,6 +77,7 @@ export class MetadataCollector implements api.IMetadataCollector {
 
     async initialize(progress?: (current: string) => void): Promise<void> {
         this.metadata = {
+            status: "collecting",
             version: api.METADATA_VERSION,
             date: Date.now(),
             databases: {},

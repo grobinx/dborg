@@ -515,9 +515,9 @@ export class Connection extends driver.Connection {
             pg_catalog.has_database_privilege(current_user, current_database(), 'CREATE') AS "canCreate",
             (SELECT rolsuper FROM pg_catalog.pg_roles WHERE rolname = current_user) AS "isSuper",
             pg_catalog.json_build_object(
-                'application_name', current_setting('application_name', true),
-                'client_encoding', current_setting('client_encoding', true),
-                'timezone', current_setting('TimeZone', true)
+                --'application_name', current_setting('application_name', true),
+                --'client_encoding', current_setting('client_encoding', true),
+                --'timezone', current_setting('TimeZone', true)
             ) AS "settings"
         `);
 

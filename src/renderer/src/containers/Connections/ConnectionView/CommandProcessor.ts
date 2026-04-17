@@ -77,7 +77,7 @@ export class CommandProcessor {
                         { type: "wild_identifier", key: "schema", optional: true },
                     ],
                     action(values) {
-                        return MCP.getSchemas(metadata.databases ?? {}, values.schema ?? null);
+                        return MCP.getSchemas(metadata, values.schema ?? null);
                     },
                 },
                 {
@@ -90,7 +90,7 @@ export class CommandProcessor {
                         { type: "reference", name: "schema_or_object", optional: true, key: "soo" },
                     ],
                     action(values) {
-                        return MCP.getRelations(metadata.databases ?? {}, values.soo?.schema ?? null, values.soo?.object ?? null);
+                        return MCP.getRelations(metadata, values.soo?.schema ?? null, values.soo?.object ?? null);
                     },
                 },
                 {
@@ -103,7 +103,7 @@ export class CommandProcessor {
                         { type: "reference", name: "schema_or_object", optional: true, key: "soo" },
                     ],
                     action(values) {
-                        return MCP.getRoutines(metadata.databases ?? {}, values.soo?.schema ?? null, values.soo?.object ?? null);
+                        return MCP.getRoutines(metadata, values.soo?.schema ?? null, values.soo?.object ?? null);
                     },
                 },
                 {
@@ -122,31 +122,31 @@ export class CommandProcessor {
                     ],
                     action(values) {
                         if (!values.soo?.schema && values.soo?.object) {
-                            const isSchema = MCP.isSchema(metadata.databases ?? {}, values.soo.object);
+                            const isSchema = MCP.isSchema(metadata, values.soo.object);
                             if (isSchema === "one") {
-                                return MCP.getObjects(metadata.databases ?? {}, values.soo.object, null);
+                                return MCP.getObjects(metadata, values.soo.object, null);
                             } else if (isSchema === "many") {
-                                return MCP.getSchemas(metadata.databases ?? {}, values.soo.object);
+                                return MCP.getSchemas(metadata, values.soo.object);
                             } else {
-                                const isObject = MCP.isObject(metadata.databases ?? {}, null, values.soo.object);
+                                const isObject = MCP.isObject(metadata, null, values.soo.object);
                                 if (isObject) {
                                     if (isObject === "relation") {
-                                        return MCP.getColumns(metadata.databases ?? {}, null, values.soo.object);
+                                        return MCP.getColumns(metadata, null, values.soo.object);
                                     } else if (isObject === "routine") {
-                                        return MCP.getArguments(metadata.databases ?? {}, null, values.soo.object);
+                                        return MCP.getArguments(metadata, null, values.soo.object);
                                     } else if (isObject === "many") {
-                                        return MCP.getObjects(metadata.databases ?? {}, null, values.soo.object);
+                                        return MCP.getObjects(metadata, null, values.soo.object);
                                     }
                                 }
                             }
                         } else if (values.soo?.schema && values.soo?.object) {
-                            const isObject = MCP.isObject(metadata.databases ?? {}, values.soo.schema, values.soo.object);
+                            const isObject = MCP.isObject(metadata, values.soo.schema, values.soo.object);
                             if (isObject === "relation") {
-                                return MCP.getColumns(metadata.databases ?? {}, values.soo.schema, values.soo.object);
+                                return MCP.getColumns(metadata, values.soo.schema, values.soo.object);
                             } else if (isObject === "routine") {
-                                return MCP.getArguments(metadata.databases ?? {}, values.soo.schema, values.soo.object);
+                                return MCP.getArguments(metadata, values.soo.schema, values.soo.object);
                             } else if (isObject === "many") {
-                                return MCP.getObjects(metadata.databases ?? {}, values.soo.schema, values.soo.object);
+                                return MCP.getObjects(metadata, values.soo.schema, values.soo.object);
                             }
                         }
                         return null;
@@ -166,7 +166,7 @@ export class CommandProcessor {
     }
 
     private static isSchema(metadata: Metadata, name: string): "one" | "many" | false {
-        const matchingSchemas = MCP.getConnectedDatabases(metadata.databases ?? {}).flatMap(db =>
+        const matchingSchemas = MCP.getConnectedDatabases(metadata).flatMap(db =>
             Object.values(db.schemas).filter(schema => Interpreter.maskMatch(name, schema.name))
         );
         if (matchingSchemas.length === 0) {
@@ -179,7 +179,7 @@ export class CommandProcessor {
     }
 
     private static isObject(metadata: Metadata, schemaName: string | null, objectName: string): "one" | "many" | "relation" | "routine" | false {
-        const matchingObjects = MCP.getConnectedDatabases(metadata.databases ?? {}).flatMap(db =>
+        const matchingObjects = MCP.getConnectedDatabases(metadata).flatMap(db =>
             Object.values(db.schemas)
                 .filter(schema => Interpreter.maskMatch(schemaName, schema.name))
                 .flatMap(schema => {

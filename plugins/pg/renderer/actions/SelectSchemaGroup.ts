@@ -3,6 +3,7 @@ import { DataGridActionContext } from "@renderer/components/DataGrid/DataGridTyp
 import { RefreshGridAction_ID } from "@renderer/containers/ViewSlots/actions/RefreshGridAction";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import i18next from "i18next";
+import { DatabaseMetadata } from "src/api/db";
 
 const sql =
     `select nspname schema_name
@@ -29,7 +30,7 @@ export const SelectSchemaGroup = (
             let schemas: string[] = [];
 
             if (session.metadata) {
-                const database = session.metadata ? Object.values(session.metadata).find((db) => db.connected) : null;
+                const database: DatabaseMetadata | null = session.metadata ? Object.values(session.metadata).find((db) => db.connected) : null;
 
                 // Wyciąganie i sortowanie schematów według nazwy
                 const foundSchemas = Object.values(database?.schemas ?? {}).sort((a, b) =>

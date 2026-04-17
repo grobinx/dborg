@@ -155,7 +155,7 @@ export interface RelationFilter extends EntityFilter<RelationDetails> { }
 export interface RelationQueryApi extends RelationDetails {
 }
 
-const createMetadataRelationQuery = (connectionId: string, databaseId: string, schemaId: string | undefined, relation: RelationDetails): RelationQueryApi => {
+const createMetadataRelationQuery = (_connectionId: string, _databaseId: string, _schemaId: string | undefined, relation: RelationDetails): RelationQueryApi => {
     return {
         ...relation
     };
@@ -167,7 +167,7 @@ export interface RoutineFilter extends EntityFilter<RoutineDetails> { }
 export interface RoutineQueryApi extends RoutineDetails {
 }
 
-const createMetadataRoutineQuery = (connectionId: string, databaseId: string, schemaId: string | undefined, routine: RoutineDetails): RoutineQueryApi => {
+const createMetadataRoutineQuery = (_connectionId: string, _databaseId: string, _schemaId: string | undefined, routine: RoutineDetails): RoutineQueryApi => {
     return {
         ...routine
     };

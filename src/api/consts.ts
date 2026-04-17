@@ -5,14 +5,14 @@ import { VersionBase } from "./version";
 //export const dborgReleaseName: string = "Schrodinger's Sprout";
 export const dborgReleaseName: string = "Louver Gate";
 export const dborgDuration: string = "2024-2026";
-export const dborgDate: string = "2026-04-16 21:14:34";
+export const dborgDate: string = "2026-04-17 09:08:23";
 export const dborgPreRelease: string = "dev";
 
 export const version: Pick<VersionBase, "major" | "minor" | "release" | "build" | "name" | "preRelease" | "toString"> = {
     major: 1,
     minor: 0,
     release: 9,
-    build: 542,
+    build: 544,
 
     preRelease: dborgPreRelease,
 

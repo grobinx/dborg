@@ -461,7 +461,7 @@ export const preload = {
     },
     connection: {
         getConnection: (uniqueId: string): Promise<api.ConnectionInfo | undefined> => invokeResult(ipcRenderer.invoke(EVENT_CONNECTION_GET, uniqueId)),
-        getContext: (uniqueId: string, reload: boolean): Promise<api.SessionContext | undefined> => invokeResult(ipcRenderer.invoke(EVENT_CONNECTION_CONTEXT_GET, uniqueId, reload)),
+        getContext: (uniqueId: string, reload?: boolean): Promise<api.SessionContext | undefined> => invokeResult(ipcRenderer.invoke(EVENT_CONNECTION_CONTEXT_GET, uniqueId, reload)),
         close: (uniqueId: string): Promise<void> => invokeResult(ipcRenderer.invoke(EVENT_CONNECTION_CLOSE, uniqueId)),
         userData: {
             get: (uniqueId: string, property: string): Promise<unknown> =>

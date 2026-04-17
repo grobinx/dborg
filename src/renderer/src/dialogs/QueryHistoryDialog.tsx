@@ -13,9 +13,9 @@ import { useSearch } from '@renderer/hooks/useSearch';
 import { useKeyboardNavigation } from '@renderer/hooks/useKeyboardNavigation';
 import { useScrollIntoView } from '@renderer/hooks/useScrollIntoView';
 import * as monaco from "monaco-editor";
-import { Monaco } from '@monaco-editor/react';
 import MonacoEditor from '@renderer/components/editor/MonacoEditor';
 import { SplitPanel, SplitPanelGroup, Splitter } from '@renderer/components/SplitPanel';
+import { QueryHistoryRecord } from '../../../../src/api/entities';
 
 export interface QueryHistoryDialogProps extends DefaultDialogProps {
     open: boolean;
@@ -40,7 +40,7 @@ const QueryHistoryDialog: React.FC<QueryHistoryDialogProps> = ({ open, onClose, 
         data: queryHistory,
         fields: ['qh_query'],
         searchText: search,
-        filter: React.useCallback((item) => !profileName || item.qh_profile_name === profileName, [profileName]),
+        filter: React.useCallback((item: QueryHistoryRecord) => !profileName || item.qh_profile_name === profileName, [profileName]),
     });
 
     const [selected, setSelected, handleKeyDown] = useKeyboardNavigation(
