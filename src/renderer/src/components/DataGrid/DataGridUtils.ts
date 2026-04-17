@@ -148,7 +148,7 @@ export const queryToDataGridColumns = (resultColumns: api.ColumnInfo[]): ColumnD
 
 export const fillInternalColumnInfo = async (metadata: MetadataQueryApi, columns: ColumnDefinition[]): Promise<ColumnDefinition[]> => {
     if (metadata.status !== "ready") {
-        return columns; 
+        return columns;
     }
 
     // Jeśli nie ma żadnego numerycznego ID, pomiń całą operację
@@ -166,21 +166,20 @@ export const fillInternalColumnInfo = async (metadata: MetadataQueryApi, columns
     // Buduj mapę tylko dla potrzebnych ID
     const tableIdMap = new Map<string, { catalogName: string, schemaName: string, tableName: string, primaryKeyFields?: string[] }>();
 
-    for (const database of await metadata.getDatabaseList({ filter: { connected: true }})) {
-        if (tableIdMap.size === idsToFind.size) break; // Znaleźliśmy wszystkie
-
+    for (const database of await metadata.getDatabaseList({ filter: { connected: true } })) {
         for (const schema of await database.getSchemaList()) {
             for (const relation of await schema.getRelationList({ id: [...idsToFind] })) {
-                    tableIdMap.set(relation.id, {
-                        catalogName: database.name,
-                        schemaName: schema.name,
-                        tableName: relation.name,
-                        primaryKeyFields: relation.primaryKey?.columns,
-                    });
-                    if (tableIdMap.size === idsToFind.size) break;
+                tableIdMap.set(relation.id, {
+                    catalogName: database.name,
+                    schemaName: schema.name,
+                    tableName: relation.name,
+                    primaryKeyFields: relation.primaryKey?.columns,
+                });
+                if (tableIdMap.size === idsToFind.size) break;
             }
             if (tableIdMap.size === idsToFind.size) break;
         }
+        if (tableIdMap.size === idsToFind.size) break; // Znaleźliśmy wszystkie
     }
 
     // Wypełnij kolumny
