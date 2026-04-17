@@ -121,6 +121,11 @@ export class CommandProcessor {
                         }
                     ],
                     action(values) {
+                        if (["select", "with", "delete", "update", "insert", "alter", "show"].includes(values.soo?.schema?.toLowerCase() ?? "") || 
+                            ["select", "with", "delete", "update", "insert", "alter", "show"].includes(values.soo?.object?.toLowerCase() ?? "")) {
+                            return null;
+                        }
+
                         if (!values.soo?.schema && values.soo?.object) {
                             const isSchema = MCP.isSchema(metadata, values.soo.object);
                             if (isSchema === "one") {
