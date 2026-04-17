@@ -236,19 +236,19 @@ class DatabaseSession implements IDatabaseSession {
 
     async getMetadataQuery(): Promise<MetadataQueryApi> {
         const metadataQuery = await createMetadataQueryApi(this.info.connectionId);
-        console.log(metadataQuery);
-        const dbList = await metadataQuery.getDatabaseList();
-        console.log(dbList);
-        dbList.forEach(async db => {
-            const schemas = await db.getSchemaList();
-            console.log(`Schemas in ${db.name}:`, schemas);
-            schemas.forEach(async schema => {
-                const relations = await schema.getRelationList();
-                console.log(`Relations in ${db.name}.${schema.name}:`, relations);
-                const routines = await schema.getRoutineList();
-                console.log(`Routines in ${db.name}.${schema.name}:`, routines);
-            });
-        });
+        // console.log(metadataQuery);
+        // const dbList = await metadataQuery.getDatabaseList();
+        // console.log(dbList);
+        // dbList.forEach(async db => {
+        //     const schemas = await db.getSchemaList();
+        //     console.log(`Schemas in ${db.name}:`, schemas);
+        //     schemas.forEach(async schema => {
+        //         const relations = await schema.getRelationList();
+        //         console.log(`Relations in ${db.name}.${schema.name}:`, relations);
+        //         const routines = await schema.getRoutineList();
+        //         console.log(`Routines in ${db.name}.${schema.name}:`, routines);
+        //     });
+        // });
         return metadataQuery;
     }
 

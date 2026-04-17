@@ -78,7 +78,6 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
     const updateCursorPositionRef = useRef<() => void>(() => { }); // Referencja na funkcję
     const updateEditorContentRef = useRef<() => void>(() => { }); // Referencja na funkcję
     const { subscribe, queueMessage } = useMessages();
-    const databaseMetadataRef = React.useRef<DatabaseMetadata | null>(null);
     const hoverProviderRef = useRef<monaco.IDisposable | null>(null);
     const editorFocusedRef = useRef(false);
     const currentFragmentRef = useRef<string | null>(null);
@@ -195,18 +194,14 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
     }, [editorInstance, itemID]);
 
     useEffect(() => {
-        const initMetadata = () => {
-            if (session.metadata && !databaseMetadataRef.current) {
-                databaseMetadataRef.current = Object.values(session.metadata.databases ?? {}).find((db) => db.connected) || null;
-                // addHoverProvider();
-            };
+        const initEditorMetadata = () => {
         }
         const metadataSuccessHandler = (message: Messages.SessionGetMetadataSuccess) => {
             if (message.connectionId === session.info.connectionId) {
-                initMetadata();
+                initEditorMetadata();
             }
         }
-        initMetadata();
+        initEditorMetadata();
 
         const unsubscribeGetMetadataSuccess = subscribe(Messages.SESSION_GET_METADATA_SUCCESS, metadataSuccessHandler);
         const unsubscribeFocus = subscribe(SQL_EDITOR_FOCUS, (message: SqlEditorFocusMessage) => {

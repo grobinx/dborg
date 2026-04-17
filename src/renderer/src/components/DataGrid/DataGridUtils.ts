@@ -4,6 +4,7 @@ import * as api from "../../../../api/db";
 import Decimal from "decimal.js";
 import { DateTime } from "luxon";
 import { DataGridChangeRow } from "./DataGrid";
+import { MetadataQueryApi } from "src/api/db/MetadataQuery";
 
 export const footerCaptionHeightFactor = 0.7;
 export const displayMaxLengh = 300;
@@ -145,37 +146,38 @@ export const queryToDataGridColumns = (resultColumns: api.ColumnInfo[]): ColumnD
     return columns;
 }
 
-export const fillInternalColumnInfo = (metadata: api.Metadata, columns: ColumnDefinition[]): ColumnDefinition[] => {
+export const fillInternalColumnInfo = async (metadata: MetadataQueryApi, columns: ColumnDefinition[]): Promise<ColumnDefinition[]> => {
+    if (metadata.status !== "ready") {
+        return columns; 
+    }
+
     // Jeśli nie ma żadnego numerycznego ID, pomiń całą operację
     const hasNumericIds = columns.some(c => c.info?.table && typeof c.info.table === 'number');
     if (!hasNumericIds) return columns;
 
     // Zbierz unikalne ID do wyszukania
-    const idsToFind = new Set<number>();
+    const idsToFind = new Set<string>();
     for (const column of columns) {
         if (column.info?.table && typeof column.info.table === 'number') {
-            idsToFind.add(column.info.table);
+            idsToFind.add(column.info.table.toString());
         }
     }
 
     // Buduj mapę tylko dla potrzebnych ID
-    const tableIdMap = new Map<number, { catalogName: string, schemaName: string, tableName: string, primaryKeyFields?: string[] }>();
+    const tableIdMap = new Map<string, { catalogName: string, schemaName: string, tableName: string, primaryKeyFields?: string[] }>();
 
-    for (const [catalogName, database] of Object.entries(metadata.databases ?? {})) {
+    for (const database of await metadata.getDatabaseList({ filter: { connected: true }})) {
         if (tableIdMap.size === idsToFind.size) break; // Znaleźliśmy wszystkie
 
-        for (const [schemaName, schema] of Object.entries(database.schemas)) {
-            for (const relation of Object.values(schema.relations)) {
-                const numId = typeof relation.id === 'number' ? relation.id : parseInt(relation.id);
-                if (!isNaN(numId) && idsToFind.has(numId)) {
-                    tableIdMap.set(numId, {
-                        catalogName,
-                        schemaName,
+        for (const schema of await database.getSchemaList()) {
+            for (const relation of await schema.getRelationList({ id: [...idsToFind] })) {
+                    tableIdMap.set(relation.id, {
+                        catalogName: database.name,
+                        schemaName: schema.name,
                         tableName: relation.name,
                         primaryKeyFields: relation.primaryKey?.columns,
                     });
                     if (tableIdMap.size === idsToFind.size) break;
-                }
             }
             if (tableIdMap.size === idsToFind.size) break;
         }
@@ -185,7 +187,7 @@ export const fillInternalColumnInfo = (metadata: api.Metadata, columns: ColumnDe
     for (const column of columns) {
         if (!column.info?.table || typeof column.info.table === 'string') continue;
 
-        const tableInfo = tableIdMap.get(column.info.table);
+        const tableInfo = tableIdMap.get(column.info.table.toString());
         if (tableInfo) {
             column._catalogName = tableInfo.catalogName;
             column._schemaName = tableInfo.schemaName;

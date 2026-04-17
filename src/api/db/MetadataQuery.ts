@@ -96,7 +96,7 @@ export interface SchemaQueryApi extends SchemaDetails {
      * Get a list of relations, optionally filtered by the provided criteria
      * @param filter - The filter criteria to apply
      */
-    getRelationList(filter?: RelationFilter): Promise<Partial<RelationQueryApi>[]>;
+    getRelationList(filter?: RelationFilter): Promise<RelationQueryApi[]>;
     /**
      * Get a full specific relation by its name or identity
      * @param id - The id or identity of the relation
@@ -107,7 +107,7 @@ export interface SchemaQueryApi extends SchemaDetails {
      * Get a list of routines, optionally filtered by the provided criteria
      * @param filter - The filter criteria to apply
      */
-    getRoutineList(filter?: RoutineFilter): Promise<Partial<RoutineQueryApi>[]>;
+    getRoutineList(filter?: RoutineFilter): Promise<RoutineQueryApi[]>;
     /**
      * Get a full specific routine by its name or identity
      * @param id - The id or identity of the routine
@@ -121,7 +121,7 @@ const createMetadataSchemaQuery = (connectionId: string, databaseId: string, sch
         getRelationList: async (filter?: RelationFilter) => {
             const relationList: RelationDetails[] = await window.dborg.database.connection.metadata.getRelationList(connectionId, databaseId, schema.id, filter);
             return relationList.map(relation => {
-                const result: Partial<RelationQueryApi> = { ...relation };
+                const result: RelationQueryApi = { ...relation };
                 return result;
             });
         },
@@ -135,7 +135,7 @@ const createMetadataSchemaQuery = (connectionId: string, databaseId: string, sch
         getRoutineList: async (filter?: RoutineFilter) => {
             const routineList: RoutineDetails[] = await window.dborg.database.connection.metadata.getRoutineList(connectionId, databaseId, schema.id, filter);
             return routineList.map(routine => {
-                const result: Partial<RoutineQueryApi> = { ...routine };
+                const result: RoutineQueryApi = { ...routine };
                 return result;
             });
         },

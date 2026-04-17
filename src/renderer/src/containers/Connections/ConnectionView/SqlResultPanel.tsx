@@ -291,7 +291,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                 setQueryDuration(info.duration ?? null);
                 fetchTime = Date.now() - fetchTime;
                 setFetchDuration(fetchTime);
-                setColumns(fillInternalColumnInfo(await session.getMetadata(), queryToDataGridColumns(info.columns ?? [])));
+                setColumns(await fillInternalColumnInfo(await session.getMetadataQuery(), queryToDataGridColumns(info.columns ?? [])));
                 setRows(rows);
                 addQueryToHistory({
                     query: oryginalQuery!,
@@ -337,7 +337,7 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
                 const result = await session.execute(query!, queryValues);
                 if (result.rows) {
                     setRows(result.rows);
-                    setColumns(fillInternalColumnInfo(await session.getMetadata(), queryToDataGridColumns(result.columns ?? [])));
+                    setColumns(await fillInternalColumnInfo(await session.getMetadataQuery(), queryToDataGridColumns(result.columns ?? [])));
                 }
                 else {
                     setRows(prev => prev.length ? [] : prev);

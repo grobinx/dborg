@@ -281,7 +281,7 @@ export class MetadataCollector implements api.IMetadataCollector {
             progress("databases");
         }
         const { rows } = await this.client!.query(
-            `select d.oid as id, 
+            `select d.oid::text as id, 
                     d.datname as name, 
                     format('%I', d.datname) as identity,
                     pg_catalog.pg_get_userbyid(d.datdba) as owner,
@@ -338,7 +338,7 @@ export class MetadataCollector implements api.IMetadataCollector {
             progress("schemas");
         }
         const { rows } = await this.client!.query(
-            `select n.oid as id,
+            `select n.oid::text as id,
                     n.nspname as name,
                     format('%I', n.nspname) as identity,
                     pg_catalog.pg_get_userbyid(n.nspowner) as owner, 
@@ -392,7 +392,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                 union
                 select lower(lanname) from pg_language
             )
-            select c.oid as id, n.nspname schema_name, 
+            select c.oid::text as id, n.nspname as schema_name, 
                 c.relname as name, 
                 format('%I', c.relname) as identity,
                 d.description,
@@ -560,7 +560,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                 union
                 select lower(lanname) from pg_language
             )
-            select f.oid id, n.nspname schema_name, pg_get_userbyid(f.proowner) as owner, 
+            select f.oid::text as id, n.nspname as schema_name, pg_get_userbyid(f.proowner) as owner, 
                 f.proname as name,
                 format('%I(%s)', f.proname, pg_get_function_identity_arguments(f.oid)) as identity,
                 ${v11OrHigher ? "case when f.prokind in ('a', 'w', 'f') then 'function' when f.prokind = 'p' then 'procedure' end" : "'function'"} as type,
@@ -576,9 +576,9 @@ export class MetadataCollector implements api.IMetadataCollector {
                 pg_catalog.pg_get_function_result(f.oid) as "returnType",
                 d.description as description,
                 (select json_agg(row_to_json(a))
-                    from (select f.oid::bigint *100 +n id, n as no, f.proargnames[n] as name, pg_catalog.format_type(f.proargtypes[n -1], -1) as "dataType",
+                    from (select (f.oid::bigint *100 +n)::text as id, n as no, f.proargnames[n] as name, pg_catalog.format_type(f.proargtypes[n -1], -1) as "dataType",
                                 case f.proargmodes[n] when 'o' then 'out' when 'b' then 'inout' else 'in' end as mode,
-                                trim((regexp_split_to_array(pg_get_expr(f.proargdefaults, 0), '[\t,](?=(?:[^\'']|\''[^\'']*\'')*$)'))[case when f.pronargs -n > f.pronargdefaults then null else f.pronargdefaults -(f.pronargs -n +1) +1 end]) as "defaultValue"
+                                trim((regexp_split_to_array(pg_get_expr(f.proargdefaults, 0), '[\t,](?=(?:[^\'']|\''[^\'']*\'')*$)'))[case when f.pronargs -n > f.pronargdefaults then null else f.pronargdefaults -(f.pronargs - n +1) +1 end]) as "defaultValue"
                             from pg_catalog.generate_series(1, f.pronargs::int) n) a) as arguments
                 ${this.collectionOptions?.identifiers ? `, ids.identifiers` : ''},
                 json_build_object(
@@ -671,7 +671,7 @@ export class MetadataCollector implements api.IMetadataCollector {
             const { rows } = await this.client!.query(
                 `select cl.relname as relation_name, 
                         json_agg(json_build_object(
-                            'id', cl.oid::bigint *10000 +att.attnum, 
+                            'id', (cl.oid::bigint *10000 +att.attnum)::text, 
                             'name', att.attname, 
                             'identity', format('%I.%I', cl.relname, att.attname),
                             'no', att.attnum, 
@@ -779,7 +779,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                 n.nspname as schema_name,
                 cl.relname as relation_name,
                 json_agg(json_build_object(
-                    'id', con.oid,
+                    'id', con.oid::text,
                     'name', con.conname,
                     'identity', format('%I', con.conname),
                     'column', array(select a.attname from pg_attribute a where a.attnum = any(con.conkey) and a.attrelid = cl.oid),
@@ -839,7 +839,7 @@ export class MetadataCollector implements api.IMetadataCollector {
         const { rows } = await this.client!.query(
             `select i.schema_name, i.relation_name,
                 json_agg(json_build_object(
-                    'id', i.id,
+                    'id', i.id::text,
                     'name', i.name,
                     'description', i.description,
                     'columns', i.columns,
@@ -958,7 +958,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                 n.nspname as schema_name,
                 cl.relname as relation_name,
                 json_build_object(
-                    'id', con.oid,
+                    'id', con.oid::text,
                     'name', con.conname,
                     'columns', json_agg(a.attname order by array_position(con.conkey, a.attnum)),
                     'description', pg_catalog.obj_description(con.oid, 'pg_constraint')
@@ -1001,7 +1001,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                 c.schema_name,
                 c.relation_name,
                 json_agg(json_build_object(
-                    'id', c.id,
+                    'id', c.id::text,
                     'name', c.name,
                     'description', c.description,
                     'type', c.type,
@@ -1058,7 +1058,7 @@ export class MetadataCollector implements api.IMetadataCollector {
         const { rows } = await this.client!.query(
             `select
                 n.nspname as schema_name,
-                t.oid as id,
+                t.oid::text as id,
                 t.typname as name,
                 format('%I', t.typname) as identity,
                 pg_catalog.obj_description(t.oid, 'pg_type') as description,
@@ -1164,7 +1164,7 @@ export class MetadataCollector implements api.IMetadataCollector {
         const { rows } = await this.client!.query(
             `select
                 n.nspname as schema_name,
-                seq.oid as id,
+                seq.oid::text as id,
                 seq.relname as name,
                 format('%I', seq.relname) as identity,
                 pg_catalog.pg_get_userbyid(seq.relowner) as owner,
