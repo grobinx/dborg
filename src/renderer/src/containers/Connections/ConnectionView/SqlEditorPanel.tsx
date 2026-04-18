@@ -309,7 +309,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
         setTabEditor(editor); // Ustaw instancję edytora dla tego taba
 
         // Dodanie polecenia do listy poleceń edytora
-        actionManager.registerAction(ExecuteQueryAction((query: string) => {
+        actionManager.registerAction(ExecuteQueryAction(async (query: string) => {
             if ((query ?? "").trim() === "") {
                 return;
             }
@@ -320,7 +320,7 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
             } | null = null;
 
             if (session.metadata) {
-                result = CommandProcessor.processCommand(query, session.metadata);
+                result = await CommandProcessor.processCommand(query, await session.getMetadataQuery());
                 if (result) {
                     queueMessage(SQL_EDITOR_SHOW_STRUCTURE, {
                         to: session.info.connectionId,

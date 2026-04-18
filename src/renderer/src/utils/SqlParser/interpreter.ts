@@ -198,7 +198,7 @@ export interface ActionMatchDefinition<R = any> extends MatchDefinition {
      * @param values Obiekt zawierający wartości dopasowanych tokenów
      * @returns Wynik działania funkcji
      */
-    action: (values: Record<string, any>) => R | null;
+    action: (values: Record<string, any>) => Promise<R | null>;
 }
 
 export interface Definition<R = any> {
@@ -234,7 +234,7 @@ export class Interpreter<R = any> {
      * Uruchamia interpretarkę na sekwencji tokenów, próbując dopasować każdy z zdefiniowanych akcji wzorców.
      * Zwraca tablicę wyników dla każdej dopasowanej akcji.
      */
-    public interpret(): R | null {
+    public async interpret(): Promise<R | null> {
         // Pomiń tokeny whitespace
         this.skipWhitespace();
 
@@ -249,7 +249,7 @@ export class Interpreter<R = any> {
 
                 if (values !== null) {
                     // Wzorzec został dopasowany, wykonaj akcję
-                    return actionDef.action(values);
+                    return await actionDef.action(values);
                 }
             }
 
@@ -626,21 +626,26 @@ export class Interpreter<R = any> {
         }
     }
 
-    public static maskMatch(pattern: string | null, value: string): boolean {
+    public static createMask(pattern: string | null): RegExp {
         if (pattern === null) {
-            return true;
+            return /.*/;
         }
-        // Escapujemy znaki regex, a potem mapujemy wildcardy:
-        // * -> dowolny ciąg znaków
-        // _ -> dokładnie jeden znak
-        const regexSource = "^" +
+        return new RegExp(
+            "^" +
             pattern
                 .toUpperCase()
                 .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
                 .replace(/\*/g, ".*")
                 .replace(/_/g, ".") +
-            "$";
+            "$",
+            "i"
+        );
+    }
 
-        return new RegExp(regexSource).test(value.toUpperCase());
+    public static maskMatch(pattern: string | null, value: string): boolean {
+        if (pattern === null) {
+            return true;
+        }
+        return this.createMask(pattern).test(value.toUpperCase());
     }
 }
