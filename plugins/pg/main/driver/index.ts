@@ -406,6 +406,7 @@ export class Connection extends driver.Connection {
     private pool: boolean;
     private fetchRecordCount: number;
     private maxStatementRows: number;
+    private metadata: api.Metadata | null = null;
     private metadataCollector: MetadataCollector;
     private metadataPromise: Promise<api.Metadata> | null = null;
     private pid: string | undefined;
@@ -722,17 +723,22 @@ export class Connection extends driver.Connection {
     }
 
     async getMetadata(progress?: (current: string) => void, force?: boolean): Promise<api.Metadata> {
+        // Jeśli mamy cached metadata i nie wymuszamy force, zwróć od razu
+        if (this.metadata && !force) {
+            return this.metadata;
+        }
+
         if (!this.metadataPromise || force) {
             let client: pg.Client | undefined;
 
-            // Tworzymy nową obietnicę tylko wtedy, gdy nie ma aktywnej lub wymuszono `force`
             this.metadataPromise = (async () => {
                 try {
                     if (!force && this.metadataFileName) {
                         const filePath = path.join(dataPath(DBORG_DATA_PATH), "metadata", this.metadataFileName);
                         if (await fs.access(filePath).then(() => true).catch(() => false)) {
                             try {
-                                return await this.metadataCollector.restoreMetadata(filePath);
+                                this.metadata = await this.metadataCollector.restoreMetadata(filePath);
+                                return this.metadata;
                             } catch (e) {
                                 console.error("Restoring metadata failed:", e);
                             }
@@ -743,27 +749,21 @@ export class Connection extends driver.Connection {
                     this.metadataCollector.setVersion(await this.getVersion());
                     await client.connect();
                     this.metadataCollector.setClient(client);
-                    const metadata = await this.metadataCollector.getMetadata(progress, force);
+                    this.metadata = await this.metadataCollector.getMetadata(progress, force);
 
-                    // Zapisujemy metadane do pliku po ich pobraniu
                     if (this.metadataFileName) {
                         const filePath = path.join(dataPath(DBORG_DATA_PATH), "metadata");
                         await fs.mkdir(filePath, { recursive: true });
                         this.metadataCollector.storeMetadata(path.join(filePath, this.metadataFileName)).catch((e) => console.error("Storing metadata failed:", e));
                     }
 
-                    return metadata;
+                    return this.metadata;
                 } finally {
                     await client?.end();
-                    // Resetujemy obietnicę po zakończeniu operacji
-                    if (!force) {
-                        this.metadataPromise = null;
-                    }
                 }
             })();
         }
 
-        // Zwracamy istniejącą obietnicę
         return this.metadataPromise;
     }
 
