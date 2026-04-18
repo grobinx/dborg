@@ -390,10 +390,10 @@ export const SqlResultContent: React.FC<SqlResultContentProps> = (props) => {
         if (query) {
             const tokens = new Tokenizer(query, { dialect: "postgres" }).tokenize();
             const scopes = Scoper.fromTokens(tokens);
-            console.log(scopes);
-            session.getContext().then(context => {
-                console.log(context);
-            });
+            // console.log(scopes);
+            // session.getContext().then(context => {
+            //     console.log(context);
+            // });
 
             if (isSelect()) {
                 fetchData();
