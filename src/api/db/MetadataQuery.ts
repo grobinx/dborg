@@ -83,6 +83,7 @@ const createDatabaseQueryApi = (connectionId: string, database: DatabaseDetails)
 };
 
 export interface SchemaDetails extends Omit<SchemaMetadata, "relations" | "routines" | "packages" | "sequences" | "types"> {
+    databaseId: string;
     relationCount: number;
     routineCount: number;
     packageCount: number;
@@ -149,7 +150,10 @@ const createMetadataSchemaQuery = (connectionId: string, databaseId: string, sch
     };
 };
 
-export type RelationDetails = RelationMetadata;
+export interface RelationDetails extends RelationMetadata {
+    databaseId: string;
+    schemaId: string | undefined;
+}
 export interface RelationFilter extends EntityFilter<RelationDetails> { }
 
 export interface RelationQueryApi extends RelationDetails {
@@ -161,7 +165,10 @@ const createMetadataRelationQuery = (_connectionId: string, _databaseId: string,
     };
 };
 
-export type RoutineDetails = RoutineMetadata;
+export interface RoutineDetails extends RoutineMetadata {
+    databaseId: string;
+    schemaId: string | undefined;
+}
 export interface RoutineFilter extends EntityFilter<RoutineDetails> { }
 
 export interface RoutineQueryApi extends RoutineDetails {
@@ -261,10 +268,11 @@ export const getMetadataDatabase = (metadata: Metadata, id: string | IdentityOpt
     return metadataDatabaseToDetails(database);
 }
 
-const metadataSchemaToDetails = (metadata: SchemaMetadata): SchemaDetails => {
+const metadataSchemaToDetails = (databaseId: string, metadata: SchemaMetadata): SchemaDetails => {
     const { relations, routines, packages, sequences, types, ...schemaMetadata } = metadata;
     return {
         ...schemaMetadata,
+        databaseId,
         relationCount: Object.keys(relations ?? {}).length,
         routineCount: Object.keys(routines ?? {}).length,
         packageCount: Object.keys(packages ?? {}).length,
@@ -278,7 +286,7 @@ export const getMetadataSchemaList = (metadata: Metadata, databaseId: string, fi
     if (!database) return [];
     return Object.values(database.schemas ?? {})
         .filter(schema => matchFilter(schema, filter))
-        .map(schema => metadataSchemaToDetails(schema));
+        .map(schema => metadataSchemaToDetails(databaseId, schema));
 }
 
 export const getMetadataSchema = (metadata: Metadata, databaseId: string, id: string | IdentityOptions): SchemaDetails | undefined => {
@@ -286,13 +294,15 @@ export const getMetadataSchema = (metadata: Metadata, databaseId: string, id: st
     if (!database) return undefined;
     const schema = Object.values(database.schemas ?? {}).find(schema => matchId(schema, id));
     if (!schema) return undefined;
-    return metadataSchemaToDetails(schema);
+    return metadataSchemaToDetails(databaseId, schema);
 }
 
-const metadataRelationToDetails = (metadata: RelationMetadata): RelationDetails => {
+const metadataRelationToDetails = (databaseId: string, schemaId: string | undefined, metadata: RelationMetadata): RelationDetails => {
     const { columns, constraints, foreignKeys, indexes, stats, identifiers, ...relationMetadata } = metadata;
     return {
         ...relationMetadata,
+        databaseId,
+        schemaId,
         columns: columns ?? [],
         constraints: constraints ?? [],
         foreignKeys: foreignKeys ?? [],
@@ -310,11 +320,11 @@ export const getMetadataRelationList = (metadata: Metadata, databaseId: string, 
         if (!schema) return [];
         return Object.values(schema.relations ?? {})
             .filter(relation => matchFilter(relation, filter))
-            .map(relation => metadataRelationToDetails(relation));
+            .map(relation => metadataRelationToDetails(databaseId, schemaId, relation));
     } else {
         return Object.values(database.builtInRelations ?? {})
             .filter(relation => matchFilter(relation, filter))
-            .map(relation => metadataRelationToDetails(relation));
+            .map(relation => metadataRelationToDetails(databaseId, schemaId, relation));
     }
 }
 
@@ -326,18 +336,20 @@ export const getMetadataRelation = (metadata: Metadata, databaseId: string, sche
         if (!schema) return undefined;
         const relation = Object.values(schema.relations ?? {}).find(relation => matchId(relation, id));
         if (!relation) return undefined;
-        return metadataRelationToDetails(relation);
+        return metadataRelationToDetails(databaseId, schemaId, relation);
     } else {
         const relation = Object.values(database.builtInRelations ?? {}).find(relation => matchId(relation, id));
         if (!relation) return undefined;
-        return metadataRelationToDetails(relation);
+        return metadataRelationToDetails(databaseId, schemaId, relation);
     }
 }
 
-const metadataRoutineToDetails = (metadata: RoutineMetadata): RoutineDetails => {
+const metadataRoutineToDetails = (databaseId: string, schemaId: string | undefined, metadata: RoutineMetadata): RoutineDetails => {
     const { arguments: args, identifiers, ...routineMetadata } = metadata;
     return {
         ...routineMetadata,
+        databaseId,
+        schemaId,
         arguments: args ?? [],
         identifiers: identifiers ?? []
     };
@@ -352,12 +364,12 @@ export const getMetadataRoutineList = (metadata: Metadata, databaseId: string, s
         return Object.values(schema.routines ?? {})
             .flatMap(routines => Object.values(routines))
             .filter(routine => matchFilter(routine, filter))
-            .map(routine => metadataRoutineToDetails(routine));
+            .map(routine => metadataRoutineToDetails(databaseId, schemaId, routine));
     } else {
         return Object.values(database.builtInRoutines ?? {})
             .flatMap(routines => Object.values(routines))
             .filter(routine => matchFilter(routine, filter))
-            .map(routine => metadataRoutineToDetails(routine));
+            .map(routine => metadataRoutineToDetails(databaseId, schemaId, routine));
     }
 }
 
@@ -371,12 +383,12 @@ export const getMetadataRoutine = (metadata: Metadata, databaseId: string, schem
             .flatMap(routines => Object.values(routines))
             .find(routine => matchId(routine, id));
         if (!routine) return undefined;
-        return metadataRoutineToDetails(routine);
+        return metadataRoutineToDetails(databaseId, schemaId, routine);
     } else {
         const routine = Object.values(database.builtInRoutines ?? {})
             .flatMap(routines => Object.values(routines))
             .find(routine => matchId(routine, id));
         if (!routine) return undefined;
-        return metadataRoutineToDetails(routine);
+        return metadataRoutineToDetails(databaseId, schemaId, routine);
     }
 }
