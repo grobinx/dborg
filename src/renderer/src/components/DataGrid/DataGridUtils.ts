@@ -158,40 +158,43 @@ export const fillInternalColumnInfo = async (metadata: MetadataQueryApi, columns
     // Zbierz unikalne ID do wyszukania
     const idsToFind = new Set<string>();
     for (const column of columns) {
-        if (column.info?.table && typeof column.info.table === 'number') {
+        if (column.info?.table) {
             idsToFind.add(column.info.table.toString());
         }
     }
 
-    // Buduj mapę tylko dla potrzebnych ID
-    const tableIdMap = new Map<string, { catalogName: string, schemaName: string, tableName: string, primaryKeyFields?: string[] }>();
+    if (idsToFind.size > 0) {
+        // Buduj mapę tylko dla potrzebnych ID
+        const tableIdMap = new Map<string, { catalogName: string, schemaName: string, tableName: string, primaryKeyFields?: string[] }>();
 
-    for (const database of await metadata.getDatabaseList({ filter: { connected: true } })) {
-        for (const schema of await database.getSchemaList()) {
-            for (const relation of await schema.getRelationList({ id: [...idsToFind] })) {
-                tableIdMap.set(relation.id, {
-                    catalogName: database.name,
-                    schemaName: schema.name,
-                    tableName: relation.name,
-                    primaryKeyFields: relation.primaryKey?.columns,
-                });
+        for (const database of await metadata.getDatabaseList({ filter: { connected: true } })) {
+            if (tableIdMap.size === idsToFind.size) break; // Znaleźliśmy wszystkie
+
+            for (const schema of await database.getSchemaList()) {
+                for (const relation of await schema.getRelationList({ id: [...idsToFind] })) {
+                    tableIdMap.set(relation.id, {
+                        catalogName: database.name,
+                        schemaName: schema.name,
+                        tableName: relation.name,
+                        primaryKeyFields: relation.primaryKey?.columns,
+                    });
+                    if (tableIdMap.size === idsToFind.size) break;
+                }
                 if (tableIdMap.size === idsToFind.size) break;
             }
-            if (tableIdMap.size === idsToFind.size) break;
         }
-        if (tableIdMap.size === idsToFind.size) break; // Znaleźliśmy wszystkie
-    }
 
-    // Wypełnij kolumny
-    for (const column of columns) {
-        if (!column.info?.table || typeof column.info.table === 'string') continue;
+        // Wypełnij kolumny
+        for (const column of columns) {
+            if (!column.info?.table || typeof column.info.table === 'string') continue;
 
-        const tableInfo = tableIdMap.get(column.info.table.toString());
-        if (tableInfo) {
-            column._catalogName = tableInfo.catalogName;
-            column._schemaName = tableInfo.schemaName;
-            column._tableName = tableInfo.tableName;
-            column._primaryKeyFields = tableInfo.primaryKeyFields;
+            const tableInfo = tableIdMap.get(column.info.table.toString());
+            if (tableInfo) {
+                column._catalogName = tableInfo.catalogName;
+                column._schemaName = tableInfo.schemaName;
+                column._tableName = tableInfo.tableName;
+                column._primaryKeyFields = tableInfo.primaryKeyFields;
+            }
         }
     }
 
