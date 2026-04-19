@@ -1,3 +1,4 @@
+import { RequiredOnly } from "../types";
 import { DatabaseMetadata, Metadata, MetadataObjectType, OwnedMetadataBase, RelationMetadata, RoutineMetadata, SchemaMetadata } from "./Metadata";
 
 /** Options for identifying a metadata entity */
@@ -8,18 +9,28 @@ export interface IdentityOptions {
     identity?: string;
 }
 
-/** Options for filtering metadata entities */
-export interface EntityFilter<T extends OwnedMetadataBase> {
+export interface EntityFilterIdentity {
     id?: string | string[];
     /** The name of the metadata entity */
     name?: string | string[] | RegExp;
     /** The owner of the metadata entity */
-    owner?: string | string[] | RegExp;
+    owner?: string | string[] | RegExp;  
+}
+
+/** Options for filtering metadata entities */
+export interface EntityFilter<T extends OwnedMetadataBase> extends EntityFilterIdentity {
     /** Additional properties to filter by, where the key is the property name and the value is the expected value or a regular expression to match against the property's value. */
-    filter?: Partial<Omit<T, "id" | "name" | "owner">>;
+    filter?: Partial<Omit<T, keyof EntityFilterIdentity>>;
 }
 
 export type IdentifierMatchMode = "exact" | "contains" | "startsWith" | "regex";
+
+export type ObjectFilters = Partial<{
+    database: DatabaseFilter;
+    schema: SchemaFilter;
+    relation: RelationFilter;
+    routine: RoutineFilter;
+}>;
 
 /** Options for searching identifier usage */
 export interface ObjectSearchOptions {
@@ -29,19 +40,24 @@ export interface ObjectSearchOptions {
     mode?: IdentifierMatchMode;
     /** Whether the search should be case-sensitive, default: false */
     caseSensitive?: boolean;
-    /** The types of objects to search for */
+    /** The types of objects to search for, if undefined, all types are considered */
     objectTypes?: Array<MetadataObjectType>;
     /** Additional filters to apply to the search, where the key is the object type and the value is a filter to apply to objects of that type. */
-    filters?: Partial<{
-        "database": DatabaseFilter;
-        "schema": SchemaFilter;
-        "relation": RelationFilter;
-        "routine": RoutineFilter;
-    }>;
+    filters?: ObjectFilters;
+}
+
+/** Options for finding objects */
+export interface ObjectFindOptions extends EntityFilterIdentity {
+    /** The types of objects to search for, if undefined, all types are considered */
+    objectTypes?: Array<MetadataObjectType>;
+    /** Additional filters to apply to the search, where the key is the object type and the value is a filter to apply to objects of that type. */
+    filters?: ObjectFilters;
 }
 
 /** Interface for querying metadata */
-export interface IdentifierUsageHit {
+export interface MetadataObjectHit {
+    /** The type of the object (relation, routine, etc.) */
+    objectType: MetadataObjectType;
     /** The ID of the database */
     databaseId: string;
     /** The name of the database */
@@ -54,10 +70,10 @@ export interface IdentifierUsageHit {
     objectId: string;
     /** The name of the object */
     objectName: string;
-    /** The type of the object (relation, routine, etc.) */
-    objectType: MetadataObjectType;
-    /** The kind of the object (table, view, function, procedure, etc.) */
-    objectKind?: string;
+}
+
+/** Interface for querying metadata */
+export interface IdentifierUsageHit extends MetadataObjectHit {
     /** The ID of the column, if applicable */
     matchedIdentifier: string;
 }
@@ -72,8 +88,10 @@ export interface MetadataQueryApi extends MetadataDetails {
     getDatabaseList(filter?: DatabaseFilter): Promise<DatabaseQueryApi[]>;
     /** Get a full specific database by its name or identity */
     getDatabase(id: string | IdentityOptions): Promise<DatabaseQueryApi | undefined>;
-   /** Search for usage of an identifier across the database, with various matching modes and filters */ 
+    /** Search for usage of an identifier across the database, with various matching modes and filters */
     searchIdentifierUsage(options: ObjectSearchOptions): Promise<IdentifierUsageHit[]>;
+    /** Find objects in the database based on various criteria and filters */
+    findObjects(options: ObjectFindOptions): Promise<RequiredOnly<MetadataObjectHit, "objectType">[]>;
 }
 
 export const createMetadataQueryApi = async (connectionId: string): Promise<MetadataQueryApi> => {
@@ -94,7 +112,11 @@ export const createMetadataQueryApi = async (connectionId: string): Promise<Meta
         searchIdentifierUsage: async (options: ObjectSearchOptions) => {
             const result: IdentifierUsageHit[] = await window.dborg.database.connection.metadata.searchIdentifierUsage(connectionId, options);
             return result;
-        }
+        },
+        findObjects: async (options: ObjectFindOptions) => {
+            const result: RequiredOnly<MetadataObjectHit, "objectType">[] = await window.dborg.database.connection.metadata.findObjects(connectionId, options);
+            return result;
+        },
     };
 };
 
@@ -243,11 +265,7 @@ const testFilterValue = (value: string, filter: string | string[] | RegExp): boo
     return filter.test(value); // RegExp test
 }
 
-/**
- * Match item against filter criteria
- * Optimized with early exit strategy and minimal allocations
- */
-const matchFilter = <T extends OwnedMetadataBase>(item: T, filter?: EntityFilter<T>): boolean => {
+const matchIdentity = <T extends OwnedMetadataBase>(item: T, filter: EntityFilterIdentity): boolean => {
     if (!filter) return true;
 
     if (filter.id !== undefined && !testFilterValue(item.id, filter.id)) return false;
@@ -255,6 +273,19 @@ const matchFilter = <T extends OwnedMetadataBase>(item: T, filter?: EntityFilter
     if (filter.name !== undefined && !testFilterValue(item.name, filter.name)) return false;
 
     if (filter.owner !== undefined && (!item.owner || !testFilterValue(item.owner, filter.owner))) return false;
+
+    return true;
+}
+
+
+/**
+ * Match item against filter criteria
+ * Optimized with early exit strategy and minimal allocations
+ */
+const matchFilter = <T extends OwnedMetadataBase>(item: T, filter?: EntityFilter<T>): boolean => {
+    if (!filter) return true;
+
+    if (!matchIdentity(item, filter)) return false;
 
     if (filter.filter) {
         // Only iterate if filter.filter has keys
@@ -476,7 +507,7 @@ const allowObjectType = (
     return filter.includes(objectType);
 };
 
-export const getMetadataIdentifierUsage = (
+export const searchIdentifierUsage = (
     metadata: Metadata,
     options: ObjectSearchOptions
 ): IdentifierUsageHit[] => {
@@ -490,8 +521,8 @@ export const getMetadataIdentifierUsage = (
 
     for (const database of Object.values(metadata.databases ?? {}).filter(db => matchFilter(db, options.filters?.database))) {
         for (const schema of Object.values(database.schemas ?? {}).filter(schema => matchFilter(schema, options.filters?.schema))) {
-            if (allowObjectType("relation", options.objectTypes)) {
-                for (const relation of Object.values(schema.relations ?? {})) {
+            if (!options.objectTypes || allowObjectType("relation", options.objectTypes)) {
+                for (const relation of Object.values(schema.relations ?? {}).filter(relation => matchFilter(relation, options.filters?.relation))) {
                     for (const id of relation.identifiers ?? []) {
                         if (!matchesIdentifier(id, query, mode, caseSensitive)) continue;
 
@@ -503,16 +534,15 @@ export const getMetadataIdentifierUsage = (
                             objectId: relation.id,
                             objectName: relation.name,
                             objectType: "relation",
-                            objectKind: relation.relationType,
                             matchedIdentifier: id,
                         });
                     }
                 }
             }
 
-            if (allowObjectType("routine", options.objectTypes)) {
+            if (!options.objectTypes || allowObjectType("routine", options.objectTypes)) {
                 for (const routineGroup of Object.values(schema.routines ?? {})) {
-                    for (const routine of Object.values(routineGroup)) {
+                    for (const routine of Object.values(routineGroup).filter(routine => matchFilter(routine, options.filters?.routine))) {
                         for (const id of routine.identifiers ?? []) {
                             if (!matchesIdentifier(id, query, mode, caseSensitive)) continue;
 
@@ -524,7 +554,6 @@ export const getMetadataIdentifierUsage = (
                                 objectId: routine.id,
                                 objectName: routine.name,
                                 objectType: "routine",
-                                objectKind: routine.routineType,
                                 matchedIdentifier: id,
                             });
                         }
@@ -536,3 +565,105 @@ export const getMetadataIdentifierUsage = (
 
     return result;
 };
+
+export const findObjects = (
+    metadata: Metadata,
+    options: ObjectFindOptions
+): RequiredOnly<MetadataObjectHit, "objectType">[] => {
+    const result: RequiredOnly<MetadataObjectHit, "objectType">[] = [];
+
+    for (const database of Object.values(metadata.databases ?? {}).filter(db => matchFilter(db, options.filters?.database))) {
+        if ((!options.objectTypes || allowObjectType("database", options.objectTypes)) && matchIdentity(database, options)) {
+            result.push({
+                objectType: "database",
+                databaseId: database.id,
+                databaseName: database.name,
+            });
+        }
+        for (const schema of Object.values(database.schemas ?? {}).filter(schema => matchFilter(schema, options.filters?.schema))) {
+            if ((!options.objectTypes || allowObjectType("schema", options.objectTypes)) && matchIdentity(schema, options)) {
+                result.push({
+                    objectType: "schema",
+                    databaseId: database.id,
+                    databaseName: database.name,
+                    schemaId: schema.id,
+                    schemaName: schema.name,
+                });
+            }
+            if (!options.objectTypes || allowObjectType("relation", options.objectTypes)) {
+                for (const relation of Object.values(schema.relations ?? {}).filter(relation => matchFilter(relation, options.filters?.relation))) {
+                    if (!matchIdentity(relation, options)) continue;
+                    result.push({
+                        objectType: "relation",
+                        databaseId: database.id,
+                        databaseName: database.name,
+                        schemaId: schema.id,
+                        schemaName: schema.name,
+                        objectId: relation.id,
+                        objectName: relation.name,
+                    });
+                }
+            }
+            if (!options.objectTypes || allowObjectType("routine", options.objectTypes)) {
+                for (const routineGroup of Object.values(schema.routines ?? {})) {
+                    for (const routine of Object.values(routineGroup).filter(routine => matchFilter(routine, options.filters?.routine))) {
+                        if (!matchIdentity(routine, options)) continue;
+                        result.push({
+                            objectType: "routine",
+                            databaseId: database.id,
+                            databaseName: database.name,
+                            schemaId: schema.id,
+                            schemaName: schema.name,
+                            objectId: routine.id,
+                            objectName: routine.name,
+                        });
+                    }
+                }
+            }
+            if (!options.objectTypes || allowObjectType("sequence", options.objectTypes)) {
+                for (const sequence of Object.values(schema.sequences ?? {}).filter(sequence => matchFilter(sequence, options.filters?.relation))) {
+                    if (!matchIdentity(sequence, options)) continue;
+                    result.push({
+                        objectType: "sequence",
+                        databaseId: database.id,
+                        databaseName: database.name,
+                        schemaId: schema.id,
+                        schemaName: schema.name,
+                        objectId: sequence.id,
+                        objectName: sequence.name,
+                    });
+                }
+            }
+            if (!options.objectTypes || allowObjectType("type", options.objectTypes)) {
+                for (const type of Object.values(schema.types ?? {}).filter(type => matchFilter(type, options.filters?.relation))) {
+                    if (!matchIdentity(type, options)) continue;
+                    result.push({
+                        objectType: "type",
+                        databaseId: database.id,
+                        databaseName: database.name,
+                        schemaId: schema.id,
+                        schemaName: schema.name,
+                        objectId: type.id,
+                        objectName: type.name,
+                    });
+                }
+            }
+            if (!options.objectTypes || allowObjectType("package", options.objectTypes)) {
+                for (const pkg of Object.values(schema.packages ?? {}).filter(pkg => matchFilter(pkg, options.filters?.relation))) {
+                    if (!matchIdentity(pkg, options)) continue;
+                    result.push({
+                        objectType: "package",
+                        databaseId: database.id,
+                        databaseName: database.name,
+                        schemaId: schema.id,
+                        schemaName: schema.name,
+                        objectId: pkg.id,
+                        objectName: pkg.name,
+                    });
+                }
+            }
+        }
+    }
+
+    return result;
+}

@@ -6,7 +6,8 @@ import { ipcMain, ipcRenderer, IpcMainInvokeEvent, IpcRendererEvent } from "elec
 import internal from '../../core/db/internal';
 import { handleResult, invokeResult, InvokeResult, invokeViaLocalResult } from '../../../api/ipc-helpers';
 import { handleWithLocalResult } from '../../../../src/api/rpc-http';
-import { DatabaseFilter, DatabaseDetails, getMetadata, getMetadataDatabase, getMetadataDatabaseList, IdentityOptions, MetadataDetails, SchemaFilter, getMetadataSchemaList, getMetadataSchema, SchemaDetails, getMetadataRoutineList, RoutineDetails, RoutineFilter, getMetadataRoutine, getMetadataRelationList, getMetadataRelation, RelationFilter, RelationDetails, ObjectSearchOptions, IdentifierUsageHit, getMetadataIdentifierUsage } from '../../../../src/api/db/MetadataQuery';
+import { DatabaseFilter, DatabaseDetails, getMetadata, getMetadataDatabase, getMetadataDatabaseList, IdentityOptions, MetadataDetails, SchemaFilter, getMetadataSchemaList, getMetadataSchema, SchemaDetails, getMetadataRoutineList, RoutineDetails, RoutineFilter, getMetadataRoutine, getMetadataRelationList, getMetadataRelation, RelationFilter, RelationDetails, ObjectSearchOptions, IdentifierUsageHit, searchIdentifierUsage, ObjectFindOptions, MetadataObjectHit, findObjects } from '../../../../src/api/db/MetadataQuery';
+import { RequiredOnly } from 'src/api/types';
 
 // Driver events
 const EVENT_DRIVER_GET_DRIVERS = "dborg:database:driver:getDrivers";
@@ -34,6 +35,7 @@ const EVENT_METADATA_QUERY_GET_METADATA = "dborg:database:metadataQuery:getMetad
 const EVENT_METADATA_QUERY_GET_DATABASE_LIST = "dborg:database:metadataQuery:getDatabaseList";
 const EVENT_METADATA_QUERY_GET_DATABASE = "dborg:database:metadataQuery:getDatabase";
 const EVENT_METADATA_QUERY_SEARCH_IDENTIFIER_USAGE = "dborg:database:metadataQuery:searchIdentifierUsage";
+const EVENT_METADATA_QUERY_FIND_OBJECTS = "dborg:database:metadataQuery:findObjects";
 const EVENT_METADATA_QUERY_GET_SCHEMA_LIST = "dborg:database:metadataQuery:getSchemaList";
 const EVENT_METADATA_QUERY_GET_SCHEMA = "dborg:database:metadataQuery:getSchema";
 const EVENT_METADATA_QUERY_GET_ROUTINE_LIST = "dborg:database:metadataQuery:getRoutineList";
@@ -371,7 +373,21 @@ export function init(): void {
                     throw ConnectionError(connectionId);
                 }
                 const metadata = await foundConnection.getMetadata();
-                return getMetadataIdentifierUsage(metadata, options);
+                return searchIdentifierUsage(metadata, options);
+            });
+        }
+    );
+
+    ipcMain.handle(
+        EVENT_METADATA_QUERY_FIND_OBJECTS,
+        async (_: IpcMainInvokeEvent, connectionId: string, options: ObjectFindOptions): Promise<InvokeResult> => {
+            return handleResult<RequiredOnly<MetadataObjectHit, "objectType">[]>(async () => {
+                const foundConnection = driver.Driver.getConnection(connectionId);
+                if (!foundConnection) {
+                    throw ConnectionError(connectionId);
+                }
+                const metadata = await foundConnection.getMetadata();
+                return findObjects(metadata, options);
             });
         }
     );
@@ -500,6 +516,7 @@ export const preload = {
             getDatabaseList: (connectionId: string, filter?: DatabaseFilter): Promise<DatabaseDetails[]> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_DATABASE_LIST, connectionId, filter)),
             getDatabase: (connectionId: string, id: string | IdentityOptions): Promise<DatabaseDetails | undefined> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_DATABASE, connectionId, id)),
             searchIdentifierUsage: (connectionId: string, options: ObjectSearchOptions): Promise<IdentifierUsageHit[]> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_SEARCH_IDENTIFIER_USAGE, connectionId, options)),
+            findObjects: (connectionId: string, options: ObjectFindOptions): Promise<RequiredOnly<MetadataObjectHit, "objectType">[]> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_FIND_OBJECTS, connectionId, options)),
             getSchemaList: (connectionId: string, databaseId: string, filter?: SchemaFilter): Promise<SchemaDetails[]> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_SCHEMA_LIST, connectionId, databaseId, filter)),
             getSchema: (connectionId: string, databaseId: string, id: string | IdentityOptions): Promise<SchemaDetails | undefined> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_SCHEMA, connectionId, databaseId, id)),
             getRoutineList: (connectionId: string, databaseId: string, schemaId: string | undefined, filter?: RoutineFilter): Promise<RoutineDetails[]> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_ROUTINE_LIST, connectionId, databaseId, schemaId, filter)),

@@ -1,5 +1,5 @@
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
-import { DatabaseMetadata, Metadata, MetadataObjectType, RelationMetadata, RoutineMetadata, SchemaMetadata, SequenceMetadata, TypeMetadata } from "../../../../../../src/api/db";
+import { MetadataObjectType, RelationMetadata, RoutineMetadata, SchemaMetadata, SequenceMetadata, TypeMetadata } from "../../../../../../src/api/db";
 import { t } from "i18next";
 
 export type RiskLevel = "low" | "medium" | "high" | "critical";
@@ -323,17 +323,6 @@ export class ObjectSafetyAnalyzer {
     }
 
     /**
-     * Pełna ocena wszystkich operacji na relacji
-     */
-    assessRelation(relation: RelationMetadata, currentOwner?: string): ObjectSafetyAssessment {
-        return {
-            canDelete: this.assessDeletion(relation),
-            canMove: this.assessRelationMove(relation),
-            canChangeOwner: this.assessChangeOwner(relation, currentOwner)
-        };
-    }
-
-    /**
      * Ocena dla rutyny (funkcji/procedury)
      */
     assessRoutineDeletion(routine: RoutineMetadata, usage?: Array<any>): OperationRisk {
@@ -434,7 +423,7 @@ export class ObjectSafetyAnalyzer {
     ): Promise<Array<{ type: MetadataObjectType; name: string; location: string }>> {
         const metadata = await this.session.getMetadataQuery();
 
-        if (metadata.status !== "ready") {
+        if (metadata.status !== "ready" || !metadata.collected?.identifiers) {
             return [];
         }
 

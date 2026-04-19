@@ -115,6 +115,7 @@ declare global {
                         getDatabase: (connectionId: string, id: string | IdentityOptions) => Promise<DatabaseDetails | undefined>,
                         getSchemaList: (connectionId: string, databaseId: string, filter?: SchemaFilter) => Promise<SchemaDetails[]>,
                         searchIdentifierUsage: (connectionId: string, options: ObjectSearchOptions) => Promise<IdentifierUsageHit[]>,
+                        findObjects: (connectionId: string, options: ObjectFindOptions) => Promise<RequiredOnly<MetadataObjectHit, "objectType">[]>,
                         getSchema: (connectionId: string, databaseId: string, id: string | IdentityOptions) => Promise<SchemaDetails | undefined>,
                         getRelationList: (connectionId: string, databaseId: string, schemaId: string | undefined, filter?: RelationFilter) => Promise<RelationDetails[]>,
                         getRelation: (connectionId: string, databaseId: string, schemaId: string | undefined, id: string | IdentityOptions) => Promise<RelationDetails | undefined>,
