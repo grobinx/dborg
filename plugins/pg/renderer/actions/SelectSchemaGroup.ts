@@ -29,20 +29,20 @@ export const SelectSchemaGroup = (
             const actions: Action<any>[] = [];
             let schemas: string[] = [];
 
-            if (session.metadata) {
-                const database: DatabaseMetadata | null = session.metadata ? Object.values(session.metadata).find((db) => db.connected) : null;
+            const metadata = await session.getMetadataQuery();
 
-                // Wyciąganie i sortowanie schematów według nazwy
-                const foundSchemas = Object.values(database?.schemas ?? {}).sort((a, b) =>
-                    (a.name as string).localeCompare(b.name as string)
-                ).map((schema) => schema.name as string);
+            if (metadata.status === "ready") {
+                const foundSchemas: string[] = [];
+
+                for (const database of await metadata.getDatabaseList({ filter: { connected: true } })) {
+                    const schemas = await database.getSchemaList();
+                    foundSchemas.push(...schemas.map(schema => schema.name));
+                }
 
                 if (foundSchemas.length > 0) {
-                    schemas = foundSchemas;
+                    schemas = foundSchemas.sort((a, b) => a.localeCompare(b));
                 }
-            }
-
-            if (schemas.length === 0) {
+            } else {
                 try {
                     const { rows } = await session.query(sql);
                     if (rows.length !== 0) {
