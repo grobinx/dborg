@@ -218,7 +218,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                 id: `${this.mainDatabaseName}.${tableName}`,
                 name: tableName,
                 identity: tableName,
-                type: isView ? 'view' : 'table',
+                relationType: isView ? 'view' : 'table',
                 kind: 'regular',
                 owner: null,
                 description: null,
@@ -307,7 +307,7 @@ export class MetadataCollector implements api.IMetadataCollector {
 
         for (const [tableName, relation] of Object.entries(schema.relations)) {
             if (name && tableName !== name) continue;
-            if (relation.type === 'view') continue; // Widoki nie mają statystyk
+            if (relation.relationType === 'view') continue; // Widoki nie mają statystyk
 
             try {
                 const countResult = await this.queryOne<{ count: number }>(
@@ -343,7 +343,7 @@ export class MetadataCollector implements api.IMetadataCollector {
 
         for (const [tableName, relation] of Object.entries(schema.relations)) {
             if (name && tableName !== name) continue;
-            if (relation.type === 'view') continue;
+            if (relation.relationType === 'view') continue;
 
             const indexes = await this.query<{
                 seqno: number;
@@ -408,7 +408,7 @@ export class MetadataCollector implements api.IMetadataCollector {
 
         for (const [tableName, relation] of Object.entries(schema.relations)) {
             if (name && tableName !== name) continue;
-            if (relation.type === 'view') continue;
+            if (relation.relationType === 'view') continue;
 
             const fkList = await this.query<{
                 id: number;

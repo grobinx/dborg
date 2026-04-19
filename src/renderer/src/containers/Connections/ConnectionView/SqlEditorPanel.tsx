@@ -319,17 +319,15 @@ export const SqlEditorContent: React.FC<SqlEditorContentProps> = (props) => {
                 rows: any[];
             } | null = null;
 
-            if (session.metadata) {
-                result = await CommandProcessor.processCommand(query, await session.getMetadataQuery());
-                if (result) {
-                    queueMessage(SQL_EDITOR_SHOW_STRUCTURE, {
-                        to: session.info.connectionId,
-                        from: itemID,
-                        data: result.rows,
-                        columns: result.columns,
-                    });
-                    return;
-                }
+            result = await CommandProcessor.processCommand(query, await session.getMetadataQuery());
+            if (result) {
+                queueMessage(SQL_EDITOR_SHOW_STRUCTURE, {
+                    to: session.info.connectionId,
+                    from: itemID,
+                    data: result.rows,
+                    columns: result.columns,
+                });
+                return;
             }
 
             //console.log(extractSqlParameters(query));

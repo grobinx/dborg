@@ -310,6 +310,7 @@ export class MetadataCollector implements api.IMetadataCollector {
             else {
                 this.metadata.databases[row.name] = {
                     ...row,
+                    objectType: "database",
                     schemas: {},
                     builtInRelations: {},
                     builtInRoutines: {},
@@ -367,6 +368,7 @@ export class MetadataCollector implements api.IMetadataCollector {
             else {
                 database.schemas[row.name] = {
                     ...row,
+                    objectType: "schema",
                     relations: {},
                     routines: {},
                     types: {},
@@ -400,7 +402,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                 case
                     when c.relkind in ('r', 'f', 'p', 't') then 'table'
                     when c.relkind in ('v', 'm') then 'view'
-                end as type,
+                end as "relationType",
                 case
                     when c.relkind in ('r', 'v') then 'regular'
                     when c.relkind = 'f' then 'foreign'
@@ -461,6 +463,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                     schema.relations[row.name] = {
                         ...row,
                         columns: [],
+                        objectType: "relation",
                     };
                 }
             }
@@ -563,7 +566,7 @@ export class MetadataCollector implements api.IMetadataCollector {
             select f.oid::text as id, n.nspname as schema_name, pg_get_userbyid(f.proowner) as owner, 
                 f.proname as name,
                 format('%I(%s)', f.proname, pg_get_function_identity_arguments(f.oid)) as identity,
-                ${v11OrHigher ? "case when f.prokind in ('a', 'w', 'f') then 'function' when f.prokind = 'p' then 'procedure' end" : "'function'"} as type,
+                ${v11OrHigher ? "case when f.prokind in ('a', 'w', 'f') then 'function' when f.prokind = 'p' then 'procedure' end" : "'function'"} as "routineType",
                 case 
                     when t.typname = 'trigger' then 'trigger'
                     when ${v11OrHigher ? "f.prokind = 'a'" : "f.proisagg"} then 'aggregate'
@@ -638,7 +641,8 @@ export class MetadataCollector implements api.IMetadataCollector {
                 }
                 else {
                     schema.routines![row.name] = [{
-                        ...row
+                        ...row,
+                        objectType: "routine"
                     }];
                 }
             }
@@ -1135,6 +1139,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                 else {
                     schema.types![row.name] = {
                         ...row,
+                        objectType: "type"
                     };
                 }
             }
@@ -1215,6 +1220,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                 else {
                     schema.sequences![row.name] = {
                         ...row,
+                        objectType: "sequence",
                     };
                 }
             }

@@ -337,7 +337,7 @@ export class CommandProcessor {
                 const relations = relationLists[i] ?? [];
 
                 for (const relation of relations) {
-                    if (type && relation.type !== type) {
+                    if (type && relation.relationType !== type) {
                         continue;
                     }
 
@@ -346,7 +346,7 @@ export class CommandProcessor {
                         schema: schema.name,
                         owner: relation.owner,
                         relation: relation.name,
-                        type: relation.type,
+                        type: relation.relationType,
                         kind: relation.kind,
                         columns: relation.columns?.length ?? 0,
                         description: relation.description,
@@ -398,7 +398,7 @@ export class CommandProcessor {
                 const overloadByName = new Map<string, number>();
 
                 for (const routine of routines) {
-                    if (type && routine.type !== type) {
+                    if (type && routine.routineType !== type) {
                         continue;
                     }
 
@@ -411,7 +411,7 @@ export class CommandProcessor {
                         owner: routine.owner,
                         overload,
                         routine: routine.name,
-                        type: routine.type,
+                        type: routine.routineType,
                         kind: routine.kind,
                         arguments: routine.arguments?.length ?? 0,
                         description: routine.description,
@@ -465,7 +465,7 @@ export class CommandProcessor {
                         schema: item.schema.name,
                         object: relation.name,
                         owner: relation.owner,
-                        type: relation.type,
+                        type: relation.relationType,
                         kind: relation.kind,
                         description: relation.description,
                     });
@@ -477,7 +477,7 @@ export class CommandProcessor {
                         schema: item.schema.name,
                         object: routine.name,
                         owner: routine.owner,
-                        type: routine.type,
+                        type: routine.routineType,
                         kind: routine.kind,
                         description: routine.description,
                     });

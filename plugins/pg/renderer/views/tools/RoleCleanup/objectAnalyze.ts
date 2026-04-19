@@ -1,5 +1,5 @@
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
-import { DatabaseMetadata, Metadata, RelationMetadata, RoutineMetadata, SchemaMetadata, SequenceMetadata, TypeMetadata } from "../../../../../../src/api/db";
+import { DatabaseMetadata, Metadata, MetadataObjectType, RelationMetadata, RoutineMetadata, SchemaMetadata, SequenceMetadata, TypeMetadata } from "../../../../../../src/api/db";
 import { t } from "i18next";
 
 export type RiskLevel = "low" | "medium" | "high" | "critical";
@@ -18,12 +18,12 @@ export interface ObjectSafetyAssessment {
 
 export interface AnalysisResult {
     found: boolean;
-    objectType?: "relation" | "routine" | "schema" | "sequence" | "type";
+    objectType?: MetadataObjectType;
     objectName?: string;
     schemaName?: string;
     assessment?: ObjectSafetyAssessment;
     usedInIdentifiers?: {
-        type: "relation" | "routine";
+        type: MetadataObjectType;
         name: string;
         location: string;
     }[];
@@ -32,69 +32,9 @@ export interface AnalysisResult {
 
 export class ObjectSafetyAnalyzer {
     private session: IDatabaseSession;
-    private identifiersCache: Map<string, Array<{ database: DatabaseMetadata, schema: SchemaMetadata, object: RoutineMetadata | RelationMetadata }>> = new Map();
 
     constructor(session: IDatabaseSession) {
         this.session = session;
-        // Initialize cache when metadata becomes available
-        session.getMetadata().then(metadata => {
-            this.prepareIdentifierCache(metadata);
-        }).catch(error => {
-            console.error("Failed to prepare identifier cache:", error);
-        });
-    }
-
-    private prepareIdentifierCache(metadata: Metadata): void {
-        if (!metadata?.databases) {
-            return;
-        }
-        const database = Object.values(metadata.databases).find(db => db.connected);
-
-        if (!database) {
-            return;
-        }
-
-        this.identifiersCache.clear();
-        Object.entries(database.schemas).forEach(([_schemaName, schema]) => {
-            // Relacje
-            Object.entries(schema.relations).forEach(([_relName, relation]) => {
-                if (relation.identifiers && relation.identifiers.length > 0) {
-                    relation.identifiers.forEach(id => {
-                        const key = id.toLowerCase().trim();
-                        if (!this.identifiersCache.has(key)) {
-                            this.identifiersCache.set(key, []);
-                        }
-                        this.identifiersCache.get(key)!.push({
-                            database,
-                            schema,
-                            object: relation
-                        });
-                    });
-                }
-            });
-
-            // Rutyny
-            if (schema.routines) {
-                Object.entries(schema.routines).forEach(([_routineName, routineList]) => {
-                    routineList.forEach((routine) => {
-                        if (routine.identifiers && routine.identifiers.length > 0) {
-                            routine.identifiers.forEach(id => {
-                                const key = id.toLowerCase().trim();
-                                if (!this.identifiersCache.has(key)) {
-                                    this.identifiersCache.set(key, []);
-                                }
-                                this.identifiersCache.get(key)!.push({
-                                    database,
-                                    schema,
-                                    object: routine
-                                });
-                            });
-                        }
-                    });
-                });
-            }
-        });
-
     }
 
     /**
@@ -105,7 +45,7 @@ export class ObjectSafetyAnalyzer {
         let level: RiskLevel = "low";
 
         // Sprawdzenie typu relacji
-        if (relation.type === "view") {
+        if (relation.relationType === "view") {
             details.push(t("relation-is-view-safe-to-delete", "Relation is a view - safe to delete"));
         } else if (relation.kind === "temporary") {
             details.push(t("relation-is-temporary-table-safe-to-delete", "Relation is a temporary table - safe to delete"));
@@ -187,7 +127,7 @@ export class ObjectSafetyAnalyzer {
         }
 
         // Sprawdzenie typu relacji
-        if (relation.type === "view") {
+        if (relation.relationType === "view") {
             level = level === "low" ? "medium" : level;
             details.push(t("relation-view-has-references", "Views can contain references to other objects"));
         }
@@ -400,9 +340,9 @@ export class ObjectSafetyAnalyzer {
         const details: string[] = [];
         let level: RiskLevel = "low";
 
-        if (routine.type === "function") {
+        if (routine.routineType === "function") {
             details.push(t("routine-function-usage", "Function - check if used in column expressions or views"));
-        } else if (routine.type === "procedure") {
+        } else if (routine.routineType === "procedure") {
             details.push(t("routine-procedure-usage", "Procedure - check if called by the application"));
         }
 
@@ -488,84 +428,41 @@ export class ObjectSafetyAnalyzer {
      * Sprawdza gdzie dany obiekt jest używany w identifiers (funkcjach, widokach, etc.)
      * Teraz korzysta z identifiersCache dla szybszego działania.
      */
-    private findObjectUsageInIdentifiers(
+    private async findObjectUsageInIdentifiers(
         objectName: string,
         schemaName: string
-    ): Array<{ type: "relation" | "routine"; name: string; location: string }> {
-        const usage: Array<{ type: "relation" | "routine"; name: string; location: string }> = [];
+    ): Promise<Array<{ type: MetadataObjectType; name: string; location: string }>> {
+        const metadata = await this.session.getMetadataQuery();
+
+        if (metadata.status !== "ready") {
+            return [];
+        }
+
+        const usage: Array<{ type: MetadataObjectType; name: string; location: string }> = [];
         const keyVariants = [
             objectName.toLowerCase().trim(),
             `${schemaName.toLowerCase().trim()}.${objectName.toLowerCase().trim()}`,
             `"${schemaName}"."${objectName}"`
         ];
 
-        // Przeszukaj cache po wszystkich wariantach klucza
-        for (const key of keyVariants) {
-            const found = this.identifiersCache.get(key);
-            if (found) {
-                found.forEach(obj => {
-                    if (obj.object.type === "view") {
-                        usage.push({
-                            type: "relation",
-                            name: `${obj.schema.identity}.${obj.object.name}`,
-                            location: obj.object.type
-                        });
-                    } else if (obj.object.type === "function" || obj.object.type === "procedure") {
-                        usage.push({
-                            type: "routine",
-                            name: `${obj.schema.identity}.${obj.object.name}`,
-                            location: `${obj.object.type}/${obj.object.kind || "regular"}`
-                        });
-                    }
-                });
+        const found = await metadata.searchIdentifierUsage({
+            query: objectName,
+            mode: "exact",
+            objectTypes: ["relation", "routine"],
+            filters: {
+                database: { filter: { connected: true } }
             }
-        }
+        });
 
-        // Dodatkowo, jeśli identyfikator jest zagnieżdżony (np. w kodzie), sprawdź regex
-        // (opcjonalnie, jeśli chcesz pełną zgodność jak poprzednio)
-        // Możesz dodać fallback do starej logiki jeśli chcesz
+        for (const hit of found) {
+            usage.push({
+                type: hit.objectType,
+                name: hit.objectName,
+                location: `${hit.schemaName}.${hit.objectName}`
+            });
+        }
 
         return usage;
-    }
-
-    /**
-     * Sprawdza czy identyfikator zawiera odniesienie do obiektu
-     */
-    private matchesIdentifier(identifier: string, objectName: string, schemaName: string): boolean {
-        // Normalizuj identyfikatory do porównania
-        const normalizedId = identifier.toLowerCase().trim();
-        const normalizedName = objectName.toLowerCase().trim();
-        const normalizedSchema = schemaName.toLowerCase().trim();
-
-        // Dokładne dopasowanie nazwy obiektu
-        if (normalizedId === normalizedName) {
-            return true;
-        }
-
-        // Dopasowanie w formacie schema.object
-        if (normalizedId === `${normalizedSchema}.${normalizedName}`) {
-            return true;
-        }
-
-        // Dopasowanie w formacie "schema"."object"
-        if (normalizedId === `"${schemaName}"."${objectName}"`) {
-            return true;
-        }
-
-        // Sprawdzenie czy identyfikator zawiera nazwę obiektu jako słowo kluczowe
-        const regex = new RegExp(`\\b${this.escapeRegex(normalizedName)}\\b`, "i");
-        if (regex.test(normalizedId)) {
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Escapuje znaki specjalne do regex
-     */
-    private escapeRegex(str: string): string {
-        return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     }
 
     private getRiskMessage(operation: string, level: RiskLevel): string {
@@ -625,7 +522,7 @@ export class ObjectSafetyAnalyzer {
             // Szukaj relacji (tabela/widok)
             const relation = schema.relations[objectName];
             if (relation) {
-                const usage = this.findObjectUsageInIdentifiers(objectName, schemaName);
+                const usage = await this.findObjectUsageInIdentifiers(objectName, schemaName);
                 return {
                     found: true,
                     objectType: "relation",
@@ -645,7 +542,7 @@ export class ObjectSafetyAnalyzer {
                 const routineList = schema.routines[objectName];
                 if (routineList && routineList.length > 0) {
                     const routine = routineList[0]; // Analizuj pierwszy overload
-                    const usage = this.findObjectUsageInIdentifiers(objectName, schemaName);
+                    const usage = await this.findObjectUsageInIdentifiers(objectName, schemaName);
                     return {
                         found: true,
                         objectType: "routine",
@@ -665,7 +562,7 @@ export class ObjectSafetyAnalyzer {
             if (schema.sequences) {
                 const sequence = schema.sequences[objectName];
                 if (sequence) {
-                    const usage = this.findObjectUsageInIdentifiers(objectName, schemaName);
+                    const usage = await this.findObjectUsageInIdentifiers(objectName, schemaName);
                     return {
                         found: true,
                         objectType: "sequence",
@@ -685,7 +582,7 @@ export class ObjectSafetyAnalyzer {
             if (schema.types) {
                 const type = schema.types[objectName];
                 if (type) {
-                    const usage = this.findObjectUsageInIdentifiers(objectName, schemaName);
+                    const usage = await this.findObjectUsageInIdentifiers(objectName, schemaName);
                     return {
                         found: true,
                         objectType: "type",

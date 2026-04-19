@@ -1,7 +1,17 @@
 import internal from "src/main/core/db/internal";
 import { DatabaseFilter, DatabaseDetails, EntityFilter, IdentityOptions, MetadataQueryApi } from "./MetadataQuery";
 
-export const METADATA_VERSION = 11;
+export const METADATA_VERSION = 12;
+
+export type MetadataObjectType = 
+    | "relation" 
+    | "routine" 
+    | "type" 
+    | "package" 
+    | "sequence" 
+    | "schema" 
+    | "database" 
+    | "unknown"; 
 
 /** Options for collecting metadata */
 export interface MetadataCollectionOptions {
@@ -64,6 +74,7 @@ export interface MetadataBase {
 }
 
 export interface OwnedMetadataBase extends MetadataBase {
+    objectType: MetadataObjectType;
     /** Owner of the object */
     owner?: string | null;
     /** Creation timestamp */
@@ -83,6 +94,8 @@ export interface DatabasePermissions {
 
 /** Main structure describing the database */
 export interface DatabaseMetadata extends OwnedMetadataBase {
+    objectType: "database";
+
     /** Permissions assigned to the database */
     permissions?: DatabasePermissions;
 
@@ -116,6 +129,8 @@ export type SchemaPermissions = {
 
 /** Structure describing a schema */
 export interface SchemaMetadata extends OwnedMetadataBase {
+    objectType: "schema";
+
     /** Whether the schema is the default schema for logged user, can be more than one */
     default?: boolean | null;
 
@@ -148,6 +163,8 @@ export interface RoutinePermissions {
 
 /** Structure describing a package */
 export interface PackageMetadata extends OwnedMetadataBase {
+    objectType: "package";
+
     /** Permissions assigned to the package */
     permissions?: RoutinePermissions;
 
@@ -163,8 +180,10 @@ export type RoutineKind = "regular" | "trigger" | "aggregate" | "window" | "set-
 
 /** Structure describing a function overload */
 export interface RoutineMetadata extends OwnedMetadataBase {
+    objectType: "routine";
+
     /** Routine type */
-    type: RoutineType;
+    routineType: RoutineType;
 
     /** Routine kind */
     kind?: RoutineKind;
@@ -256,8 +275,10 @@ export interface RelationStatsMetadata {
 
 /** Structure describing a table */
 export interface RelationMetadata extends OwnedMetadataBase {
+    objectType: "relation";
+
     /** Type of the relation */
-    type: RelationType;
+    relationType: RelationType;
 
     /** Kind of the relation */
     kind?: RelationKind | null;
@@ -453,6 +474,8 @@ export type SequencePermissions = {
 
 /** Structure describing a sequence */
 export interface SequenceMetadata extends OwnedMetadataBase {
+    objectType: "sequence";
+
     /** Permissions assigned to the sequence */
     permissions?: SequencePermissions;
 
@@ -485,6 +508,8 @@ export type TypePermissions = {
 
 /** Structure describing a user-defined type */
 export interface TypeMetadata extends OwnedMetadataBase {
+    objectType: "type";
+
     /** Permissions assigned to the type */
     permissions?: TypePermissions;
 

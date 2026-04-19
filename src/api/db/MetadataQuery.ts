@@ -1,4 +1,4 @@
-import { DatabaseMetadata, Metadata, OwnedMetadataBase, RelationMetadata, RoutineMetadata, SchemaMetadata } from "./Metadata";
+import { DatabaseMetadata, Metadata, MetadataObjectType, OwnedMetadataBase, RelationMetadata, RoutineMetadata, SchemaMetadata } from "./Metadata";
 
 /** Options for identifying a metadata entity */
 export interface IdentityOptions {
@@ -19,6 +19,49 @@ export interface EntityFilter<T extends OwnedMetadataBase> {
     filter?: Partial<Omit<T, "id" | "name" | "owner">>;
 }
 
+export type IdentifierMatchMode = "exact" | "contains" | "startsWith" | "regex";
+
+/** Options for searching identifier usage */
+export interface ObjectSearchOptions {
+    /** The identifier to search for (e.g. table name, column name, etc.) */
+    query: string;
+    /** The mode to use for matching the identifier, default: "contains" */
+    mode?: IdentifierMatchMode;
+    /** Whether the search should be case-sensitive, default: false */
+    caseSensitive?: boolean;
+    /** The types of objects to search for */
+    objectTypes?: Array<MetadataObjectType>;
+    /** Additional filters to apply to the search, where the key is the object type and the value is a filter to apply to objects of that type. */
+    filters?: Partial<{
+        "database": DatabaseFilter;
+        "schema": SchemaFilter;
+        "relation": RelationFilter;
+        "routine": RoutineFilter;
+    }>;
+}
+
+/** Interface for querying metadata */
+export interface IdentifierUsageHit {
+    /** The ID of the database */
+    databaseId: string;
+    /** The name of the database */
+    databaseName: string;
+    /** The ID of the schema */
+    schemaId: string;
+    /** The name of the schema */
+    schemaName: string;
+    /** The ID of the object */
+    objectId: string;
+    /** The name of the object */
+    objectName: string;
+    /** The type of the object (relation, routine, etc.) */
+    objectType: MetadataObjectType;
+    /** The kind of the object (table, view, function, procedure, etc.) */
+    objectKind?: string;
+    /** The ID of the column, if applicable */
+    matchedIdentifier: string;
+}
+
 export interface MetadataDetails extends Omit<Metadata, "databases"> {
     databaseCount: number;
 }
@@ -29,6 +72,8 @@ export interface MetadataQueryApi extends MetadataDetails {
     getDatabaseList(filter?: DatabaseFilter): Promise<DatabaseQueryApi[]>;
     /** Get a full specific database by its name or identity */
     getDatabase(id: string | IdentityOptions): Promise<DatabaseQueryApi | undefined>;
+   /** Search for usage of an identifier across the database, with various matching modes and filters */ 
+    searchIdentifierUsage(options: ObjectSearchOptions): Promise<IdentifierUsageHit[]>;
 }
 
 export const createMetadataQueryApi = async (connectionId: string): Promise<MetadataQueryApi> => {
@@ -45,6 +90,10 @@ export const createMetadataQueryApi = async (connectionId: string): Promise<Meta
                 return createDatabaseQueryApi(connectionId, database);
             }
             return undefined;
+        },
+        searchIdentifierUsage: async (options: ObjectSearchOptions) => {
+            const result: IdentifierUsageHit[] = await window.dborg.database.connection.metadata.searchIdentifierUsage(connectionId, options);
+            return result;
         }
     };
 };
@@ -392,3 +441,98 @@ export const getMetadataRoutine = (metadata: Metadata, databaseId: string, schem
         return metadataRoutineToDetails(databaseId, schemaId, routine);
     }
 }
+
+const normalizeIdentifier = (value: string, caseSensitive: boolean): string => {
+    const trimmed = value.trim();
+    return caseSensitive ? trimmed : trimmed.toLowerCase();
+};
+
+const matchesIdentifier = (
+    candidate: string,
+    query: string,
+    mode: IdentifierMatchMode,
+    caseSensitive: boolean
+): boolean => {
+    const c = normalizeIdentifier(candidate, caseSensitive);
+    const q = normalizeIdentifier(query, caseSensitive);
+
+    if (mode === "exact") return c === q;
+    if (mode === "contains") return c.includes(q);
+    if (mode === "startsWith") return c.startsWith(q);
+
+    try {
+        const re = new RegExp(query, caseSensitive ? "" : "i");
+        return re.test(candidate);
+    } catch {
+        return false;
+    }
+};
+
+const allowObjectType = (
+    objectType: MetadataObjectType,
+    filter?: Array<MetadataObjectType>
+): boolean => {
+    if (!filter || filter.length === 0) return true;
+    return filter.includes(objectType);
+};
+
+export const getMetadataIdentifierUsage = (
+    metadata: Metadata,
+    options: ObjectSearchOptions
+): IdentifierUsageHit[] => {
+    const mode = options.mode ?? "contains";
+    const caseSensitive = options.caseSensitive ?? false;
+    const query = options.query ?? "";
+
+    if (!query.trim()) return [];
+
+    const result: IdentifierUsageHit[] = [];
+
+    for (const database of Object.values(metadata.databases ?? {}).filter(db => matchFilter(db, options.filters?.database))) {
+        for (const schema of Object.values(database.schemas ?? {}).filter(schema => matchFilter(schema, options.filters?.schema))) {
+            if (allowObjectType("relation", options.objectTypes)) {
+                for (const relation of Object.values(schema.relations ?? {})) {
+                    for (const id of relation.identifiers ?? []) {
+                        if (!matchesIdentifier(id, query, mode, caseSensitive)) continue;
+
+                        result.push({
+                            databaseId: database.id,
+                            databaseName: database.name,
+                            schemaId: schema.id,
+                            schemaName: schema.name,
+                            objectId: relation.id,
+                            objectName: relation.name,
+                            objectType: "relation",
+                            objectKind: relation.relationType,
+                            matchedIdentifier: id,
+                        });
+                    }
+                }
+            }
+
+            if (allowObjectType("routine", options.objectTypes)) {
+                for (const routineGroup of Object.values(schema.routines ?? {})) {
+                    for (const routine of Object.values(routineGroup)) {
+                        for (const id of routine.identifiers ?? []) {
+                            if (!matchesIdentifier(id, query, mode, caseSensitive)) continue;
+
+                            result.push({
+                                databaseId: database.id,
+                                databaseName: database.name,
+                                schemaId: schema.id,
+                                schemaName: schema.name,
+                                objectId: routine.id,
+                                objectName: routine.name,
+                                objectType: "routine",
+                                objectKind: routine.routineType,
+                                matchedIdentifier: id,
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return result;
+};

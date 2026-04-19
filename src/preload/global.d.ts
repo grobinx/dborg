@@ -11,7 +11,7 @@ import {
     CommandResult, ConnectionInfo, Cursor, CursorInfo, CursorFetchMaxRowsMode, Metadata, SessionContext, TSettings, WindowState,
     DriverInfo, Properties, QueryResult, StatementResult
 } from "src/api/db"
-import { DatabaseDetails, MetadataDetails, RelationDetails, SchemaDetails } from "src/api/db/MetadataQuery"
+import { DatabaseDetails, IdentifierUsageHit, MetadataDetails, ObjectSearchOptions, RelationDetails, SchemaDetails } from "src/api/db/MetadataQuery"
 import { FileChangeEvent } from "src/main/api/dborg-file"
 
 declare global {
@@ -114,6 +114,7 @@ declare global {
                         getDatabaseList: (connectionId: string, filter?: DatabaseFilter) => Promise<DatabaseDetails[]>,
                         getDatabase: (connectionId: string, id: string | IdentityOptions) => Promise<DatabaseDetails | undefined>,
                         getSchemaList: (connectionId: string, databaseId: string, filter?: SchemaFilter) => Promise<SchemaDetails[]>,
+                        searchIdentifierUsage: (connectionId: string, options: ObjectSearchOptions) => Promise<IdentifierUsageHit[]>,
                         getSchema: (connectionId: string, databaseId: string, id: string | IdentityOptions) => Promise<SchemaDetails | undefined>,
                         getRelationList: (connectionId: string, databaseId: string, schemaId: string | undefined, filter?: RelationFilter) => Promise<RelationDetails[]>,
                         getRelation: (connectionId: string, databaseId: string, schemaId: string | undefined, id: string | IdentityOptions) => Promise<RelationDetails | undefined>,
