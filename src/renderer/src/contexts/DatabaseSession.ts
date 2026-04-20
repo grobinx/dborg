@@ -145,7 +145,7 @@ export class DatabaseSessionCursor implements IDatabaseSessionCursor {
 
 class DatabaseSession implements IDatabaseSession {
     private readonly changeManagers: Map<string, DataGridChangesManager<any>> = new Map();
-    private changeManagersOrder: string[] = []; 
+    private changeManagersOrder: string[] = [];
 
     info: api.ConnectionInfo; // Connection information
     profile: ProfileRecord; // Profile information

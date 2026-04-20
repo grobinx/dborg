@@ -81,6 +81,8 @@ export interface OwnedMetadataBase extends MetadataBase {
     created?: string | null;
     /** Last modification timestamp */
     modified?: string | null;
+    /** CRC checksum of the object */
+    crc?: string | null;
 }
 
 export interface DatabasePermissions {
