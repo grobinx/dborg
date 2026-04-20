@@ -383,7 +383,7 @@ export class Interpreter<R = any> {
 
         const isWildcardPiece = (t: Token): boolean => {
             if (t.type === "operator") {
-                return t.value === "*" || t.value === "_";
+                return t.value === "*" || t.value === "%" || t.value === "_";
             }
             if (t.type === "identifier") {
                 // tylko niecytowane identyfikatory
@@ -635,7 +635,7 @@ export class Interpreter<R = any> {
             pattern
                 .toUpperCase()
                 .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
-                .replace(/\*/g, ".*")
+                .replace(/[\*%]/g, ".*")
                 .replace(/_/g, ".") +
             "$",
             "i"

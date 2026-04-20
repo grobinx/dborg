@@ -1,7 +1,7 @@
 import internal from "src/main/core/db/internal";
 import { DatabaseFilter, DatabaseDetails, EntityFilter, IdentityOptions, MetadataQueryApi } from "./MetadataQuery";
 
-export const METADATA_VERSION = 12;
+export const METADATA_VERSION = 14;
 
 export type MetadataObjectType = 
     | "relation" 
@@ -195,6 +195,9 @@ export interface RoutineMetadata extends OwnedMetadataBase {
 
     /** Return type of the function */
     returnType: string;
+
+    /** Overload number of the function, starting from 1 for the first overload */
+    overload?: number;
 
     /** List of function arguments */
     arguments: RoutineArgumentMetadata[];

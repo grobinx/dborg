@@ -14,7 +14,7 @@ export interface EntityFilterIdentity {
     /** The name of the metadata entity */
     name?: string | string[] | RegExp;
     /** The owner of the metadata entity */
-    owner?: string | string[] | RegExp;  
+    owner?: string | string[] | RegExp;
 }
 
 /** Options for filtering metadata entities */
@@ -92,6 +92,8 @@ export interface MetadataQueryApi extends MetadataDetails {
     searchIdentifierUsage(options: ObjectSearchOptions): Promise<IdentifierUsageHit[]>;
     /** Find objects in the database based on various criteria and filters */
     findObjects(options: ObjectFindOptions): Promise<RequiredOnly<MetadataObjectHit, "objectType">[]>;
+    /** Get a query API for a specific metadata object hit, which can be used to retrieve detailed information about the object and its related entities */
+    getObject(hit: RequiredOnly<MetadataObjectHit, "objectType">): Promise<DatabaseQueryApi | SchemaQueryApi | RelationQueryApi | RoutineQueryApi | undefined>
 }
 
 export const createMetadataQueryApi = async (connectionId: string): Promise<MetadataQueryApi> => {
@@ -117,6 +119,46 @@ export const createMetadataQueryApi = async (connectionId: string): Promise<Meta
             const result: RequiredOnly<MetadataObjectHit, "objectType">[] = await window.dborg.database.connection.metadata.findObjects(connectionId, options);
             return result;
         },
+        getObject: async (hit: RequiredOnly<MetadataObjectHit, "objectType">): Promise<DatabaseQueryApi | SchemaQueryApi | RelationQueryApi | RoutineQueryApi | undefined> => {
+            switch (hit.objectType) {
+                case "database": {
+                    if (!hit.databaseId) return undefined;
+                    const db = await window.dborg.database.connection.metadata.getDatabase(connectionId, hit.databaseId);
+                    return db ? createDatabaseQueryApi(connectionId, db) : undefined;
+                }
+
+                case "schema": {
+                    if (!hit.databaseId || !hit.schemaId) return undefined;
+                    const schema = await window.dborg.database.connection.metadata.getSchema(connectionId, hit.databaseId, hit.schemaId);
+                    return schema ? createMetadataSchemaQuery(connectionId, hit.databaseId, schema) : undefined;
+                }
+
+                case "relation": {
+                    if (!hit.databaseId || !hit.schemaId || !hit.objectId) return undefined;
+                    const relation = await window.dborg.database.connection.metadata.getRelation(
+                        connectionId,
+                        hit.databaseId,
+                        hit.schemaId,
+                        hit.objectId
+                    );
+                    return relation ? createMetadataRelationQuery(connectionId, hit.databaseId, hit.schemaId, relation) : undefined;
+                }
+
+                case "routine": {
+                    if (!hit.databaseId || !hit.schemaId || !hit.objectId) return undefined;
+                    const routine = await window.dborg.database.connection.metadata.getRoutine(
+                        connectionId,
+                        hit.databaseId,
+                        hit.schemaId,
+                        hit.objectId
+                    );
+                    return routine ? createMetadataRoutineQuery(connectionId, hit.databaseId, hit.schemaId, routine) : undefined;
+                }
+
+                default:
+                    return undefined;
+            }
+        }
     };
 };
 

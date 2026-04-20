@@ -2,7 +2,8 @@ import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { Definition, Interpreter } from "@renderer/utils/SqlParser/interpreter";
 import { Tokenizer } from "@renderer/utils/SqlParser/tokenizer";
 import { RelationType, RoutineType } from "../../../../../../src/api/db/Metadata";
-import { DatabaseQueryApi, MetadataQueryApi } from "../../../../../../src/api/db/MetadataQuery";
+import { DatabaseQueryApi, MetadataObjectHit, MetadataQueryApi } from "../../../../../../src/api/db/MetadataQuery";
+import { RequiredOnly } from "src/api/types";
 
 export type ObjectType = "relation" | "routine" | "schema" | null;
 
@@ -78,7 +79,8 @@ export class CommandProcessor {
                         { type: "wild_identifier", key: "schema", optional: true },
                     ],
                     action: async (values) => {
-                        return await MCP.getSchemas(metadata, values.schema ?? null);
+                        const schemas = await MCP.findSchemas(metadata, values.soo?.object ?? null);
+                        return await MCP.getSchemas(metadata, schemas.found);
                     },
                 },
                 {
@@ -128,31 +130,32 @@ export class CommandProcessor {
                         }
 
                         if (!values.soo?.schema && values.soo?.object) {
-                            const isSchema = await MCP.isSchema(metadata, values.soo.object);
-                            if (isSchema === "one") {
-                                return await MCP.getObjects(metadata, values.soo.object, null);
-                            } else if (isSchema === "many") {
-                                return await MCP.getSchemas(metadata, values.soo.object);
+                            const schemas = await MCP.findSchemas(metadata, values.soo.object);
+                            if (schemas.status === "one") {
+                                const objects = await MCP.findObjects(metadata, values.soo.object, null);
+                                return await MCP.getObjects(metadata, objects.found);
+                            } else if (schemas.status === "many") {
+                                return await MCP.getSchemas(metadata, schemas.found);
                             } else {
-                                const isObject = await MCP.isObject(metadata, null, values.soo.object);
-                                if (isObject) {
-                                    if (isObject === "relation") {
-                                        return await MCP.getColumns(metadata, null, values.soo.object);
-                                    } else if (isObject === "routine") {
-                                        return await MCP.getArguments(metadata, null, values.soo.object);
-                                    } else if (isObject === "many") {
-                                        return await MCP.getObjects(metadata, null, values.soo.object);
+                                const objects = await MCP.findObjects(metadata, null, values.soo.object);
+                                if (objects) {
+                                    if (objects.status === "relation") {
+                                        return await MCP.getColumns(metadata, objects.found);
+                                    } else if (objects.status === "routine") {
+                                        return await MCP.getArguments(metadata, objects.found);
+                                    } else if (objects.status === "many") {
+                                        return await MCP.getObjects(metadata, objects.found);
                                     }
                                 }
                             }
                         } else if (values.soo?.schema && values.soo?.object) {
-                            const isObject = await MCP.isObject(metadata, values.soo.schema, values.soo.object);
-                            if (isObject === "relation") {
-                                return await MCP.getColumns(metadata, values.soo.schema, values.soo.object);
-                            } else if (isObject === "routine") {
-                                return await MCP.getArguments(metadata, values.soo.schema, values.soo.object);
-                            } else if (isObject === "many") {
-                                return await MCP.getObjects(metadata, values.soo.schema, values.soo.object);
+                            const objects = await MCP.findObjects(metadata, values.soo.schema, values.soo.object);
+                            if (objects.status === "relation") {
+                                return await MCP.getColumns(metadata, objects.found);
+                            } else if (objects.status === "routine") {
+                                return await MCP.getArguments(metadata, objects.found);
+                            } else if (objects.status === "many") {
+                                return await MCP.getObjects(metadata, objects.found);
                             }
                         }
                         return null;
@@ -174,68 +177,51 @@ export class CommandProcessor {
         return await interpreter.interpret();
     }
 
-    private static async isSchema(metadata: MetadataQueryApi, name: string): Promise<"one" | "many" | false> {
-        const matchedSchemas = (
-            await Promise.all(
-                (await MCP.getConnectedDatabases(metadata))
-                    .map(db => db.getSchemaList({ name: Interpreter.createMask(name) }))
-            )
-        ).flat();
-        if (matchedSchemas.length === 0) {
-            return false;
-        } else if (matchedSchemas.length === 1) {
-            return "one";
+    private static async findSchemas(metadata: MetadataQueryApi, name: string | null): Promise<{ found: RequiredOnly<MetadataObjectHit, "objectType">[]; status: "one" | "many" | false }> {
+        const objects = await metadata.findObjects({
+            name: Interpreter.createMask(name),
+            objectTypes: ["schema"],
+            filters: {
+                database: { filter: { connected: true } }
+            }
+        });
+
+        if (objects.length === 0) {
+            return { found: [], status: false };
+        } else if (objects.length === 1) {
+            return { found: objects, status: "one" };
         } else {
-            return "many";
+            return { found: objects, status: "many" };
         }
     }
 
-    private static async isObject(
+    private static async findObjects(
         metadata: MetadataQueryApi,
         schemaName: string | null,
-        objectName: string
-    ): Promise<"one" | "many" | "relation" | "routine" | false> {
-        const databases = await MCP.getConnectedDatabases(metadata);
-
-        const schemaMask = schemaName ? Interpreter.createMask(schemaName) : undefined;
-        const objectMask = Interpreter.createMask(objectName);
-
-        let relationCount = 0;
-        let routineCount = 0;
-
-        for (const database of databases) {
-            const schemas = await database.getSchemaList(
-                schemaMask ? { name: schemaMask } : undefined
-            );
-
-            const perSchemaMatches = await Promise.all(
-                schemas.map(async (schema) => {
-                    const [relations, routines] = await Promise.all([
-                        schema.getRelationList({ name: objectMask }),
-                        schema.getRoutineList({ name: objectMask }),
-                    ]);
-
-                    return {
-                        relations: relations.length,
-                        routines: routines.length,
-                    };
-                })
-            );
-
-            for (const match of perSchemaMatches) {
-                relationCount += match.relations;
-                routineCount += match.routines;
+        objectName: string | null
+    ): Promise<{ found: RequiredOnly<MetadataObjectHit, "objectType">[]; status: "many" | "relation" | "routine" | false }> {
+        const objects = await metadata.findObjects({
+            name: Interpreter.createMask(objectName),
+            objectTypes: ["relation", "routine"],
+            filters: {
+                database: { filter: { connected: true } },
+                schema: schemaName ? { name: Interpreter.createMask(schemaName) } : undefined,
             }
+        });
+
+        if (objects.length === 0) {
+            return { found: [], status: false };
+        } else if (objects.length === 1) {
+            return { found: objects, status: objects[0].objectType === "relation" ? "relation" : "routine" };
         }
 
-        const total = relationCount + routineCount;
+        if (objects.every(obj => obj.objectType === "relation")) {
+            return { found: objects, status: "relation" };
+        } else if (objects.every(obj => obj.objectType === "routine")) {
+            return { found: objects, status: "routine" };
+        }
 
-        if (total === 0) return false;
-        if (total > 1) return "many";
-        if (relationCount === 1) return "relation";
-        if (routineCount === 1) return "routine";
-
-        return "one";
+        return { found: objects, status: "many" };
     }
 
 
@@ -264,7 +250,7 @@ export class CommandProcessor {
 
     private static async getSchemas(
         metadata: MetadataQueryApi,
-        schemaName?: string | null
+        found: RequiredOnly<MetadataObjectHit, "objectType">[]
     ): Promise<{ columns: ColumnDefinition[]; rows: any[] }> {
         const columns: ColumnDefinition[] = [
             { key: "database", label: "Database", dataType: "string" },
@@ -273,26 +259,19 @@ export class CommandProcessor {
             { key: "description", label: "Description", dataType: "string" },
         ];
 
-        const schemaMask = schemaName ? Interpreter.createMask(schemaName) : undefined;
-        const databases = await MCP.getConnectedDatabases(metadata);
-
-        const schemaLists = await Promise.all(
-            databases.map((db) => db.getSchemaList(schemaMask ? { name: schemaMask } : undefined))
-        );
-
         const rows: any[] = [];
 
-        for (let i = 0; i < databases.length; i++) {
-            const db = databases[i];
-            const schemas = schemaLists[i] ?? [];
-
-            for (const schema of schemas) {
-                rows.push({
-                    database: db.name,
-                    schema: schema.name,
-                    owner: schema.owner,
-                    description: schema.description,
-                });
+        for (const hit of found) {
+            if (hit.objectType === "schema") {
+                const schema = await metadata.getObject(hit);
+                if (schema?.objectType === "schema") {
+                    rows.push({
+                        database: hit.databaseName,
+                        schema: hit.schemaName,
+                        owner: schema.owner,
+                        description: schema.description,
+                    });
+                }
             }
         }
 
@@ -316,36 +295,24 @@ export class CommandProcessor {
             { key: "description", label: "Description", dataType: "string" },
         ];
 
-        const schemaMask = schemaName ? Interpreter.createMask(schemaName) : undefined;
-        const objectMask = objectName ? Interpreter.createMask(objectName) : undefined;
-
         const rows: any[] = [];
 
-        for (const database of await MCP.getConnectedDatabases(metadata)) {
-            const schemas = await database.getSchemaList(
-                schemaMask ? { name: schemaMask } : undefined
+        const database = await metadata.getDatabaseList({ filter: { connected: true } });
+
+        for (const db of database) {
+            const schemas = await db.getSchemaList(
+                schemaName ? { name: Interpreter.createMask(schemaName) } : undefined
             );
-
-            const relationLists = await Promise.all(
-                schemas.map((schema) =>
-                    schema.getRelationList(objectMask ? { name: objectMask } : undefined)
-                )
-            );
-
-            for (let i = 0; i < schemas.length; i++) {
-                const schema = schemas[i];
-                const relations = relationLists[i] ?? [];
-
+            for (const schema of schemas) {
+                const relations = await schema.getRelationList(
+                    objectName ? { name: Interpreter.createMask(objectName), filter: { relationType: type } } : undefined
+                );
                 for (const relation of relations) {
-                    if (type && relation.relationType !== type) {
-                        continue;
-                    }
-
                     rows.push({
-                        database: database.name,
+                        database: db.name,
                         schema: schema.name,
-                        owner: relation.owner,
                         relation: relation.name,
+                        owner: relation.owner,
                         type: relation.relationType,
                         kind: relation.kind,
                         columns: relation.columns?.length ?? 0,
@@ -376,40 +343,24 @@ export class CommandProcessor {
             { key: "description", label: "Description", dataType: "string" },
         ];
 
-        const schemaMask = schemaName ? Interpreter.createMask(schemaName) : undefined;
-        const objectMask = objectName ? Interpreter.createMask(objectName) : undefined;
-
         const rows: any[] = [];
 
-        for (const database of await MCP.getConnectedDatabases(metadata)) {
-            const schemas = await database.getSchemaList(
-                schemaMask ? { name: schemaMask } : undefined
+        const database = await metadata.getDatabaseList({ filter: { connected: true } });
+
+        for (const db of database) {
+            const schemas = await db.getSchemaList(
+                schemaName ? { name: Interpreter.createMask(schemaName) } : undefined
             );
-
-            const routineLists = await Promise.all(
-                schemas.map((schema) =>
-                    schema.getRoutineList(objectMask ? { name: objectMask } : undefined)
-                )
-            );
-
-            for (let i = 0; i < schemas.length; i++) {
-                const schema = schemas[i];
-                const routines = routineLists[i] ?? [];
-                const overloadByName = new Map<string, number>();
-
+            for (const schema of schemas) {
+                const routines = await schema.getRoutineList(
+                    objectName ? { name: Interpreter.createMask(objectName), filter: { routineType: type } } : undefined
+                );
                 for (const routine of routines) {
-                    if (type && routine.routineType !== type) {
-                        continue;
-                    }
-
-                    const overload = (overloadByName.get(routine.name) ?? 0) + 1;
-                    overloadByName.set(routine.name, overload);
-
                     rows.push({
-                        database: database.name,
+                        database: db.name,
                         schema: schema.name,
                         owner: routine.owner,
-                        overload,
+                        overload: routine.overload ?? 1,
                         routine: routine.name,
                         type: routine.routineType,
                         kind: routine.kind,
@@ -425,8 +376,7 @@ export class CommandProcessor {
 
     private static async getObjects(
         metadata: MetadataQueryApi,
-        schemaName: string | null,
-        objectName: string | null,
+        found: RequiredOnly<MetadataObjectHit, "objectType">[],
     ): Promise<{ columns: ColumnDefinition[]; rows: any[] }> {
         const columns: ColumnDefinition[] = [
             { key: "database", label: "Database", dataType: "string" },
@@ -438,60 +388,42 @@ export class CommandProcessor {
             { key: "description", label: "Description", dataType: "string" },
         ];
 
-        const schemaMask = schemaName ? Interpreter.createMask(schemaName) : undefined;
-        const objectMask = objectName ? Interpreter.createMask(objectName) : undefined;
-
         const rows: any[] = [];
 
-        for (const database of await MCP.getConnectedDatabases(metadata)) {
-            const schemas = await database.getSchemaList(
-                schemaMask ? { name: schemaMask } : undefined
-            );
-
-            const perSchemaData = await Promise.all(
-                schemas.map(async (schema) => {
-                    const [relations, routines] = await Promise.all([
-                        schema.getRelationList(objectMask ? { name: objectMask } : undefined),
-                        schema.getRoutineList(objectMask ? { name: objectMask } : undefined),
-                    ]);
-                    return { schema, relations, routines };
-                })
-            );
-
-            for (const item of perSchemaData) {
-                for (const relation of item.relations) {
-                    rows.push({
-                        database: database.name,
-                        schema: item.schema.name,
-                        object: relation.name,
-                        owner: relation.owner,
-                        type: relation.relationType,
-                        kind: relation.kind,
-                        description: relation.description,
-                    });
-                }
-
-                for (const routine of item.routines) {
-                    rows.push({
-                        database: database.name,
-                        schema: item.schema.name,
-                        object: routine.name,
-                        owner: routine.owner,
-                        type: routine.routineType,
-                        kind: routine.kind,
-                        description: routine.description,
-                    });
-                }
+        for (const hit of found) {
+            const object = await metadata.getObject(hit);
+            if (!object) {
+                continue;
+            }
+            if (object?.objectType === "relation") {
+                rows.push({
+                    database: hit.databaseName,
+                    schema: hit.schemaName,
+                    object: hit.objectName,
+                    owner: object.owner,
+                    type: object.relationType,
+                    kind: object.kind,
+                    description: object.description,
+                });
+            }
+            if (object?.objectType === "routine") {
+                rows.push({
+                    database: hit.databaseName,
+                    schema: hit.schemaName,
+                    object: hit.objectName,
+                    owner: object.owner,
+                    type: object.routineType,
+                    kind: object.kind,
+                    description: object.description,
+                });
             }
         }
-
         return { columns, rows };
     }
 
     private static async getArguments(
         metadata: MetadataQueryApi,
-        schemaName: string | null,
-        routineName: string | null
+        found: RequiredOnly<MetadataObjectHit, "objectType">[],
     ): Promise<{ columns: ColumnDefinition[]; rows: any[] }> {
         const columns: ColumnDefinition[] = [
             { key: "database", label: "Database", dataType: "string" },
@@ -506,62 +438,30 @@ export class CommandProcessor {
             { key: "description", label: "Description", dataType: "string" },
         ];
 
-        const schemaMask = schemaName ? Interpreter.createMask(schemaName) : undefined;
-        const routineMask = routineName ? Interpreter.createMask(routineName) : undefined;
-
         const rows: any[] = [];
 
-        for (const database of await MCP.getConnectedDatabases(metadata)) {
-            const schemas = await database.getSchemaList(
-                schemaMask ? { name: schemaMask } : undefined
-            );
-
-            const routineLists = await Promise.all(
-                schemas.map((schema) =>
-                    schema.getRoutineList(routineMask ? { name: routineMask } : undefined)
-                )
-            );
-
-            for (let i = 0; i < schemas.length; i++) {
-                const schema = schemas[i];
-                const routines = routineLists[i] ?? [];
-                const overloadByName = new Map<string, number>();
-
-                for (const routine of routines) {
-                    const overload = (overloadByName.get(routine.name) ?? 0) + 1;
-                    overloadByName.set(routine.name, overload);
-
-                    for (const arg of routine.arguments ?? []) {
-                        rows.push({
-                            database: database.name,
-                            schema: schema.name,
-                            routine: routine.name,
-                            overload,
-                            no: arg.no,
-                            argument: arg.name,
-                            dataType: arg.dataType,
-                            mode: arg.mode,
-                            defaultValue: arg.defaultValue,
-                            description: arg.description,
-                        });
-                    }
-
-                    if (routine.returnType) {
-                        rows.push({
-                            database: database.name,
-                            schema: schema.name,
-                            routine: routine.name,
-                            overload,
-                            no: null,
-                            argument: null,
-                            dataType: routine.returnType,
-                            mode: "return",
-                            defaultValue: null,
-                            description: null,
-                        });
-                    }
-                }
+        for (const hit of found) {
+            if (hit.objectType !== "routine") {
+                continue;
             }
+
+            const routine = await metadata.getObject(hit);
+            if (!routine || routine.objectType !== "routine") {
+                continue;
+            }
+
+            rows.push(...(routine.arguments ?? []).map((arg, index) => ({
+                database: hit.databaseName,
+                schema: hit.schemaName,
+                routine: hit.objectName,
+                overload: routine.overload ?? 1,
+                no: arg.no ?? index + 1,
+                argument: arg.name,
+                dataType: arg.dataType,
+                mode: arg.mode,
+                defaultValue: arg.defaultValue,
+                description: arg.description,
+            })));
         }
 
         return { columns, rows };
@@ -569,8 +469,7 @@ export class CommandProcessor {
 
     private static async getColumns(
         metadata: MetadataQueryApi,
-        schemaName: string | null,
-        relationName: string | null
+        found: RequiredOnly<MetadataObjectHit, "objectType">[]
     ): Promise<{ columns: ColumnDefinition[]; rows: any[] }> {
         const columns: ColumnDefinition[] = [
             { key: "database", label: "Database", dataType: "string" },
@@ -584,42 +483,29 @@ export class CommandProcessor {
             { key: "description", label: "Description", dataType: "string" },
         ];
 
-        const schemaMask = schemaName ? Interpreter.createMask(schemaName) : undefined;
-        const relationMask = relationName ? Interpreter.createMask(relationName) : undefined;
-
         const rows: any[] = [];
 
-        for (const database of await MCP.getConnectedDatabases(metadata)) {
-            const schemas = await database.getSchemaList(
-                schemaMask ? { name: schemaMask } : undefined
-            );
-
-            const relationLists = await Promise.all(
-                schemas.map((schema) =>
-                    schema.getRelationList(relationMask ? { name: relationMask } : undefined)
-                )
-            );
-
-            for (let i = 0; i < schemas.length; i++) {
-                const schema = schemas[i];
-                const relations = relationLists[i] ?? [];
-
-                for (const relation of relations) {
-                    for (const column of relation.columns ?? []) {
-                        rows.push({
-                            database: database.name,
-                            schema: schema.name,
-                            relation: relation.name,
-                            no: column.no,
-                            column: column.name,
-                            dataType: column.dataType,
-                            nullable: column.nullable,
-                            defaultValue: column.defaultValue,
-                            description: column.description,
-                        });
-                    }
-                }
+        for (const hit of found) {
+            if (hit.objectType !== "relation") {
+                continue;
             }
+
+            const relation = await metadata.getObject(hit);
+            if (!relation || relation.objectType !== "relation") {
+                continue;
+            }
+
+            rows.push(...(relation.columns ?? []).map((column) => ({
+                database: hit.databaseName,
+                schema: hit.schemaName,
+                relation: hit.objectName,
+                no: column.no,
+                column: column.name,
+                dataType: column.dataType,
+                nullable: column.nullable,
+                defaultValue: column.defaultValue,
+                description: column.description,
+            })));
         }
 
         return { columns, rows };

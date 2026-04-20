@@ -346,8 +346,8 @@ export class MetadataCollector implements api.IMetadataCollector {
                     pg_catalog.obj_description(n.oid, 'pg_namespace') as description,
                     n.nspname = any (current_schemas(true)) as default,
                     n.nspname = any (array['pg_catalog', 'information_schema', 'pg_toast']) as catalog
-                    ${this.collectionOptions?.permissions ? 
-                        `, pg_catalog.json_build_object(
+                    ${this.collectionOptions?.permissions ?
+                `, pg_catalog.json_build_object(
                         'create', pg_catalog.has_schema_privilege(current_user, n.oid, 'CREATE'),
                         'usage', pg_catalog.has_schema_privilege(current_user, n.oid, 'USAGE')
                     ) as permissions` : ''}
@@ -557,66 +557,104 @@ export class MetadataCollector implements api.IMetadataCollector {
         const v11OrHigher = this.version?.major !== undefined && this.version.major >= 11;
         const versionNumber = versionToNumber(this.version?.toString() ?? "");
 
+        const routineTypeExpr = v11OrHigher
+            ? "case when f.prokind in ('a', 'w', 'f') then 'function' when f.prokind = 'p' then 'procedure' end"
+            : "'function'";
+
         const { rows } = await this.client!.query(
-            `with kw as (
-                select lower(word) as word from pg_catalog.pg_get_keywords()
-                union
-                select lower(lanname) from pg_language
-            )
-            select f.oid::text as id, n.nspname as schema_name, pg_get_userbyid(f.proowner) as owner, 
-                f.proname as name,
-                format('%I(%s)', f.proname, pg_get_function_identity_arguments(f.oid)) as identity,
-                ${v11OrHigher ? "case when f.prokind in ('a', 'w', 'f') then 'function' when f.prokind = 'p' then 'procedure' end" : "'function'"} as "routineType",
-                case 
-                    when t.typname = 'trigger' then 'trigger'
-                    when ${v11OrHigher ? "f.prokind = 'a'" : "f.proisagg"} then 'aggregate'
-                    when ${v11OrHigher ? "f.prokind = 'w'" : "f.proiswindow"} then 'window'
-                    ${v11OrHigher ? "when f.prokind in ('f', 'p') then 'regular'" : "else 'regular'"}
-                end as kind
-                ${this.collectionOptions?.permissions ? `, pg_catalog.json_build_object(
-                    'execute', has_function_privilege(f.oid, 'EXECUTE')
-                ) AS permissions` : ''},
-                pg_catalog.pg_get_function_result(f.oid) as "returnType",
-                d.description as description,
-                (select json_agg(row_to_json(a))
-                    from (select (f.oid::bigint *100 +n)::text as id, n as no, f.proargnames[n] as name, pg_catalog.format_type(f.proargtypes[n -1], -1) as "dataType",
-                                case f.proargmodes[n] when 'o' then 'out' when 'b' then 'inout' else 'in' end as mode,
-                                trim((regexp_split_to_array(pg_get_expr(f.proargdefaults, 0), '[\t,](?=(?:[^\'']|\''[^\'']*\'')*$)'))[case when f.pronargs -n > f.pronargdefaults then null else f.pronargdefaults -(f.pronargs - n +1) +1 end]) as "defaultValue"
-                            from pg_catalog.generate_series(1, f.pronargs::int) n) a) as arguments
-                ${this.collectionOptions?.identifiers ? `, ids.identifiers` : ''},
-                json_build_object(
-                    'is_security_definer', f.prosecdef,
-                    'execute_as', CASE WHEN f.prosecdef THEN 'definer' ELSE 'invoker' END,
-                    'language', l.lanname,
-                    'volatility', CASE f.provolatile
-                        WHEN 'i' THEN 'immutable'
-                        WHEN 's' THEN 'stable'
-                        WHEN 'v' THEN 'volatile'
-                    END,
-                    'parallel_safe', ${versionNumber >= 90600 ? 'f.proparallel != \'u\'' : 'false'}
-                ) as data
-            from pg_catalog.pg_proc f
-                join pg_catalog.pg_language l on f.prolang = l.oid
-                left join pg_catalog.pg_namespace n on f.pronamespace = n.oid
-                left join pg_catalog.pg_type t on f.prorettype = t.oid
-                left join pg_catalog.pg_description d on d.classoid = f.tableoid and d.objoid = f.oid and d.objsubid = 0
-                ${this.collectionOptions?.identifiers ? `left join lateral (
-                    select array_agg(distinct lower(m[1]) order by lower(m[1])) as identifiers
-                    from regexp_matches(
-                            -- użyj prosrc, jeśli wolisz bez deklaracji; możesz zamienić na pg_get_functiondef(f.oid)
-                            f.prosrc,
-                            '([A-Za-z_][A-Za-z0-9_]*)',  -- tylko identyfikatory, bez stringów
-                            'g'
-                        ) as m
-                    where lower(m[1]) not in (select word from kw)  -- odfiltruj słowa kluczowe i języki
-                        and m[1] not in ('', '_')
-                    ) ids on true` : ''}
-            where (n.nspname = $1 or $1 is null)
-                and (f.proname = $2 or $2 is null)
-                and n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
-                ${this.collectionOptions?.systemObjects ? '' : `and n.nspname not in ('pg_catalog', 'information_schema')`}
+    `with kw as (
+        select lower(word) as word from pg_catalog.pg_get_keywords()
+        union
+        select lower(lanname) from pg_language
+    ),
+    routines_base as (
+        select
+            f.oid::text as id,
+            n.nspname as schema_name,
+            pg_get_userbyid(f.proowner) as owner,
+            f.proname as name,
+            format('%I(%s)', f.proname, pg_get_function_identity_arguments(f.oid)) as identity,
+            ${routineTypeExpr} as "routineType",
+            case
+                when t.typname = 'trigger' then 'trigger'
+                when ${v11OrHigher ? "f.prokind = 'a'" : "f.proisagg"} then 'aggregate'
+                when ${v11OrHigher ? "f.prokind = 'w'" : "f.proiswindow"} then 'window'
+                ${v11OrHigher ? "when f.prokind in ('f', 'p') then 'regular'" : "else 'regular'"}
+            end as kind
+            ${this.collectionOptions?.permissions ? `, pg_catalog.json_build_object(
+                'execute', has_function_privilege(f.oid, 'EXECUTE')
+            ) as permissions` : ''},
+            pg_catalog.pg_get_function_result(f.oid) as "returnType",
+            d.description as description,
+            (
+                select json_agg(row_to_json(a))
+                from (
+                    select
+                        (f.oid::bigint * 100 + n)::text as id,
+                        n as no,
+                        f.proargnames[n] as name,
+                        pg_catalog.format_type(f.proargtypes[n - 1], -1) as "dataType",
+                        case f.proargmodes[n]
+                            when 'o' then 'out'
+                            when 'b' then 'inout'
+                            else 'in'
+                        end as mode,
+                        trim(
+                            (regexp_split_to_array(
+                                pg_get_expr(f.proargdefaults, 0),
+                                '[\t,](?=(?:[^\'']|\''[^\'']*\'')*$)'
+                            ))[
+                                case
+                                    when f.pronargs - n > f.pronargdefaults then null
+                                    else f.pronargdefaults - (f.pronargs - n + 1) + 1
+                                end
+                            ]
+                        ) as "defaultValue"
+                    from pg_catalog.generate_series(1, f.pronargs::int) n
+                ) a
+            ) as arguments
+            ${this.collectionOptions?.identifiers ? `, ids.identifiers` : ''},
+            json_build_object(
+                'is_security_definer', f.prosecdef,
+                'execute_as', case when f.prosecdef then 'definer' else 'invoker' end,
+                'language', l.lanname,
+                'volatility', case f.provolatile
+                    when 'i' then 'immutable'
+                    when 's' then 'stable'
+                    when 'v' then 'volatile'
+                end,
+                'parallel_safe', ${versionNumber >= 90600 ? "f.proparallel != 'u'" : "false"}
+            ) as data
+        from pg_catalog.pg_proc f
+            join pg_catalog.pg_language l on f.prolang = l.oid
+            left join pg_catalog.pg_namespace n on f.pronamespace = n.oid
+            left join pg_catalog.pg_type t on f.prorettype = t.oid
+            left join pg_catalog.pg_description d on d.classoid = f.tableoid and d.objoid = f.oid and d.objsubid = 0
+            ${this.collectionOptions?.identifiers ? `left join lateral (
+                select array_agg(distinct lower(m[1]) order by lower(m[1])) as identifiers
+                from regexp_matches(
+                    f.prosrc,
+                    '([A-Za-z_][A-Za-z0-9_]*)',
+                    'g'
+                ) as m
+                where lower(m[1]) not in (select word from kw)
+                    and m[1] not in ('', '_')
+            ) ids on true` : ''}
+        where (n.nspname = $1 or $1 is null)
+            and (f.proname = $2 or $2 is null)
+            and n.nspname not ilike 'pg_toast%'
+            and n.nspname not ilike 'pg_temp%'
+            ${this.collectionOptions?.systemObjects ? '' : `and n.nspname not in ('pg_catalog', 'information_schema')`}
             ${v11OrHigher ? "and f.prokind in ('a', 'w', 'f', 'p')" : ""}
-            order by schema_name, name`,
+    )
+    select
+        rb.*,
+        row_number() over (
+            partition by rb.schema_name, rb.name, rb."routineType"
+            order by rb.identity, rb.id::bigint
+        )::int as overload
+    from routines_base rb
+    order by rb.schema_name, rb.name, rb."routineType", overload`,
             [schemaName, name]
         );
 
@@ -635,7 +673,8 @@ export class MetadataCollector implements api.IMetadataCollector {
                     schema.routines![row.name] = [
                         ...schema.routines![row.name],
                         {
-                            ...row
+                            ...row,
+                            objectType: "routine"
                         }
                     ];
                 }
