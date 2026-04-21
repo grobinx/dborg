@@ -2,7 +2,7 @@ import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { Definition, Interpreter } from "@renderer/utils/SqlParser/interpreter";
 import { Tokenizer } from "@renderer/utils/SqlParser/tokenizer";
 import { RelationType, RoutineType } from "../../../../../../src/api/db/Metadata";
-import { DatabaseQueryApi, MetadataObjectHit, MetadataQueryApi } from "../../../../../../src/api/db/MetadataQuery";
+import { DatabaseQueryApi, MetadataAnyObjectHit, MetadataObjectHit, MetadataQueryApi } from "../../../../../../src/api/db/MetadataQuery";
 import { RequiredOnly } from "src/api/types";
 
 export type ObjectType = "relation" | "routine" | "schema" | null;
@@ -177,7 +177,7 @@ export class CommandProcessor {
         return await interpreter.interpret();
     }
 
-    private static async findSchemas(metadata: MetadataQueryApi, name: string | null): Promise<{ found: RequiredOnly<MetadataObjectHit, "objectType">[]; status: "one" | "many" | false }> {
+    private static async findSchemas(metadata: MetadataQueryApi, name: string | null): Promise<{ found: MetadataAnyObjectHit[]; status: "one" | "many" | false }> {
         const objects = await metadata.findObjects({
             name: Interpreter.createMask(name),
             objectTypes: ["schema"],
@@ -199,7 +199,7 @@ export class CommandProcessor {
         metadata: MetadataQueryApi,
         schemaName: string | null,
         objectName: string | null
-    ): Promise<{ found: RequiredOnly<MetadataObjectHit, "objectType">[]; status: "many" | "relation" | "routine" | false }> {
+    ): Promise<{ found: MetadataAnyObjectHit[]; status: "many" | "relation" | "routine" | false }> {
         const objects = await metadata.findObjects({
             name: Interpreter.createMask(objectName),
             objectTypes: ["relation", "routine"],
@@ -245,7 +245,7 @@ export class CommandProcessor {
 
     private static async getSchemas(
         metadata: MetadataQueryApi,
-        found: RequiredOnly<MetadataObjectHit, "objectType">[]
+        found: MetadataAnyObjectHit[]
     ): Promise<{ columns: ColumnDefinition[]; rows: any[] }> {
         const columns: ColumnDefinition[] = [
             { key: "database", label: "Database", dataType: "string" },
@@ -371,7 +371,7 @@ export class CommandProcessor {
 
     private static async getObjects(
         metadata: MetadataQueryApi,
-        found: RequiredOnly<MetadataObjectHit, "objectType">[],
+        found: MetadataAnyObjectHit[],
     ): Promise<{ columns: ColumnDefinition[]; rows: any[] }> {
         const columns: ColumnDefinition[] = [
             { key: "database", label: "Database", dataType: "string" },
@@ -418,7 +418,7 @@ export class CommandProcessor {
 
     private static async getArguments(
         metadata: MetadataQueryApi,
-        found: RequiredOnly<MetadataObjectHit, "objectType">[],
+        found: MetadataAnyObjectHit[],
     ): Promise<{ columns: ColumnDefinition[]; rows: any[] }> {
         const columns: ColumnDefinition[] = [
             { key: "database", label: "Database", dataType: "string" },
@@ -464,7 +464,7 @@ export class CommandProcessor {
 
     private static async getColumns(
         metadata: MetadataQueryApi,
-        found: RequiredOnly<MetadataObjectHit, "objectType">[]
+        found: MetadataAnyObjectHit[]
     ): Promise<{ columns: ColumnDefinition[]; rows: any[] }> {
         const columns: ColumnDefinition[] = [
             { key: "database", label: "Database", dataType: "string" },

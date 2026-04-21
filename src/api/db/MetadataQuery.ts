@@ -1,5 +1,5 @@
 import { RequiredOnly } from "../types";
-import { DatabaseMetadata, Metadata, MetadataObjectType, OwnedMetadataBase, RelationMetadata, RoutineMetadata, SchemaMetadata } from "./Metadata";
+import { DatabaseMetadata, Metadata, MetadataObjectType, OwnedMetadataBase, PackageMetadata, RelationMetadata, RoutineMetadata, SchemaMetadata, SequenceMetadata, TypeMetadata } from "./Metadata";
 
 /** Options for identifying a metadata entity */
 export interface IdentityOptions {
@@ -10,6 +10,9 @@ export interface IdentityOptions {
 }
 
 export interface EntityFilterIdentity {
+    /** Whether to negate the filter */
+    not?: boolean;
+    /** The ID of the metadata entity, or an array of IDs, or a regex to match the ID(s) */
     id?: string | string[];
     /** The name of the metadata entity */
     name?: string | string[] | RegExp;
@@ -30,6 +33,9 @@ export type ObjectFilters = Partial<{
     schema: SchemaFilter;
     relation: RelationFilter;
     routine: RoutineFilter;
+    sequence: SequenceFilter;
+    type: TypeFilter;
+    package: PackageFilter;
 }>;
 
 /** Options for searching identifier usage */
@@ -72,6 +78,8 @@ export interface MetadataObjectHit {
     objectName: string;
 }
 
+export type MetadataAnyObjectHit = RequiredOnly<MetadataObjectHit, "objectType">;
+
 /** Interface for querying metadata */
 export interface IdentifierUsageHit extends MetadataObjectHit {
     /** The ID of the column, if applicable */
@@ -91,9 +99,9 @@ export interface MetadataQueryApi extends MetadataDetails {
     /** Search for usage of an identifier across the database, with various matching modes and filters */
     searchIdentifierUsage(options: ObjectSearchOptions): Promise<IdentifierUsageHit[]>;
     /** Find objects in the database based on various criteria and filters */
-    findObjects(options: ObjectFindOptions): Promise<RequiredOnly<MetadataObjectHit, "objectType">[]>;
+    findObjects(options: ObjectFindOptions): Promise<MetadataAnyObjectHit[]>;
     /** Get a query API for a specific metadata object hit, which can be used to retrieve detailed information about the object and its related entities */
-    getObject(hit: RequiredOnly<MetadataObjectHit, "objectType">): Promise<DatabaseQueryApi | SchemaQueryApi | RelationQueryApi | RoutineQueryApi | undefined>
+    getObject(hit: MetadataAnyObjectHit): Promise<DatabaseQueryApi | SchemaQueryApi | RelationQueryApi | RoutineQueryApi | SequenceQueryApi | TypeQueryApi | PackageQueryApi | undefined>
 }
 
 export const createMetadataQueryApi = async (connectionId: string): Promise<MetadataQueryApi> => {
@@ -116,10 +124,10 @@ export const createMetadataQueryApi = async (connectionId: string): Promise<Meta
             return result;
         },
         findObjects: async (options: ObjectFindOptions) => {
-            const result: RequiredOnly<MetadataObjectHit, "objectType">[] = await window.dborg.database.connection.metadata.findObjects(connectionId, options);
+            const result: MetadataAnyObjectHit[] = await window.dborg.database.connection.metadata.findObjects(connectionId, options);
             return result;
         },
-        getObject: async (hit: RequiredOnly<MetadataObjectHit, "objectType">): Promise<DatabaseQueryApi | SchemaQueryApi | RelationQueryApi | RoutineQueryApi | undefined> => {
+        getObject: async (hit: MetadataAnyObjectHit): Promise<DatabaseQueryApi | SchemaQueryApi | RelationQueryApi | RoutineQueryApi | SequenceQueryApi | TypeQueryApi | PackageQueryApi | undefined> => {
             switch (hit.objectType) {
                 case "database": {
                     if (!hit.databaseId) return undefined;
@@ -153,6 +161,39 @@ export const createMetadataQueryApi = async (connectionId: string): Promise<Meta
                         hit.objectId
                     );
                     return routine ? createMetadataRoutineQuery(connectionId, hit.databaseId, hit.schemaId, routine) : undefined;
+                }
+
+                case "sequence": {
+                    if (!hit.databaseId || !hit.schemaId || !hit.objectId) return undefined;
+                    const sequence = await window.dborg.database.connection.metadata.getSequence(
+                        connectionId,
+                        hit.databaseId,
+                        hit.schemaId,
+                        hit.objectId
+                    );
+                    return sequence ? createMetadataSequenceQuery(connectionId, hit.databaseId, hit.schemaId, sequence) : undefined;
+                }
+
+                case "type": {
+                    if (!hit.databaseId || !hit.schemaId || !hit.objectId) return undefined;
+                    const type = await window.dborg.database.connection.metadata.getType(
+                        connectionId,
+                        hit.databaseId,
+                        hit.schemaId,
+                        hit.objectId
+                    );
+                    return type ? createMetadataTypeQuery(connectionId, hit.databaseId, hit.schemaId, type) : undefined;
+                }
+
+                case "package": {
+                    if (!hit.databaseId || !hit.schemaId || !hit.objectId) return undefined;
+                    const pkg = await window.dborg.database.connection.metadata.getPackage(
+                        connectionId,
+                        hit.databaseId,
+                        hit.schemaId,
+                        hit.objectId
+                    );
+                    return pkg ? createMetadataPackageQuery(connectionId, hit.databaseId, hit.schemaId, pkg) : undefined;
                 }
 
                 default:
@@ -227,6 +268,37 @@ export interface SchemaQueryApi extends SchemaDetails {
      * @param id - The id or identity of the routine
      */
     getRoutine(id: string | IdentityOptions): Promise<RoutineQueryApi | undefined>;
+    /**
+     * Get a list of sequences, optionally filtered by the provided criteria
+     * @param filter - The filter criteria to apply
+     */
+    getSequenceList(filter?: SequenceFilter): Promise<SequenceQueryApi[]>;
+    /**
+     * Get a full specific sequence by its name or identity
+     * @param id - The id or identity of the sequence
+     */
+    getSequence(id: string | IdentityOptions): Promise<SequenceQueryApi | undefined>;
+    /**
+     * Get a list of types, optionally filtered by the provided criteria
+     * @param filter - The filter criteria to apply
+     */
+    getTypeList(filter?: TypeFilter): Promise<TypeQueryApi[]>;
+    /**
+     * Get a full specific type by its name or identity
+     * @param id - The id or identity of the type
+     */
+    getType(id: string | IdentityOptions): Promise<TypeQueryApi | undefined>;
+    /**
+     * Get a list of packages, optionally filtered by the provided criteria
+     * @param filter - The filter criteria to apply
+     */
+    getPackageList(filter?: PackageFilter): Promise<PackageQueryApi[]>;
+    /**
+     * Get a full specific package by its name or identity
+     * @param id - The id or identity of the package
+     */
+    getPackage(id: string | IdentityOptions): Promise<PackageQueryApi | undefined>;
+
 }
 
 const createMetadataSchemaQuery = (connectionId: string, databaseId: string, schema: SchemaDetails): SchemaQueryApi => {
@@ -235,8 +307,7 @@ const createMetadataSchemaQuery = (connectionId: string, databaseId: string, sch
         getRelationList: async (filter?: RelationFilter) => {
             const relationList: RelationDetails[] = await window.dborg.database.connection.metadata.getRelationList(connectionId, databaseId, schema.id, filter);
             return relationList.map(relation => {
-                const result: RelationQueryApi = { ...relation };
-                return result;
+                return createMetadataRelationQuery(connectionId, databaseId, schema.id, relation);
             });
         },
         getRelation: async (id: string | IdentityOptions) => {
@@ -249,8 +320,7 @@ const createMetadataSchemaQuery = (connectionId: string, databaseId: string, sch
         getRoutineList: async (filter?: RoutineFilter) => {
             const routineList: RoutineDetails[] = await window.dborg.database.connection.metadata.getRoutineList(connectionId, databaseId, schema.id, filter);
             return routineList.map(routine => {
-                const result: RoutineQueryApi = { ...routine };
-                return result;
+                return createMetadataRoutineQuery(connectionId, databaseId, schema.id, routine);
             });
         },
         getRoutine: async (id: string | IdentityOptions) => {
@@ -259,7 +329,46 @@ const createMetadataSchemaQuery = (connectionId: string, databaseId: string, sch
                 return createMetadataRoutineQuery(connectionId, databaseId, schema.id, routine);
             }
             return undefined;
-        }
+        },
+        getSequenceList: async (filter?: SequenceFilter) => {
+            const sequenceList: SequenceDetails[] = await window.dborg.database.connection.metadata.getSequenceList(connectionId, databaseId, schema.id, filter);
+            return sequenceList.map(sequence => {
+                return createMetadataSequenceQuery(connectionId, databaseId, schema.id, sequence);
+            });
+        },
+        getSequence: async (id: string | IdentityOptions) => {
+            const sequence = await window.dborg.database.connection.metadata.getSequence(connectionId, databaseId, schema.id, id);
+            if (sequence) {
+                return createMetadataSequenceQuery(connectionId, databaseId, schema.id, sequence);
+            }
+            return undefined;
+        },
+        getTypeList: async (filter?: TypeFilter) => {
+            const typeList: TypeDetails[] = await window.dborg.database.connection.metadata.getTypeList(connectionId, databaseId, schema.id, filter);
+            return typeList.map(type => {
+                return createMetadataTypeQuery(connectionId, databaseId, schema.id, type);
+            });
+        },
+        getType: async (id: string | IdentityOptions) => {
+            const type = await window.dborg.database.connection.metadata.getType(connectionId, databaseId, schema.id, id);
+            if (type) {
+                return createMetadataTypeQuery(connectionId, databaseId, schema.id, type);
+            }
+            return undefined;
+        },
+        getPackageList: async (filter?: PackageFilter) => {
+            const packageList: PackageDetails[] = await window.dborg.database.connection.metadata.getPackageList(connectionId, databaseId, schema.id, filter);
+            return packageList.map(pkg => {
+                return createMetadataPackageQuery(connectionId, databaseId, schema.id, pkg);
+            });
+        },
+        getPackage: async (id: string | IdentityOptions) => {
+            const pkg = await window.dborg.database.connection.metadata.getPackage(connectionId, databaseId, schema.id, id);
+            if (pkg) {
+                return createMetadataPackageQuery(connectionId, databaseId, schema.id, pkg);
+            }
+            return undefined;
+        },
     };
 };
 
@@ -293,6 +402,53 @@ const createMetadataRoutineQuery = (_connectionId: string, _databaseId: string, 
     };
 }
 
+export interface SequenceDetails extends SequenceMetadata {
+    databaseId: string;
+    schemaId: string | undefined;
+}
+export interface SequenceFilter extends EntityFilter<SequenceDetails> { }
+
+export interface SequenceQueryApi extends SequenceDetails {
+}
+
+const createMetadataSequenceQuery = (_connectionId: string, _databaseId: string, _schemaId: string | undefined, sequence: SequenceDetails): SequenceQueryApi => {
+    return {
+        ...sequence
+    };
+}
+
+export interface TypeDetails extends TypeMetadata {
+    databaseId: string;
+    schemaId: string | undefined;
+}
+export interface TypeFilter extends EntityFilter<TypeDetails> { }
+
+export interface TypeQueryApi extends TypeDetails {
+}
+
+const createMetadataTypeQuery = (_connectionId: string, _databaseId: string, _schemaId: string | undefined, type: TypeDetails): TypeQueryApi => {
+    return {
+        ...type
+    };
+}
+
+export interface PackageDetails extends Omit<PackageMetadata, "routines" | "types"> {
+    databaseId: string;
+    schemaId: string | undefined;
+    routineCount: number;
+    typeCount: number;
+}
+export interface PackageFilter extends EntityFilter<PackageDetails> { }
+
+export interface PackageQueryApi extends PackageDetails {
+}
+
+const createMetadataPackageQuery = (_connectionId: string, _databaseId: string, _schemaId: string | undefined, pkg: PackageDetails): PackageQueryApi => {
+    return {
+        ...pkg
+    };
+}
+
 /**
  * Test value against filter (string, array of strings, or regex)
  * Optimized for performance with early exits
@@ -310,14 +466,21 @@ const testFilterValue = (value: string, filter: string | string[] | RegExp): boo
 const matchIdentity = <T extends OwnedMetadataBase>(item: T, filter: EntityFilterIdentity): boolean => {
     if (!filter) return true;
 
-    if (filter.id !== undefined && !testFilterValue(item.id, filter.id)) return false;
+    const hasCriteria =
+        filter.id !== undefined ||
+        filter.name !== undefined ||
+        filter.owner !== undefined;
 
-    if (filter.name !== undefined && !testFilterValue(item.name, filter.name)) return false;
+    if (!hasCriteria) return true;
 
-    if (filter.owner !== undefined && (!item.owner || !testFilterValue(item.owner, filter.owner))) return false;
+    let matched = true;
 
-    return true;
-}
+    if (filter.id !== undefined && !testFilterValue(item.id, filter.id)) matched = false;
+    if (filter.name !== undefined && !testFilterValue(item.name, filter.name)) matched = false;
+    if (filter.owner !== undefined && (!item.owner || !testFilterValue(item.owner, filter.owner))) matched = false;
+
+    return filter.not ? !matched : matched;
+};
 
 
 /**
@@ -515,6 +678,95 @@ export const getMetadataRoutine = (metadata: Metadata, databaseId: string, schem
     }
 }
 
+const metadataSequenceToDetails = (databaseId: string, schemaId: string | undefined, metadata: SequenceMetadata): SequenceDetails => {
+    const { ...sequenceMetadata } = metadata;
+    return {
+        ...sequenceMetadata,
+        databaseId,
+        schemaId,
+    };
+}
+
+export const getMetadataSequenceList = (metadata: Metadata, databaseId: string, schemaId: string | undefined, filter?: SequenceFilter): SequenceDetails[] => {
+    const database = Object.values(metadata.databases ?? {}).find(db => db.id === databaseId);
+    if (!database) return [];
+    const schema = Object.values(database.schemas ?? {}).find(schema => schema.id === schemaId);
+    if (!schema) return [];
+    return Object.values(schema.sequences ?? {})
+        .filter(sequence => matchFilter(sequence, filter))
+        .map(sequence => metadataSequenceToDetails(databaseId, schemaId, sequence));
+}
+
+export const getMetadataSequence = (metadata: Metadata, databaseId: string, schemaId: string | undefined, id: string | IdentityOptions): SequenceDetails | undefined => {
+    const database = Object.values(metadata.databases ?? {}).find(db => db.id === databaseId);
+    if (!database) return undefined;
+    const schema = Object.values(database.schemas ?? {}).find(schema => schema.id === schemaId);
+    if (!schema) return undefined;
+    const sequence = Object.values(schema.sequences ?? {}).find(sequence => matchId(sequence, id));
+    if (!sequence) return undefined;
+    return metadataSequenceToDetails(databaseId, schemaId, sequence);
+}
+
+const metadataTypeToDetails = (databaseId: string, schemaId: string | undefined, metadata: TypeMetadata): TypeDetails => {
+    const { ...typeMetadata } = metadata;
+    return {
+        ...typeMetadata,
+        databaseId,
+        schemaId,
+    };
+}
+
+export const getMetadataTypeList = (metadata: Metadata, databaseId: string, schemaId: string | undefined, filter?: TypeFilter): TypeDetails[] => {
+    const database = Object.values(metadata.databases ?? {}).find(db => db.id === databaseId);
+    if (!database) return [];
+    const schema = Object.values(database.schemas ?? {}).find(schema => schema.id === schemaId);
+    if (!schema) return [];
+    return Object.values(schema.types ?? {})
+        .filter(type => matchFilter(type, filter))
+        .map(type => metadataTypeToDetails(databaseId, schemaId, type));
+}
+
+export const getMetadataType = (metadata: Metadata, databaseId: string, schemaId: string | undefined, id: string | IdentityOptions): TypeDetails | undefined => {
+    const database = Object.values(metadata.databases ?? {}).find(db => db.id === databaseId);
+    if (!database) return undefined;
+    const schema = Object.values(database.schemas ?? {}).find(schema => schema.id === schemaId);
+    if (!schema) return undefined;
+    const type = Object.values(schema.types ?? {}).find(type => matchId(type, id));
+    if (!type) return undefined;
+    return metadataTypeToDetails(databaseId, schemaId, type);
+}
+
+const metadataPackageToDetails = (databaseId: string, schemaId: string | undefined, metadata: PackageMetadata): PackageDetails => {
+    const { routines, types, ...packageMetadata } = metadata;
+    return {
+        ...packageMetadata,
+        databaseId,
+        schemaId,
+        routineCount: Object.keys(routines ?? {}).length,
+        typeCount: Object.keys(types ?? {}).length,
+    };
+}
+
+export const getMetadataPackageList = (metadata: Metadata, databaseId: string, schemaId: string | undefined, filter?: PackageFilter): PackageDetails[] => {
+    const database = Object.values(metadata.databases ?? {}).find(db => db.id === databaseId);
+    if (!database) return [];
+    const schema = Object.values(database.schemas ?? {}).find(schema => schema.id === schemaId);
+    if (!schema) return [];
+    return Object.values(schema.packages ?? {})
+        .filter(pkg => matchFilter(pkg, filter))
+        .map(pkg => metadataPackageToDetails(databaseId, schemaId, pkg));
+}
+
+export const getMetadataPackage = (metadata: Metadata, databaseId: string, schemaId: string | undefined, id: string | IdentityOptions): PackageDetails | undefined => {
+    const database = Object.values(metadata.databases ?? {}).find(db => db.id === databaseId);
+    if (!database) return undefined;
+    const schema = Object.values(database.schemas ?? {}).find(schema => schema.id === schemaId);
+    if (!schema) return undefined;
+    const pkg = Object.values(schema.packages ?? {}).find(pkg => matchId(pkg, id));
+    if (!pkg) return undefined;
+    return metadataPackageToDetails(databaseId, schemaId, pkg);
+}
+
 const normalizeIdentifier = (value: string, caseSensitive: boolean): string => {
     const trimmed = value.trim();
     return caseSensitive ? trimmed : trimmed.toLowerCase();
@@ -611,8 +863,8 @@ export const searchIdentifierUsage = (
 export const findObjects = (
     metadata: Metadata,
     options: ObjectFindOptions
-): RequiredOnly<MetadataObjectHit, "objectType">[] => {
-    const result: RequiredOnly<MetadataObjectHit, "objectType">[] = [];
+): MetadataAnyObjectHit[] => {
+    const result: MetadataAnyObjectHit[] = [];
 
     for (const database of Object.values(metadata.databases ?? {}).filter(db => matchFilter(db, options.filters?.database))) {
         if ((!options.objectTypes || allowObjectType("database", options.objectTypes)) && matchIdentity(database, options)) {
@@ -663,7 +915,7 @@ export const findObjects = (
                 }
             }
             if (!options.objectTypes || allowObjectType("sequence", options.objectTypes)) {
-                for (const sequence of Object.values(schema.sequences ?? {}).filter(sequence => matchFilter(sequence, options.filters?.relation))) {
+                for (const sequence of Object.values(schema.sequences ?? {}).filter(sequence => matchFilter(sequence, options.filters?.sequence))) {
                     if (!matchIdentity(sequence, options)) continue;
                     result.push({
                         objectType: "sequence",
@@ -677,7 +929,7 @@ export const findObjects = (
                 }
             }
             if (!options.objectTypes || allowObjectType("type", options.objectTypes)) {
-                for (const type of Object.values(schema.types ?? {}).filter(type => matchFilter(type, options.filters?.relation))) {
+                for (const type of Object.values(schema.types ?? {}).filter(type => matchFilter(type, options.filters?.type))) {
                     if (!matchIdentity(type, options)) continue;
                     result.push({
                         objectType: "type",
@@ -691,7 +943,7 @@ export const findObjects = (
                 }
             }
             if (!options.objectTypes || allowObjectType("package", options.objectTypes)) {
-                for (const pkg of Object.values(schema.packages ?? {}).filter(pkg => matchFilter(pkg, options.filters?.relation))) {
+                for (const pkg of Object.values(schema.packages ?? {}).filter(pkg => matchFilter(pkg, options.filters?.package))) {
                     if (!matchIdentity(pkg, options)) continue;
                     result.push({
                         objectType: "package",

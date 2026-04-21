@@ -1,6 +1,7 @@
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import { MetadataObjectType, RelationMetadata, RoutineMetadata, SchemaMetadata, SequenceMetadata, TypeMetadata } from "../../../../../../src/api/db";
 import { t } from "i18next";
+import { RelationQueryApi, RoutineQueryApi, SchemaQueryApi, SequenceQueryApi, TypeQueryApi } from "../../../../../../src/api/db/MetadataQuery";
 
 export type RiskLevel = "low" | "medium" | "high" | "critical";
 
@@ -40,7 +41,7 @@ export class ObjectSafetyAnalyzer {
     /**
      * Ocenia bezpieczeństwo usuwania obiektu
      */
-    assessDeletion(relation: RelationMetadata, usage?: Array<any>): OperationRisk {
+    assessDeletion(relation: RelationQueryApi, usage?: Array<any>): OperationRisk {
         const details: string[] = [];
         let level: RiskLevel = "low";
 
@@ -110,7 +111,7 @@ export class ObjectSafetyAnalyzer {
     /**
      * Ocenia bezpieczeństwo przenoszenia obiektu
      */
-    assessRelationMove(relation: RelationMetadata, usage?: Array<any>): OperationRisk {
+    assessRelationMove(relation: RelationQueryApi, usage?: Array<any>): OperationRisk {
         const details: string[] = [];
         let level: RiskLevel = "low";
 
@@ -167,7 +168,7 @@ export class ObjectSafetyAnalyzer {
         };
     }
 
-    private assessRoutineMove(routine: RoutineMetadata, usage?: Array<any>): OperationRisk {
+    private assessRoutineMove(routine: RoutineQueryApi, usage?: Array<any>): OperationRisk {
         const details: string[] = [];
         let level: RiskLevel = "low";
 
@@ -205,7 +206,7 @@ export class ObjectSafetyAnalyzer {
     /**
      * Ocena przenoszenia sekwencji
      */
-    private assessSequenceMove(sequence: SequenceMetadata, usage?: Array<any>): OperationRisk {
+    private assessSequenceMove(sequence: SequenceQueryApi, usage?: Array<any>): OperationRisk {
         const details: string[] = [];
         let level: RiskLevel = "low";
 
@@ -240,7 +241,7 @@ export class ObjectSafetyAnalyzer {
     /**
      * Ocena przenoszenia typu
      */
-    private assessTypeMove(type: TypeMetadata, usage?: Array<any>): OperationRisk {
+    private assessTypeMove(type: TypeQueryApi, usage?: Array<any>): OperationRisk {
         const details: string[] = [];
         let level: RiskLevel = "low";
 
@@ -288,7 +289,7 @@ export class ObjectSafetyAnalyzer {
     /**
      * Ocenia bezpieczeństwo zmiany właściciela
      */
-    assessChangeOwner(relation: RelationMetadata, currentOwner?: string | null): OperationRisk {
+    assessChangeOwner(relation: RelationQueryApi, currentOwner?: string | null): OperationRisk {
         const details: string[] = [];
         let level: RiskLevel = "low";
 
@@ -325,7 +326,7 @@ export class ObjectSafetyAnalyzer {
     /**
      * Ocena dla rutyny (funkcji/procedury)
      */
-    assessRoutineDeletion(routine: RoutineMetadata, usage?: Array<any>): OperationRisk {
+    assessRoutineDeletion(routine: RoutineQueryApi, usage?: Array<any>): OperationRisk {
         const details: string[] = [];
         let level: RiskLevel = "low";
 
@@ -372,7 +373,7 @@ export class ObjectSafetyAnalyzer {
     /**
      * Ocena dla schematu
      */
-    assessSchemaDeletion(schema: SchemaMetadata, relationsCount: number): OperationRisk {
+    assessSchemaDeletion(schema: SchemaQueryApi): OperationRisk {
         const details: string[] = [];
         let level: RiskLevel = "low";
 
@@ -386,19 +387,19 @@ export class ObjectSafetyAnalyzer {
             details.push(t("schema-is-default", "Schema is a default schema for the user"));
         }
 
-        if (relationsCount > 0) {
+        if (schema.relationCount > 0) {
             level = level === "low" ? "high" : "critical";
-            details.push(t("schema-contains-objects", "Schema contains {{count}} objects - they will be deleted", { count: relationsCount }));
+            details.push(t("schema-contains-objects", "Schema contains {{count}} objects - they will be deleted", { count: schema.relationCount }));
         }
 
-        if (schema.routines && Object.keys(schema.routines).length > 0) {
+        if (schema.routineCount > 0) {
             level = "critical";
-            details.push(t("schema-contains-routines", "Schema contains {{count}} routine(s)", { count: Object.keys(schema.routines).length }));
+            details.push(t("schema-contains-routines", "Schema contains {{count}} routine(s)", { count: schema.routineCount }));
         }
 
-        if (schema.types && Object.keys(schema.types).length > 0) {
+        if (schema.typeCount > 0) {
             level = "critical";
-            details.push(t("schema-contains-types", "Schema contains {{count}} user-defined type(s)", { count: Object.keys(schema.types).length }));
+            details.push(t("schema-contains-types", "Schema contains {{count}} user-defined type(s)", { count: schema.typeCount }));
         }
 
         if (schema.permissions?.usage === false) {
@@ -419,7 +420,6 @@ export class ObjectSafetyAnalyzer {
      */
     private async findObjectUsageInIdentifiers(
         objectName: string,
-        schemaName: string
     ): Promise<Array<{ type: MetadataObjectType; name: string; location: string }>> {
         const metadata = await this.session.getMetadataQuery();
 
@@ -428,18 +428,15 @@ export class ObjectSafetyAnalyzer {
         }
 
         const usage: Array<{ type: MetadataObjectType; name: string; location: string }> = [];
-        const keyVariants = [
-            objectName.toLowerCase().trim(),
-            `${schemaName.toLowerCase().trim()}.${objectName.toLowerCase().trim()}`,
-            `"${schemaName}"."${objectName}"`
-        ];
 
         const found = await metadata.searchIdentifierUsage({
             query: objectName,
             mode: "exact",
             objectTypes: ["relation", "routine"],
             filters: {
-                database: { filter: { connected: true } }
+                database: { filter: { connected: true } },
+                relation: { not: true, name: objectName },
+                routine: { not: true, name: objectName }
             }
         });
 
@@ -480,127 +477,98 @@ export class ObjectSafetyAnalyzer {
     ): Promise<AnalysisResult> {
         try {
             // Pobierz metadane z sesji
-            const metadata = await this.session.getMetadata();
+            const metadata = await this.session.getMetadataQuery();
 
-            if (!metadata || Object.keys(metadata.databases ?? {}).length === 0) {
+            if (metadata.status !== "ready") {
                 return {
                     found: false,
-                    error: t("error-metadata-fetch", "Could not fetch metadata from database")
+                    error: t("error-metadata-not-ready-or-unsupported", "Metadata is not ready yet or not supported. Please try again later.")
                 };
             }
 
-            // Pobierz pierwszą bazę danych do której jesteś podłączony
-            const database = Object.values(metadata.databases ?? {}).find(db => db.connected);
+            const usage = await this.findObjectUsageInIdentifiers(objectName);
+            const objects = await metadata.findObjects({
+                name: objectName,
+                filters: {
+                    database: { filter: { connected: true } },
+                    schema: { name: schemaName }
+                }
+            });
 
-            if (!database) {
-                return {
-                    found: false,
-                    error: t("error-database-not-found", "Database not found")
-                };
-            }
+            if (objects.length > 0) {
+                const object = await metadata.getObject(objects[0]); // Analizuj pierwszy znaleziony obiekt
 
-            // Sprawdź czy schemat istnieje
-            const schema = database.schemas[schemaName];
-            if (!schema) {
-                return {
-                    found: false,
-                    error: t("error-schema-not-found", `Schema "${schemaName}" not found`)
-                };
-            }
-
-            // Szukaj relacji (tabela/widok)
-            const relation = schema.relations[objectName];
-            if (relation) {
-                const usage = await this.findObjectUsageInIdentifiers(objectName, schemaName);
-                return {
-                    found: true,
-                    objectType: "relation",
-                    objectName,
-                    schemaName,
-                    usedInIdentifiers: usage,
-                    assessment: {
-                        canDelete: this.assessDeletion(relation, usage),
-                        canMove: this.assessRelationMove(relation, usage),
-                        canChangeOwner: this.assessChangeOwner(relation, relation.owner)
+                if (object) {
+                    if (object.objectType === "schema") {
+                        return {
+                            found: true,
+                            objectType: "schema",
+                            objectName: schemaName,
+                            schemaName,
+                            assessment: {
+                                canDelete: this.assessSchemaDeletion(object),
+                                canMove: this.createUnavailableOperation(t("operation-move-schema", "Move schema")),
+                                canChangeOwner: this.assessSchemaChangeOwner(object)
+                            }
+                        };
                     }
-                };
-            }
-
-            // Szukaj rutyn (funkcji/procedur)
-            if (schema.routines) {
-                const routineList = schema.routines[objectName];
-                if (routineList && routineList.length > 0) {
-                    const routine = routineList[0]; // Analizuj pierwszy overload
-                    const usage = await this.findObjectUsageInIdentifiers(objectName, schemaName);
-                    return {
-                        found: true,
-                        objectType: "routine",
-                        objectName,
-                        schemaName,
-                        usedInIdentifiers: usage,
-                        assessment: {
-                            canDelete: this.assessRoutineDeletion(routine, usage),
-                            canMove: this.assessRoutineMove(routine, usage),
-                            canChangeOwner: this.assessRoutineChangeOwner(routine)
-                        }
-                    };
-                }
-            }
-
-            // Szukaj sekwencji
-            if (schema.sequences) {
-                const sequence = schema.sequences[objectName];
-                if (sequence) {
-                    const usage = await this.findObjectUsageInIdentifiers(objectName, schemaName);
-                    return {
-                        found: true,
-                        objectType: "sequence",
-                        objectName,
-                        schemaName,
-                        usedInIdentifiers: usage,
-                        assessment: {
-                            canDelete: this.assessSequenceDeletion(sequence, usage),
-                            canMove: this.assessSequenceMove(sequence, usage),
-                            canChangeOwner: this.assessSequenceChangeOwner(sequence)
-                        }
-                    };
-                }
-            }
-
-            // Szukaj typów
-            if (schema.types) {
-                const type = schema.types[objectName];
-                if (type) {
-                    const usage = await this.findObjectUsageInIdentifiers(objectName, schemaName);
-                    return {
-                        found: true,
-                        objectType: "type",
-                        objectName,
-                        schemaName,
-                        usedInIdentifiers: usage,
-                        assessment: {
-                            canDelete: this.assessTypeDeletion(type, usage),
-                            canMove: this.assessTypeMove(type, usage),
-                            canChangeOwner: this.assessTypeChangeOwner(type)
-                        }
-                    };
-                }
-            }
-
-            // Sprawdź czy szukano schematu
-            if (objectName === "" || objectName === schemaName) {
-                const relationsCount = Object.keys(schema.relations).length;
-                return {
-                    found: true,
-                    objectType: "schema",
-                    objectName: schemaName,
-                    schemaName,
-                    assessment: {
-                        canDelete: this.assessSchemaDeletion(schema, relationsCount),
-                        canMove: this.createUnavailableOperation(t("operation-move-schema", "Move schema")),
-                        canChangeOwner: this.assessSchemaChangeOwner(schema)
+                    if (object.objectType === "relation") {
+                        return {
+                            found: true,
+                            objectType: "relation",
+                            objectName,
+                            schemaName,
+                            usedInIdentifiers: usage,
+                            assessment: {
+                                canDelete: this.assessDeletion(object, usage),
+                                canMove: this.assessRelationMove(object, usage),
+                                canChangeOwner: this.assessChangeOwner(object, object.owner)
+                            }
+                        };
                     }
-                };
+                    if (object.objectType === "routine") {
+                        return {
+                            found: true,
+                            objectType: "routine",
+                            objectName,
+                            schemaName,
+                            usedInIdentifiers: usage,
+                            assessment: {
+                                canDelete: this.assessRoutineDeletion(object, usage),
+                                canMove: this.assessRoutineMove(object, usage),
+                                canChangeOwner: this.assessRoutineChangeOwner(object)
+                            }
+                        };
+                    }
+                    if (object.objectType === "sequence") {
+                        return {
+                            found: true,
+                            objectType: "sequence",
+                            objectName,
+                            schemaName,
+                            usedInIdentifiers: usage,
+                            assessment: {
+                                canDelete: this.assessSequenceDeletion(object, usage),
+                                canMove: this.assessSequenceMove(object, usage),
+                                canChangeOwner: this.assessSequenceChangeOwner(object)
+                            }
+                        };
+                    }
+                    if (object.objectType === "type") {
+                        return {
+                            found: true,
+                            objectType: "type",
+                            objectName,
+                            schemaName,
+                            usedInIdentifiers: usage,
+                            assessment: {
+                                canDelete: this.assessTypeDeletion(object, usage),
+                                canMove: this.assessTypeMove(object, usage),
+                                canChangeOwner: this.assessTypeChangeOwner(object)
+                            }
+                        };
+                    }
+                }
             }
 
             return {
@@ -775,7 +743,7 @@ export class ObjectSafetyAnalyzer {
     /**
      * Ocena zmiany właściciela schematu
      */
-    private assessSchemaChangeOwner(schema: SchemaMetadata): OperationRisk {
+    private assessSchemaChangeOwner(schema: SchemaQueryApi): OperationRisk {
         const details: string[] = [];
         let level: RiskLevel = "low";
 

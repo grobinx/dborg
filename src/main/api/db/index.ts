@@ -6,7 +6,7 @@ import { ipcMain, ipcRenderer, IpcMainInvokeEvent, IpcRendererEvent } from "elec
 import internal from '../../core/db/internal';
 import { handleResult, invokeResult, InvokeResult, invokeViaLocalResult } from '../../../api/ipc-helpers';
 import { handleWithLocalResult } from '../../../../src/api/rpc-http';
-import { DatabaseFilter, DatabaseDetails, getMetadata, getMetadataDatabase, getMetadataDatabaseList, IdentityOptions, MetadataDetails, SchemaFilter, getMetadataSchemaList, getMetadataSchema, SchemaDetails, getMetadataRoutineList, RoutineDetails, RoutineFilter, getMetadataRoutine, getMetadataRelationList, getMetadataRelation, RelationFilter, RelationDetails, ObjectSearchOptions, IdentifierUsageHit, searchIdentifierUsage, ObjectFindOptions, MetadataObjectHit, findObjects } from '../../../../src/api/db/MetadataQuery';
+import { DatabaseFilter, DatabaseDetails, getMetadata, getMetadataDatabase, getMetadataDatabaseList, IdentityOptions, MetadataDetails, SchemaFilter, getMetadataSchemaList, getMetadataSchema, SchemaDetails, getMetadataRoutineList, RoutineDetails, RoutineFilter, getMetadataRoutine, getMetadataRelationList, getMetadataRelation, RelationFilter, RelationDetails, ObjectSearchOptions, IdentifierUsageHit, searchIdentifierUsage, ObjectFindOptions, MetadataObjectHit, findObjects, MetadataAnyObjectHit, getMetadataSequenceList, getMetadataSequence, getMetadataTypeList, getMetadataType, getMetadataPackageList, getMetadataPackage, SequenceFilter, TypeFilter, PackageFilter, PackageDetails, SequenceDetails, TypeDetails } from '../../../../src/api/db/MetadataQuery';
 import { RequiredOnly } from 'src/api/types';
 
 // Driver events
@@ -42,6 +42,12 @@ const EVENT_METADATA_QUERY_GET_ROUTINE_LIST = "dborg:database:metadataQuery:getR
 const EVENT_METADATA_QUERY_GET_ROUTINE = "dborg:database:metadataQuery:getRoutine";
 const EVENT_METADATA_QUERY_GET_RELATION_LIST = "dborg:database:metadataQuery:getRelationList";
 const EVENT_METADATA_QUERY_GET_RELATION = "dborg:database:metadataQuery:getRelation";
+const EVENT_METADATA_QUERY_GET_SEQUENCE_LIST = "dborg:database:metadataQuery:getSequenceList";
+const EVENT_METADATA_QUERY_GET_SEQUENCE = "dborg:database:metadataQuery:getSequence";
+const EVENT_METADATA_QUERY_GET_TYPE_LIST = "dborg:database:metadataQuery:getTypeList";
+const EVENT_METADATA_QUERY_GET_TYPE = "dborg:database:metadataQuery:getType";
+const EVENT_METADATA_QUERY_GET_PACKAGE_LIST = "dborg:database:metadataQuery:getPackageList";
+const EVENT_METADATA_QUERY_GET_PACKAGE = "dborg:database:metadataQuery:getPackage";
 
 // Cursor events
 const EVENT_CONNECTION_CURSOR_GET = "dborg:database:connection:cursor:get";
@@ -381,7 +387,7 @@ export function init(): void {
     ipcMain.handle(
         EVENT_METADATA_QUERY_FIND_OBJECTS,
         async (_: IpcMainInvokeEvent, connectionId: string, options: ObjectFindOptions): Promise<InvokeResult> => {
-            return handleResult<RequiredOnly<MetadataObjectHit, "objectType">[]>(async () => {
+            return handleResult<MetadataAnyObjectHit[]>(async () => {
                 const foundConnection = driver.Driver.getConnection(connectionId);
                 if (!foundConnection) {
                     throw ConnectionError(connectionId);
@@ -470,6 +476,84 @@ export function init(): void {
         }
     );
 
+    ipcMain.handle(
+        EVENT_METADATA_QUERY_GET_SEQUENCE_LIST,
+        async (_: IpcMainInvokeEvent, connectionId: string, databaseId: string, schemaId: string, filter?: SequenceFilter): Promise<InvokeResult> => {
+            return handleResult(async () => {
+                const foundConnection = driver.Driver.getConnection(connectionId);
+                if (!foundConnection) {
+                    throw ConnectionError(connectionId);
+                }
+                return getMetadataSequenceList(await foundConnection.getMetadata(), databaseId, schemaId, filter);
+            });
+        }
+    );
+
+    ipcMain.handle(
+        EVENT_METADATA_QUERY_GET_SEQUENCE,
+        async (_: IpcMainInvokeEvent, connectionId: string, databaseId: string, schemaId: string, id: string | IdentityOptions): Promise<InvokeResult> => {
+            return handleResult(async () => {
+                const foundConnection = driver.Driver.getConnection(connectionId);
+                if (!foundConnection) {
+                    throw ConnectionError(connectionId);
+                }
+                return getMetadataSequence(await foundConnection.getMetadata(), databaseId, schemaId, id);
+            });
+        }
+    );
+
+    ipcMain.handle(
+        EVENT_METADATA_QUERY_GET_TYPE_LIST,
+        async (_: IpcMainInvokeEvent, connectionId: string, databaseId: string, schemaId: string, filter?: TypeFilter): Promise<InvokeResult> => {
+            return handleResult(async () => {
+                const foundConnection = driver.Driver.getConnection(connectionId);
+                if (!foundConnection) {
+                    throw ConnectionError(connectionId);
+                }
+                return getMetadataTypeList(await foundConnection.getMetadata(), databaseId, schemaId, filter);
+            });
+        }
+    );
+
+    ipcMain.handle(
+        EVENT_METADATA_QUERY_GET_TYPE,
+        async (_: IpcMainInvokeEvent, connectionId: string, databaseId: string, schemaId: string, id: string | IdentityOptions): Promise<InvokeResult> => {
+            return handleResult(async () => {
+                const foundConnection = driver.Driver.getConnection(connectionId);
+                if (!foundConnection) {
+                    throw ConnectionError(connectionId);
+                }
+                return getMetadataType(await foundConnection.getMetadata(), databaseId, schemaId, id);
+            });
+        }
+    );
+
+    ipcMain.handle(
+        EVENT_METADATA_QUERY_GET_PACKAGE_LIST,
+        async (_: IpcMainInvokeEvent, connectionId: string, databaseId: string, schemaId: string, filter?: PackageFilter): Promise<InvokeResult> => {
+            return handleResult(async () => {
+                const foundConnection = driver.Driver.getConnection(connectionId);
+                if (!foundConnection) {
+                    throw ConnectionError(connectionId);
+                }
+                return getMetadataPackageList(await foundConnection.getMetadata(), databaseId, schemaId, filter);
+            });
+        }
+    );
+
+    ipcMain.handle(
+        EVENT_METADATA_QUERY_GET_PACKAGE,
+        async (_: IpcMainInvokeEvent, connectionId: string, databaseId: string, schemaId: string, id: string | IdentityOptions): Promise<InvokeResult> => {
+            return handleResult(async () => {
+                const foundConnection = driver.Driver.getConnection(connectionId);
+                if (!foundConnection) {
+                    throw ConnectionError(connectionId);
+                }
+                return getMetadataPackage(await foundConnection.getMetadata(), databaseId, schemaId, id);
+            });
+        }
+    );
+
     // Internal dborg database
     ipcMain.handle(
         EVENT_INTERNAL_QUERY,
@@ -516,13 +600,19 @@ export const preload = {
             getDatabaseList: (connectionId: string, filter?: DatabaseFilter): Promise<DatabaseDetails[]> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_DATABASE_LIST, connectionId, filter)),
             getDatabase: (connectionId: string, id: string | IdentityOptions): Promise<DatabaseDetails | undefined> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_DATABASE, connectionId, id)),
             searchIdentifierUsage: (connectionId: string, options: ObjectSearchOptions): Promise<IdentifierUsageHit[]> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_SEARCH_IDENTIFIER_USAGE, connectionId, options)),
-            findObjects: (connectionId: string, options: ObjectFindOptions): Promise<RequiredOnly<MetadataObjectHit, "objectType">[]> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_FIND_OBJECTS, connectionId, options)),
+            findObjects: (connectionId: string, options: ObjectFindOptions): Promise<MetadataAnyObjectHit[]> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_FIND_OBJECTS, connectionId, options)),
             getSchemaList: (connectionId: string, databaseId: string, filter?: SchemaFilter): Promise<SchemaDetails[]> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_SCHEMA_LIST, connectionId, databaseId, filter)),
             getSchema: (connectionId: string, databaseId: string, id: string | IdentityOptions): Promise<SchemaDetails | undefined> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_SCHEMA, connectionId, databaseId, id)),
             getRoutineList: (connectionId: string, databaseId: string, schemaId: string | undefined, filter?: RoutineFilter): Promise<RoutineDetails[]> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_ROUTINE_LIST, connectionId, databaseId, schemaId, filter)),
             getRoutine: (connectionId: string, databaseId: string, schemaId: string | undefined, id: string | IdentityOptions): Promise<RoutineDetails | undefined> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_ROUTINE, connectionId, databaseId, schemaId, id)),
             getRelationList: (connectionId: string, databaseId: string, schemaId: string | undefined, filter?: RelationFilter): Promise<RelationDetails[]> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_RELATION_LIST, connectionId, databaseId, schemaId, filter)),
             getRelation: (connectionId: string, databaseId: string, schemaId: string | undefined, id: string | IdentityOptions): Promise<RelationDetails | undefined> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_RELATION, connectionId, databaseId, schemaId, id)),
+            getSequenceList: (connectionId: string, databaseId: string, schemaId: string | undefined, filter?: SequenceFilter): Promise<SequenceDetails[]> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_SEQUENCE_LIST, connectionId, databaseId, schemaId, filter)),
+            getSequence: (connectionId: string, databaseId: string, schemaId: string | undefined, id: string | IdentityOptions): Promise<SequenceDetails | undefined> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_SEQUENCE, connectionId, databaseId, schemaId, id)),
+            getTypeList: (connectionId: string, databaseId: string, schemaId: string | undefined, filter?: TypeFilter): Promise<TypeDetails[]> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_TYPE_LIST, connectionId, databaseId, schemaId, filter)),
+            getType: (connectionId: string, databaseId: string, schemaId: string | undefined, id: string | IdentityOptions): Promise<TypeDetails | undefined> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_TYPE, connectionId, databaseId, schemaId, id)),
+            getPackageList: (connectionId: string, databaseId: string, schemaId: string | undefined, filter?: PackageFilter): Promise<PackageDetails[]> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_PACKAGE_LIST, connectionId, databaseId, schemaId, filter)),
+            getPackage: (connectionId: string, databaseId: string, schemaId: string | undefined, id: string | IdentityOptions): Promise<PackageDetails | undefined> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_PACKAGE, connectionId, databaseId, schemaId, id)),
         },
         getMetadata: async (uniqueId: string, progress?: (current: string) => void, force?: boolean): Promise<api.Metadata> => {
             const listener = (_event: IpcRendererEvent, eUniqueId: string, current: string): void => {
