@@ -158,9 +158,10 @@ export const createMetadataQueryApi = async (connectionId: string): Promise<Meta
                         connectionId,
                         hit.databaseId,
                         hit.schemaId,
-                        hit.objectId
+                        undefined,
+                        hit.objectId,
                     );
-                    return routine ? createMetadataRoutineQuery(connectionId, hit.databaseId, hit.schemaId, routine) : undefined;
+                    return routine ? createMetadataRoutineQuery(connectionId, hit.databaseId, hit.schemaId, undefined, routine) : undefined;
                 }
 
                 case "sequence": {
@@ -180,9 +181,10 @@ export const createMetadataQueryApi = async (connectionId: string): Promise<Meta
                         connectionId,
                         hit.databaseId,
                         hit.schemaId,
+                        undefined,
                         hit.objectId
                     );
-                    return type ? createMetadataTypeQuery(connectionId, hit.databaseId, hit.schemaId, type) : undefined;
+                    return type ? createMetadataTypeQuery(connectionId, hit.databaseId, hit.schemaId, undefined, type) : undefined;
                 }
 
                 case "package": {
@@ -318,15 +320,15 @@ const createMetadataSchemaQuery = (connectionId: string, databaseId: string, sch
             return undefined;
         },
         getRoutineList: async (filter?: RoutineFilter) => {
-            const routineList: RoutineDetails[] = await window.dborg.database.connection.metadata.getRoutineList(connectionId, databaseId, schema.id, filter);
+            const routineList: RoutineDetails[] = await window.dborg.database.connection.metadata.getRoutineList(connectionId, databaseId, schema.id, undefined, filter);
             return routineList.map(routine => {
-                return createMetadataRoutineQuery(connectionId, databaseId, schema.id, routine);
+                return createMetadataRoutineQuery(connectionId, databaseId, schema.id, undefined, routine);
             });
         },
         getRoutine: async (id: string | IdentityOptions) => {
-            const routine = await window.dborg.database.connection.metadata.getRoutine(connectionId, databaseId, schema.id, id);
+            const routine = await window.dborg.database.connection.metadata.getRoutine(connectionId, databaseId, schema.id, undefined, id);
             if (routine) {
-                return createMetadataRoutineQuery(connectionId, databaseId, schema.id, routine);
+                return createMetadataRoutineQuery(connectionId, databaseId, schema.id, undefined, routine);
             }
             return undefined;
         },
@@ -344,15 +346,15 @@ const createMetadataSchemaQuery = (connectionId: string, databaseId: string, sch
             return undefined;
         },
         getTypeList: async (filter?: TypeFilter) => {
-            const typeList: TypeDetails[] = await window.dborg.database.connection.metadata.getTypeList(connectionId, databaseId, schema.id, filter);
+            const typeList: TypeDetails[] = await window.dborg.database.connection.metadata.getTypeList(connectionId, databaseId, schema.id, undefined, filter);
             return typeList.map(type => {
-                return createMetadataTypeQuery(connectionId, databaseId, schema.id, type);
+                return createMetadataTypeQuery(connectionId, databaseId, schema.id, undefined, type);
             });
         },
         getType: async (id: string | IdentityOptions) => {
-            const type = await window.dborg.database.connection.metadata.getType(connectionId, databaseId, schema.id, id);
+            const type = await window.dborg.database.connection.metadata.getType(connectionId, databaseId, schema.id, undefined, id);
             if (type) {
-                return createMetadataTypeQuery(connectionId, databaseId, schema.id, type);
+                return createMetadataTypeQuery(connectionId, databaseId, schema.id, undefined, type);
             }
             return undefined;
         },
@@ -390,13 +392,14 @@ const createMetadataRelationQuery = (_connectionId: string, _databaseId: string,
 export interface RoutineDetails extends RoutineMetadata {
     databaseId: string;
     schemaId: string | undefined;
+    packageId: string | undefined;
 }
 export interface RoutineFilter extends EntityFilter<RoutineDetails> { }
 
 export interface RoutineQueryApi extends RoutineDetails {
 }
 
-const createMetadataRoutineQuery = (_connectionId: string, _databaseId: string, _schemaId: string | undefined, routine: RoutineDetails): RoutineQueryApi => {
+const createMetadataRoutineQuery = (_connectionId: string, _databaseId: string, _schemaId: string | undefined, _packageId: string | undefined, routine: RoutineDetails): RoutineQueryApi => {
     return {
         ...routine
     };
@@ -420,13 +423,14 @@ const createMetadataSequenceQuery = (_connectionId: string, _databaseId: string,
 export interface TypeDetails extends TypeMetadata {
     databaseId: string;
     schemaId: string | undefined;
+    packageId: string | undefined;
 }
 export interface TypeFilter extends EntityFilter<TypeDetails> { }
 
 export interface TypeQueryApi extends TypeDetails {
 }
 
-const createMetadataTypeQuery = (_connectionId: string, _databaseId: string, _schemaId: string | undefined, type: TypeDetails): TypeQueryApi => {
+const createMetadataTypeQuery = (_connectionId: string, _databaseId: string, _schemaId: string | undefined, _packageId: string | undefined, type: TypeDetails): TypeQueryApi => {
     return {
         ...type
     };
@@ -441,11 +445,53 @@ export interface PackageDetails extends Omit<PackageMetadata, "routines" | "type
 export interface PackageFilter extends EntityFilter<PackageDetails> { }
 
 export interface PackageQueryApi extends PackageDetails {
+    /**
+     * Get a list of routines in the package, optionally filtered by the provided criteria
+     * @param filter 
+     */
+    getRoutineList(filter?: RoutineFilter): Promise<RoutineQueryApi[]>;
+    /**
+     * Get a full specific routine in the package by its name or identity
+     * @param id
+     */
+    getRoutine(id: string | IdentityOptions): Promise<RoutineQueryApi | undefined>;
+    /**
+     * Get a list of types in the package, optionally filtered by the provided criteria
+     * @param filter 
+     */
+    getTypeList(filter?: TypeFilter): Promise<TypeQueryApi[]>;
+    /**
+     * Get a full specific type in the package by its name or identity
+     * @param id
+     */
+    getType(id: string | IdentityOptions): Promise<TypeQueryApi | undefined>;
 }
 
-const createMetadataPackageQuery = (_connectionId: string, _databaseId: string, _schemaId: string | undefined, pkg: PackageDetails): PackageQueryApi => {
+const createMetadataPackageQuery = (connectionId: string, databaseId: string, schemaId: string | undefined, pkg: PackageDetails): PackageQueryApi => {
     return {
-        ...pkg
+        ...pkg,
+        getRoutineList: async (filter?: RoutineFilter) => {
+            const routineList: RoutineDetails[] = await window.dborg.database.connection.metadata.getRoutineList(connectionId, databaseId, schemaId, pkg.id, filter);
+            return routineList.map(routine => {
+                return createMetadataRoutineQuery(connectionId, databaseId, schemaId, pkg.id, routine);
+            });
+        },
+        getRoutine: async (id: string | IdentityOptions) => {
+            const routine: RoutineDetails | undefined = await window.dborg.database.connection.metadata.getRoutine(connectionId, databaseId, schemaId, pkg.id, id);
+            if (!routine) return undefined;
+            return createMetadataRoutineQuery(connectionId, databaseId, schemaId, pkg.id, routine);
+        },
+        getTypeList: async (filter?: TypeFilter) => {
+            const typeList: TypeDetails[] = await window.dborg.database.connection.metadata.getTypeList(connectionId, databaseId, schemaId, pkg.id, filter);
+            return typeList.map(type => {
+                return createMetadataTypeQuery(connectionId, databaseId, schemaId, pkg.id, type);
+            });
+        },
+        getType: async (id: string | IdentityOptions) => {
+            const type: TypeDetails | undefined = await window.dborg.database.connection.metadata.getType(connectionId, databaseId, schemaId, pkg.id, id);
+            if (!type) return undefined;
+            return createMetadataTypeQuery(connectionId, databaseId, schemaId, pkg.id, type);
+        }
     };
 }
 
@@ -629,52 +675,70 @@ export const getMetadataRelation = (metadata: Metadata, databaseId: string, sche
     }
 }
 
-const metadataRoutineToDetails = (databaseId: string, schemaId: string | undefined, metadata: RoutineMetadata): RoutineDetails => {
+const metadataRoutineToDetails = (databaseId: string, schemaId: string | undefined, packageId: string | undefined, metadata: RoutineMetadata): RoutineDetails => {
     const { arguments: args, identifiers, ...routineMetadata } = metadata;
     return {
         ...routineMetadata,
         databaseId,
         schemaId,
+        packageId,
         arguments: args ?? [],
         identifiers: identifiers ?? []
     };
 }
 
-export const getMetadataRoutineList = (metadata: Metadata, databaseId: string, schemaId: string | undefined, filter?: RoutineFilter): RoutineDetails[] => {
+export const getMetadataRoutineList = (metadata: Metadata, databaseId: string, schemaId: string | undefined, packageId: string | undefined, filter?: RoutineFilter): RoutineDetails[] => {
     const database = Object.values(metadata.databases ?? {}).find(db => db.id === databaseId);
     if (!database) return [];
     if (schemaId) {
         const schema = Object.values(database.schemas ?? {}).find(schema => schema.id === schemaId);
         if (!schema) return [];
+        if (packageId) {
+            const pkg = Object.values(schema.packages ?? {}).find(pkg => pkg.id === packageId);
+            if (!pkg) return [];
+            return Object.values(pkg.routines ?? {})
+                .flatMap(routines => Object.values(routines))
+                .filter(routine => matchFilter(routine, filter))
+                .map(routine => metadataRoutineToDetails(databaseId, schemaId, packageId, routine));
+        }
         return Object.values(schema.routines ?? {})
             .flatMap(routines => Object.values(routines))
             .filter(routine => matchFilter(routine, filter))
-            .map(routine => metadataRoutineToDetails(databaseId, schemaId, routine));
+            .map(routine => metadataRoutineToDetails(databaseId, schemaId, packageId, routine));
     } else {
         return Object.values(database.builtInRoutines ?? {})
             .flatMap(routines => Object.values(routines))
             .filter(routine => matchFilter(routine, filter))
-            .map(routine => metadataRoutineToDetails(databaseId, schemaId, routine));
+            .map(routine => metadataRoutineToDetails(databaseId, schemaId, packageId, routine));
     }
 }
 
-export const getMetadataRoutine = (metadata: Metadata, databaseId: string, schemaId: string | undefined, id: string | IdentityOptions): RoutineDetails | undefined => {
+export const getMetadataRoutine = (metadata: Metadata, databaseId: string, schemaId: string | undefined, packageId: string | undefined, id: string | IdentityOptions): RoutineDetails | undefined => {
     const database = Object.values(metadata.databases ?? {}).find(db => db.id === databaseId);
     if (!database) return undefined;
     if (schemaId) {
         const schema = Object.values(database.schemas ?? {}).find(schema => schema.id === schemaId);
         if (!schema) return undefined;
+        if (packageId) {
+            const pkg = Object.values(schema.packages ?? {}).find(pkg => pkg.id === packageId);
+            if (!pkg) return undefined;
+            const routine = Object.values(pkg.routines ?? {})
+                .flatMap(routines => Object.values(routines))
+                .find(routine => matchId(routine, id));
+            if (!routine) return undefined;
+            return metadataRoutineToDetails(databaseId, schemaId, packageId, routine);
+        }
         const routine = Object.values(schema.routines ?? {})
             .flatMap(routines => Object.values(routines))
             .find(routine => matchId(routine, id));
         if (!routine) return undefined;
-        return metadataRoutineToDetails(databaseId, schemaId, routine);
+        return metadataRoutineToDetails(databaseId, schemaId, packageId, routine);
     } else {
         const routine = Object.values(database.builtInRoutines ?? {})
             .flatMap(routines => Object.values(routines))
             .find(routine => matchId(routine, id));
         if (!routine) return undefined;
-        return metadataRoutineToDetails(databaseId, schemaId, routine);
+        return metadataRoutineToDetails(databaseId, schemaId, packageId, routine);
     }
 }
 
@@ -707,33 +771,48 @@ export const getMetadataSequence = (metadata: Metadata, databaseId: string, sche
     return metadataSequenceToDetails(databaseId, schemaId, sequence);
 }
 
-const metadataTypeToDetails = (databaseId: string, schemaId: string | undefined, metadata: TypeMetadata): TypeDetails => {
+const metadataTypeToDetails = (databaseId: string, schemaId: string | undefined, packageId: string | undefined, metadata: TypeMetadata): TypeDetails => {
     const { ...typeMetadata } = metadata;
     return {
         ...typeMetadata,
         databaseId,
         schemaId,
+        packageId,
     };
 }
 
-export const getMetadataTypeList = (metadata: Metadata, databaseId: string, schemaId: string | undefined, filter?: TypeFilter): TypeDetails[] => {
+export const getMetadataTypeList = (metadata: Metadata, databaseId: string, schemaId: string | undefined, packageId: string | undefined, filter?: TypeFilter): TypeDetails[] => {
     const database = Object.values(metadata.databases ?? {}).find(db => db.id === databaseId);
     if (!database) return [];
     const schema = Object.values(database.schemas ?? {}).find(schema => schema.id === schemaId);
     if (!schema) return [];
+    if (packageId) {
+        const pkg = Object.values(schema.packages ?? {}).find(pkg => pkg.id === packageId);
+        if (!pkg) return [];
+        return Object.values(pkg.types ?? {})
+            .filter(type => matchFilter(type, filter))
+            .map(type => metadataTypeToDetails(databaseId, schemaId, packageId, type));
+    }
     return Object.values(schema.types ?? {})
         .filter(type => matchFilter(type, filter))
-        .map(type => metadataTypeToDetails(databaseId, schemaId, type));
+        .map(type => metadataTypeToDetails(databaseId, schemaId, undefined, type));
 }
 
-export const getMetadataType = (metadata: Metadata, databaseId: string, schemaId: string | undefined, id: string | IdentityOptions): TypeDetails | undefined => {
+export const getMetadataType = (metadata: Metadata, databaseId: string, schemaId: string | undefined, packageId: string | undefined, id: string | IdentityOptions): TypeDetails | undefined => {
     const database = Object.values(metadata.databases ?? {}).find(db => db.id === databaseId);
     if (!database) return undefined;
     const schema = Object.values(database.schemas ?? {}).find(schema => schema.id === schemaId);
     if (!schema) return undefined;
+    if (packageId) {
+        const pkg = Object.values(schema.packages ?? {}).find(pkg => pkg.id === packageId);
+        if (!pkg) return undefined;
+        const type = Object.values(pkg.types ?? {}).find(type => matchId(type, id));
+        if (!type) return undefined;
+        return metadataTypeToDetails(databaseId, schemaId, packageId, type);
+    }
     const type = Object.values(schema.types ?? {}).find(type => matchId(type, id));
     if (!type) return undefined;
-    return metadataTypeToDetails(databaseId, schemaId, type);
+    return metadataTypeToDetails(databaseId, schemaId, undefined, type);
 }
 
 const metadataPackageToDetails = (databaseId: string, schemaId: string | undefined, metadata: PackageMetadata): PackageDetails => {

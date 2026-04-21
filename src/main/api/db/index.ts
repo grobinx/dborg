@@ -426,26 +426,26 @@ export function init(): void {
 
     ipcMain.handle(
         EVENT_METADATA_QUERY_GET_ROUTINE_LIST,
-        async (_: IpcMainInvokeEvent, connectionId: string, databaseId: string, schemaId: string, filter?: RoutineFilter): Promise<InvokeResult> => {
+        async (_: IpcMainInvokeEvent, connectionId: string, databaseId: string, schemaId: string | undefined, packageId: string | undefined, filter?: RoutineFilter): Promise<InvokeResult> => {
             return handleResult(async () => {
                 const foundConnection = driver.Driver.getConnection(connectionId);
                 if (!foundConnection) {
                     throw ConnectionError(connectionId);
                 }
-                return getMetadataRoutineList(await foundConnection.getMetadata(), databaseId, schemaId, filter);
+                return getMetadataRoutineList(await foundConnection.getMetadata(), databaseId, schemaId, packageId, filter);
             });
         }
     );
 
     ipcMain.handle(
         EVENT_METADATA_QUERY_GET_ROUTINE,
-        async (_: IpcMainInvokeEvent, connectionId: string, databaseId: string, schemaId: string, id: string | IdentityOptions): Promise<InvokeResult> => {
+        async (_: IpcMainInvokeEvent, connectionId: string, databaseId: string, schemaId: string | undefined, packageId: string | undefined, id: string | IdentityOptions): Promise<InvokeResult> => {
             return handleResult(async () => {
                 const foundConnection = driver.Driver.getConnection(connectionId);
                 if (!foundConnection) {
                     throw ConnectionError(connectionId);
                 }
-                return getMetadataRoutine(await foundConnection.getMetadata(), databaseId, schemaId, id);
+                return getMetadataRoutine(await foundConnection.getMetadata(), databaseId, schemaId, packageId, id);
             });
         }
     );
@@ -504,26 +504,26 @@ export function init(): void {
 
     ipcMain.handle(
         EVENT_METADATA_QUERY_GET_TYPE_LIST,
-        async (_: IpcMainInvokeEvent, connectionId: string, databaseId: string, schemaId: string, filter?: TypeFilter): Promise<InvokeResult> => {
+        async (_: IpcMainInvokeEvent, connectionId: string, databaseId: string, schemaId: string | undefined, packageId: string | undefined, filter?: TypeFilter): Promise<InvokeResult> => {
             return handleResult(async () => {
                 const foundConnection = driver.Driver.getConnection(connectionId);
                 if (!foundConnection) {
                     throw ConnectionError(connectionId);
                 }
-                return getMetadataTypeList(await foundConnection.getMetadata(), databaseId, schemaId, filter);
+                return getMetadataTypeList(await foundConnection.getMetadata(), databaseId, schemaId, packageId, filter);
             });
         }
     );
 
     ipcMain.handle(
         EVENT_METADATA_QUERY_GET_TYPE,
-        async (_: IpcMainInvokeEvent, connectionId: string, databaseId: string, schemaId: string, id: string | IdentityOptions): Promise<InvokeResult> => {
+        async (_: IpcMainInvokeEvent, connectionId: string, databaseId: string, schemaId: string | undefined, packageId: string | undefined, id: string | IdentityOptions): Promise<InvokeResult> => {
             return handleResult(async () => {
                 const foundConnection = driver.Driver.getConnection(connectionId);
                 if (!foundConnection) {
                     throw ConnectionError(connectionId);
                 }
-                return getMetadataType(await foundConnection.getMetadata(), databaseId, schemaId, id);
+                return getMetadataType(await foundConnection.getMetadata(), databaseId, schemaId, packageId, id);
             });
         }
     );
@@ -603,14 +603,14 @@ export const preload = {
             findObjects: (connectionId: string, options: ObjectFindOptions): Promise<MetadataAnyObjectHit[]> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_FIND_OBJECTS, connectionId, options)),
             getSchemaList: (connectionId: string, databaseId: string, filter?: SchemaFilter): Promise<SchemaDetails[]> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_SCHEMA_LIST, connectionId, databaseId, filter)),
             getSchema: (connectionId: string, databaseId: string, id: string | IdentityOptions): Promise<SchemaDetails | undefined> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_SCHEMA, connectionId, databaseId, id)),
-            getRoutineList: (connectionId: string, databaseId: string, schemaId: string | undefined, filter?: RoutineFilter): Promise<RoutineDetails[]> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_ROUTINE_LIST, connectionId, databaseId, schemaId, filter)),
-            getRoutine: (connectionId: string, databaseId: string, schemaId: string | undefined, id: string | IdentityOptions): Promise<RoutineDetails | undefined> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_ROUTINE, connectionId, databaseId, schemaId, id)),
+            getRoutineList: (connectionId: string, databaseId: string, schemaId: string | undefined, packageId: string | undefined, filter?: RoutineFilter): Promise<RoutineDetails[]> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_ROUTINE_LIST, connectionId, databaseId, schemaId, packageId, filter)),
+            getRoutine: (connectionId: string, databaseId: string, schemaId: string | undefined, packageId: string | undefined, id: string | IdentityOptions): Promise<RoutineDetails | undefined> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_ROUTINE, connectionId, databaseId, schemaId, packageId, id)),
             getRelationList: (connectionId: string, databaseId: string, schemaId: string | undefined, filter?: RelationFilter): Promise<RelationDetails[]> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_RELATION_LIST, connectionId, databaseId, schemaId, filter)),
             getRelation: (connectionId: string, databaseId: string, schemaId: string | undefined, id: string | IdentityOptions): Promise<RelationDetails | undefined> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_RELATION, connectionId, databaseId, schemaId, id)),
             getSequenceList: (connectionId: string, databaseId: string, schemaId: string | undefined, filter?: SequenceFilter): Promise<SequenceDetails[]> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_SEQUENCE_LIST, connectionId, databaseId, schemaId, filter)),
             getSequence: (connectionId: string, databaseId: string, schemaId: string | undefined, id: string | IdentityOptions): Promise<SequenceDetails | undefined> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_SEQUENCE, connectionId, databaseId, schemaId, id)),
-            getTypeList: (connectionId: string, databaseId: string, schemaId: string | undefined, filter?: TypeFilter): Promise<TypeDetails[]> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_TYPE_LIST, connectionId, databaseId, schemaId, filter)),
-            getType: (connectionId: string, databaseId: string, schemaId: string | undefined, id: string | IdentityOptions): Promise<TypeDetails | undefined> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_TYPE, connectionId, databaseId, schemaId, id)),
+            getTypeList: (connectionId: string, databaseId: string, schemaId: string | undefined, packageId: string | undefined, filter?: TypeFilter): Promise<TypeDetails[]> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_TYPE_LIST, connectionId, databaseId, schemaId, packageId, filter)),
+            getType: (connectionId: string, databaseId: string, schemaId: string | undefined, packageId: string | undefined, id: string | IdentityOptions): Promise<TypeDetails | undefined> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_TYPE, connectionId, databaseId, schemaId, packageId, id)),
             getPackageList: (connectionId: string, databaseId: string, schemaId: string | undefined, filter?: PackageFilter): Promise<PackageDetails[]> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_PACKAGE_LIST, connectionId, databaseId, schemaId, filter)),
             getPackage: (connectionId: string, databaseId: string, schemaId: string | undefined, id: string | IdentityOptions): Promise<PackageDetails | undefined> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_PACKAGE, connectionId, databaseId, schemaId, id)),
         },
