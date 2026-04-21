@@ -226,6 +226,26 @@ export interface RoutineArgumentMetadata extends MetadataBase {
 export type RelationType = "table" | "view";
 export type RelationKind = "regular" | "foreign" | "partitioned" | "temporary" | "materialized";
 
+export type TriggerEvent = "insert" | "update" | "delete";
+export type TriggerTiming = "before" | "after" | "instead of";
+export type TriggerLevel = "statement" | "row";
+export type TriggerEnabled = "enabled" | "disabled" | "replica" | "always";
+
+/** Structure describing a trigger */
+export interface TriggerMetadata extends MetadataBase {
+    /** Timing of the trigger */
+    timing?: TriggerTiming | null;
+
+    /** Event that fires the trigger */
+    event?: TriggerEvent | null;
+
+    /** Level at which the trigger operates */
+    level?: TriggerLevel | null;
+
+    /** Whether the trigger is enabled */
+    enabled?: TriggerEnabled | null;
+}
+
 /** Structure describing permissions? */
 export interface RelationPermissions {
     /** User have permission for select */
@@ -305,6 +325,9 @@ export interface RelationMetadata extends OwnedMetadataBase {
 
     /** List of indexes */
     indexes?: IndexMetadata[];
+
+    /** List of triggers on the relation */
+    triggers?: TriggerMetadata[];
 
     /** Stats of the relation */
     stats?: RelationStatsMetadata;
