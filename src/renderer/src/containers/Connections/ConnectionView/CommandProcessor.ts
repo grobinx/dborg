@@ -225,11 +225,6 @@ export class CommandProcessor {
     }
 
 
-    private static getConnectedDatabases(metadata: MetadataQueryApi): Promise<DatabaseQueryApi[]> {
-        const databases = metadata.getDatabaseList({ filter: { connected: true } });
-        return databases;
-    }
-
     private static getHelp(definition: Definition): { columns: ColumnDefinition[]; rows: any[] } {
         const columns: ColumnDefinition[] = [
             { key: "command", label: "Command", dataType: "string" },
