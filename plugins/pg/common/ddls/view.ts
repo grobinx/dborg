@@ -10,6 +10,8 @@ export async function viewDdl(session: IDatabaseSession, schemaName: string, vie
         await session.query<{ source: string }>(viewPrivilegesDdl(versionNumber), [schemaName, viewName]).then(res => res.rows.map(row => row.source).join("\n")),
         await session.query<{ source: string }>(viewCommentDdl(versionNumber), [schemaName, viewName]).then(res => res.rows.map(row => row.source).join("\n")),
         await session.query<{ source: string }>(viewColumnCommentsDdl(versionNumber), [schemaName, viewName]).then(res => res.rows.map(row => row.source).join("\n")),
+        await session.query<{ source: string }>(viewIndexesDdl(versionNumber), [schemaName, viewName]).then(res => res.rows.map(row => row.source).join("\n")),
+        await session.query<{ source: string }>(viewIndexCommentsDdl(versionNumber), [schemaName, viewName]).then(res => res.rows.map(row => row.source).join("\n")),
         await session.query<{ source: string }>(viewTriggersDdl(versionNumber), [schemaName, viewName]).then(res => res.rows.map(row => row.source).join("\n")),
         await session.query<{ source: string }>(viewTriggerCommentsDdl(versionNumber), [schemaName, viewName]).then(res => res.rows.map(row => row.source).join("\n")),
         await session.query<{ source: string }>(viewRulesDdl(versionNumber), [schemaName, viewName]).then(res => res.rows.map(row => row.source).join("\n")),
@@ -185,6 +187,56 @@ SELECT
 FROM obj o
 JOIN pg_attribute a ON a.attrelid = o.oid AND a.attnum > 0 AND NOT a.attisdropped
 LEFT JOIN pg_description d ON d.objoid = o.oid AND d.classoid = 'pg_class'::regclass AND d.objsubid = a.attnum;
+`;
+}
+
+export function viewIndexCommentsDdl(_version: number): string {
+    return `
+WITH obj AS (
+  SELECT c.oid, n.nspname AS schema_name, c.relname AS table_name
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+   WHERE n.nspname = $1 AND c.relname = $2 AND c.relkind IN ('r','p','f')
+)
+SELECT
+    format(
+        'COMMENT ON INDEX %I.%I IS %L;',
+        n.nspname,
+        idx.relname,
+        d.description
+    ) AS source
+FROM obj o
+JOIN pg_index i ON i.indrelid = o.oid
+JOIN pg_class idx ON idx.oid = i.indexrelid
+JOIN pg_namespace n ON n.oid = idx.relnamespace
+LEFT JOIN pg_description d ON d.objoid = idx.oid AND d.classoid = 'pg_class'::regclass AND d.objsubid = 0;
+`;
+}
+
+export function viewIndexesDdl(version: number): string {
+    return `
+WITH obj AS (
+  SELECT c.oid, n.nspname AS schema_name, c.relname AS view_name
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+   WHERE n.nspname = $1 AND c.relname = $2 AND c.relkind = 'm'
+)
+SELECT
+    format(
+        E'-- DROP INDEX %s %I.%I;\\n-- REINDEX INDEX %s%I.%I;\\n%s',
+        CASE WHEN i.indisunique OR i.indisprimary THEN 'CONCURRENTLY' ELSE '' END,
+        n.nspname,
+        idx.relname,
+        ${version >= 120000 ? "'CONCURRENTLY '" : "''"},
+        n.nspname,
+        idx.relname,
+        pg_get_indexdef(i.indexrelid) || ';'
+    ) AS source
+FROM pg_index i
+JOIN obj o ON o.oid = i.indrelid
+JOIN pg_class idx ON idx.oid = i.indexrelid
+JOIN pg_namespace n ON n.oid = idx.relnamespace
+WHERE i.indrelid = o.oid;
 `;
 }
 
