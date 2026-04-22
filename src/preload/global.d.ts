@@ -129,7 +129,6 @@ declare global {
                         getPackage: (connectionId: string, databaseId: string, schemaId: string | undefined, id: string | IdentityOptions) => Promise<PackageDetails | undefined>,
                     },
                     getMetadata: (uniqueId: string, progress?: (current: string) => void, force?: boolean) => Promise<Metadata>,
-                    updateObject: (uniqueId: string, progress?: (current: string) => void, schemaName?: string, objectName?: string) => Promise<void>,
                 },
                 internal: {
                     query: <R extends api.QueryResultRow = api.QueryResultRow>(sql: string, values?: unknown[]) => Promise<QueryResult<R>>,

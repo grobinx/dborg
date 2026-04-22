@@ -420,8 +420,6 @@ export interface Connection extends BaseConnection {
     getContext(reload?: boolean): Promise<SessionContext | undefined>;
 
     getMetadata(progress?: (current: string) => void, force?: boolean): Promise<Metadata>;
-
-    updateObject(progress?: (current: string) => void, schemaName?: string, objectName?: string): Promise<void>;
 }
 
 export type DatabaseName = "PostgreSQL" | "MySQL" | "SQLite" | "Oracle" | "MSSQL" | "ClickHouse" | "MongoDB" | "Redis" | "Cassandra" | "Elasticsearch" | "InfluxDB" | "TimescaleDB" | "MariaDB";

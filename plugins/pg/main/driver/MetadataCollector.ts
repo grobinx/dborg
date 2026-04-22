@@ -212,7 +212,7 @@ export class MetadataCollector implements api.IMetadataCollector {
         return metadata;
     }
 
-    async getMetadata(progress?: (current: string) => void, force?: boolean): Promise<api.Metadata> {
+    async collect(progress?: (current: string) => void, force?: boolean): Promise<api.Metadata> {
         if (!this.inited || force) {
             if (!this.client) {
                 throw new Error("Client is not set");

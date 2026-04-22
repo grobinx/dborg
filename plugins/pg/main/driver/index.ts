@@ -749,7 +749,7 @@ export class Connection extends driver.Connection {
                     this.metadataCollector.setVersion(await this.getVersion());
                     await client.connect();
                     this.metadataCollector.setClient(client);
-                    this.metadata = await this.metadataCollector.getMetadata(progress, force);
+                    this.metadata = await this.metadataCollector.collect(progress, force);
 
                     if (this.metadataFileName) {
                         const filePath = path.join(dataPath(DBORG_DATA_PATH), "metadata");
@@ -765,18 +765,6 @@ export class Connection extends driver.Connection {
         }
 
         return this.metadataPromise;
-    }
-
-    async updateObject(progress?: (current: string) => void, schemaName?: string, objectName?: string): Promise<void> {
-        const client = new pg.Client(this.properties);
-        try {
-            await client.connect();
-            this.metadataCollector.setClient(client);
-            return await this.metadataCollector.updateObject(progress, schemaName, objectName);
-        }
-        finally {
-            await client.end();
-        }
     }
 
 }

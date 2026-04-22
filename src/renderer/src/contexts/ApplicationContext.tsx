@@ -302,7 +302,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                 profile: session.profile,
             } as Messages.SessionGetMetadataStart);
 
-            session.getMetadata((current) => {
+            session.initializeMetadata((current) => {
                 queueMessage(Messages.SESSION_GET_METADATA_PROGRESS, {
                     connectionId: session.info.connectionId,
                     progress: current,

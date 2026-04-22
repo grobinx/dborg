@@ -12,12 +12,11 @@ export function resultsTabsId(session: IDatabaseSession): string {
     return session.profile.sch_id + ":" + session.info.connectionId + ":results-tabs";
 }
 
-export interface IDatabaseSession extends api.BaseConnection, api.IMetadataSessionCollector {
+export interface IDatabaseSession extends api.BaseConnection, api.IMetadataProvider {
     info: api.ConnectionInfo; // Connection information
     profile: ProfileRecord; // Profile information
     settings: Map<string, Record<string, any>>; // Profile settings (loaded from user settings folder)
     metadata?: api.Metadata | undefined; // Metadata of the database
-    metadataQuery?: MetadataQueryApi | undefined;
 
     getVersion(): string | undefined; // Get the version of the database
 
@@ -252,7 +251,7 @@ class DatabaseSession implements IDatabaseSession {
         return metadataQuery;
     }
 
-    async getMetadata(progress?: (current: string) => void, force?: boolean): Promise<api.Metadata> {
+    async initializeMetadata(progress?: (current: string) => void, force?: boolean): Promise<api.Metadata> {
         if (this.info.driver.implements.includes("metadata")) {
             if (this.metadata.status === "ready" && !force) {
                 return this.metadata;
@@ -271,13 +270,6 @@ class DatabaseSession implements IDatabaseSession {
         }
         this.metadata.status = "not-supported";
         return this.metadata;
-    }
-
-    updateObject(progress?: (current: string) => void, schemaName?: string, objectName?: string): Promise<void> {
-        if (this.info.driver.implements.includes("metadata")) {
-            return window.dborg.database.connection.updateObject(this.info.connectionId, progress, schemaName, objectName);
-        }
-        return Promise.resolve();
     }
 
     async closeCursors(): Promise<void> {

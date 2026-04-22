@@ -54,7 +54,7 @@ export class MetadataCollector implements api.IMetadataCollector {
         });
     }
 
-    async getMetadata(progress?: (current: string) => void, force?: boolean): Promise<api.Metadata> {
+    async collect(progress?: (current: string) => void, force?: boolean): Promise<api.Metadata> {
         if (!this.inited || force) {
             if (!this.db) {
                 throw new Error("Database not set");

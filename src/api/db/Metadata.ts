@@ -554,17 +554,19 @@ export interface TypeMetadata extends OwnedMetadataBase {
 //export type MetadataCollectorOptions = {
 
 
+/** Interface for metadata collectors */
 export interface IMetadataCollector {
-    getMetadata(progress?: (current: string) => void, force?: boolean): Promise<Metadata>;
-    updateObject(progress?: (current: string) => void, schemaName?: string, objectName?: string): Promise<void>;
+    collect(progress?: (current: string) => void, force?: boolean): Promise<Metadata>;
 }
 
-export interface IMetadataMainCollector extends IMetadataCollector {
+/** Interface for metadata sources (driver connection on main thread) */
+export interface IMetadataSource {
+    initializeMetadata(progress?: (current: string) => void, force?: boolean): Promise<void>;
     getMetadata(progress?: (current: string) => void, force?: boolean): Promise<Metadata>;
 }
 
-export interface IMetadataSessionCollector {
+/** Interface for metadata providers (used by database sessions on render side) */
+export interface IMetadataProvider {
+    initializeMetadata(progress?: (current: string) => void, force?: boolean): Promise<Metadata>;
     getMetadataQuery(): Promise<MetadataQueryApi>;
-    getMetadata(progress?: (current: string) => void, force?: boolean): Promise<Metadata>;
-    updateObject(progress?: (current: string) => void, schemaName?: string, objectName?: string): Promise<void>;
 }
