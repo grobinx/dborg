@@ -737,6 +737,7 @@ export class Connection extends driver.Connection {
                         const filePath = path.join(dataPath(DBORG_DATA_PATH), "metadata", this.metadataFileName);
                         if (await fs.access(filePath).then(() => true).catch(() => false)) {
                             try {
+                                progress?.("Restoring metadata from cache...");
                                 this.metadata = await this.metadataCollector.restoreMetadata(filePath);
                                 return this.metadata;
                             } catch (e) {
@@ -754,6 +755,7 @@ export class Connection extends driver.Connection {
                     if (this.metadataFileName) {
                         const filePath = path.join(dataPath(DBORG_DATA_PATH), "metadata");
                         await fs.mkdir(filePath, { recursive: true });
+                        progress?.("Storing metadata to cache...");
                         this.metadataCollector.storeMetadata(path.join(filePath, this.metadataFileName)).catch((e) => console.error("Storing metadata failed:", e));
                     }
 
