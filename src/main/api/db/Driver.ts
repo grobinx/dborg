@@ -43,7 +43,6 @@ export abstract class Connection implements api.Connection {
         [uniqueId: string]: api.Cursor
     } = {}
 
-
     /**
      * call super() for add connection to global list
      * @param driver 

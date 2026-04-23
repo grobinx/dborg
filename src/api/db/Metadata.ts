@@ -1,5 +1,5 @@
-import internal from "src/main/core/db/internal";
-import { DatabaseFilter, DatabaseDetails, EntityFilter, IdentityOptions, MetadataQueryApi } from "./MetadataQuery";
+import { Connection } from "../../../src/main/api/db";
+import { MetadataQueryApi } from "./MetadataQuery";
 
 export const METADATA_VERSION = 14;
 
@@ -559,10 +559,17 @@ export interface IMetadataCollector {
     collect(progress?: (current: string) => void, force?: boolean): Promise<Metadata>;
 }
 
+export interface IMetadataStorage {
+    storeMetadata(metadata: Metadata, connection: Connection): Promise<void>;
+    restoreMetadata(metadata: Metadata, connection: Connection): Promise<Metadata | undefined>;
+}
+
 /** Interface for metadata sources (driver connection on main thread) */
 export interface IMetadataSource {
-    initializeMetadata(progress?: (current: string) => void, force?: boolean): Promise<void>;
-    getMetadata(progress?: (current: string) => void, force?: boolean): Promise<Metadata>;
+    metadata?: Metadata;
+    registerCollector(collector: IMetadataCollector, storage?: IMetadataStorage): void;
+    initializeMetadata(progress?: (current: string) => void): Promise<void>;
+    getMetadata(): Promise<Metadata>;
 }
 
 /** Interface for metadata providers (used by database sessions on render side) */

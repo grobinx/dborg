@@ -31,21 +31,21 @@ const driver_fetch_record_count_default = 100;
 const driver_max_statement_rows = "driver:max_statement_rows";
 const driver_max_statement_rows_default = 1000;
 
-const driver_collector_relationStats = "driver:collector_relation_stats";
+export const driver_collector_relationStats = "driver:collector_relation_stats";
 export const driver_collector_relationStats_default = false;
-const driver_collector_relationColumnStats = "driver:collector_relation_column_stats";
+export const driver_collector_relationColumnStats = "driver:collector_relation_column_stats";
 export const driver_collector_relationColumnStats_default = false;
-const driver_collector_identifiers = "driver:collector_identifiers";
+export const driver_collector_identifiers = "driver:collector_identifiers";
 export const driver_collector_identifiers_default = false;
-const driver_collector_indexStats = "driver:collector_index_stats";
+export const driver_collector_indexStats = "driver:collector_index_stats";
 export const driver_collector_indexStats_default = false;
-const driver_collector_systemObjects = "driver:collector_system_objects";
+export const driver_collector_systemObjects = "driver:collector_system_objects";
 export const driver_collector_systemObjects_default = false;
-const driver_collector_builtInObjects = "driver:collector_built_in_objects";
+export const driver_collector_builtInObjects = "driver:collector_built_in_objects";
 export const driver_collector_builtInObjects_default = false;
-const driver_collector_constraints = "driver:collector_constraints";
+export const driver_collector_constraints = "driver:collector_constraints";
 export const driver_collector_constraints_default = false;
-const driver_collector_permissions = "driver:collector_permissions";
+export const driver_collector_permissions = "driver:collector_permissions";
 export const driver_collector_permissions_default = false;
 
 const defaultCollectionOptions: api.MetadataCollectionOptions = {
@@ -407,7 +407,6 @@ export class Connection extends driver.Connection {
     private fetchRecordCount: number;
     private maxStatementRows: number;
     private metadata: api.Metadata | null = null;
-    private metadataCollector: MetadataCollector;
     private metadataPromise: Promise<api.Metadata> | null = null;
     private pid: string | undefined;
     private metadataFileName: string | undefined;
@@ -423,17 +422,6 @@ export class Connection extends driver.Connection {
         this.pool = client instanceof pg.Pool;
         this.fetchRecordCount = this.properties[driver_fetch_record_count] as number ?? driver_fetch_record_count_default;
         this.maxStatementRows = this.properties[driver_max_statement_rows] as number ?? driver_max_statement_rows_default;
-        this.metadataCollector = new MetadataCollector();
-        this.metadataCollector.setCollectionOptions({
-            relationStats: this.properties[driver_collector_relationStats] as boolean ?? driver_collector_relationStats_default,
-            relationColumnStats: this.properties[driver_collector_relationColumnStats] as boolean ?? driver_collector_relationColumnStats_default,
-            identifiers: this.properties[driver_collector_identifiers] as boolean ?? driver_collector_identifiers_default,
-            indexStats: this.properties[driver_collector_indexStats] as boolean ?? driver_collector_indexStats_default,
-            systemObjects: this.properties[driver_collector_systemObjects] as boolean ?? driver_collector_systemObjects_default,
-            builtInObjects: this.properties[driver_collector_builtInObjects] as boolean ?? driver_collector_builtInObjects_default,
-            constraints: this.properties[driver_collector_constraints] as boolean ?? driver_collector_constraints_default,
-            permissions: this.properties[driver_collector_permissions] as boolean ?? driver_collector_permissions_default,
-        });
         this.setMetadataFileName();
     }
 
@@ -729,40 +717,31 @@ export class Connection extends driver.Connection {
         }
 
         if (!this.metadataPromise || force) {
-            let client: pg.Client | undefined;
-
             this.metadataPromise = (async () => {
-                try {
-                    if (!force && this.metadataFileName) {
-                        const filePath = path.join(dataPath(DBORG_DATA_PATH), "metadata", this.metadataFileName);
-                        if (await fs.access(filePath).then(() => true).catch(() => false)) {
-                            try {
-                                progress?.("Restoring metadata from cache...");
-                                this.metadata = await this.metadataCollector.restoreMetadata(filePath);
-                                return this.metadata;
-                            } catch (e) {
-                                console.error("Restoring metadata failed:", e);
-                            }
+                const collector = new MetadataCollector(this);
+                if (!force && this.metadataFileName) {
+                    const filePath = path.join(dataPath(DBORG_DATA_PATH), "metadata", this.metadataFileName);
+                    if (await fs.access(filePath).then(() => true).catch(() => false)) {
+                        try {
+                            progress?.("Restoring metadata from cache...");
+                            this.metadata = await collector.restoreMetadata(filePath);
+                            return this.metadata;
+                        } catch (e) {
+                            console.error("Restoring metadata failed:", e);
                         }
                     }
-
-                    client = new pg.Client(this.properties);
-                    this.metadataCollector.setVersion(await this.getVersion());
-                    await client.connect();
-                    this.metadataCollector.setClient(client);
-                    this.metadata = await this.metadataCollector.collect(progress, force);
-
-                    if (this.metadataFileName) {
-                        const filePath = path.join(dataPath(DBORG_DATA_PATH), "metadata");
-                        await fs.mkdir(filePath, { recursive: true });
-                        progress?.("Storing metadata to cache...");
-                        this.metadataCollector.storeMetadata(path.join(filePath, this.metadataFileName)).catch((e) => console.error("Storing metadata failed:", e));
-                    }
-
-                    return this.metadata;
-                } finally {
-                    await client?.end();
                 }
+
+                this.metadata = await collector.collect(progress, force);
+
+                if (this.metadataFileName) {
+                    const filePath = path.join(dataPath(DBORG_DATA_PATH), "metadata");
+                    await fs.mkdir(filePath, { recursive: true });
+                    progress?.("Storing metadata to cache...");
+                    collector.storeMetadata(path.join(filePath, this.metadataFileName)).catch((e) => console.error("Storing metadata failed:", e));
+                }
+
+                return this.metadata;
             })();
         }
 

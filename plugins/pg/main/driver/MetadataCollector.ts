@@ -6,6 +6,7 @@ import * as readline from 'readline';
 import { Readable } from 'stream';
 import { pipeline } from 'stream/promises';
 import zlib from 'zlib';
+import { Connection, driver_collector_builtInObjects, driver_collector_builtInObjects_default, driver_collector_constraints, driver_collector_constraints_default, driver_collector_identifiers, driver_collector_identifiers_default, driver_collector_indexStats, driver_collector_indexStats_default, driver_collector_permissions, driver_collector_permissions_default, driver_collector_relationColumnStats, driver_collector_relationColumnStats_default, driver_collector_relationStats, driver_collector_relationStats_default, driver_collector_systemObjects, driver_collector_systemObjects_default } from '.';
 
 const METADATA_ARCHIVE_FORMAT = 'dborg-metadata-ndjson-v1';
 const NOT_ARCHIVE_ERROR = '__NOT_DBORG_METADATA_ARCHIVE__';
@@ -16,6 +17,22 @@ export class MetadataCollector implements api.IMetadataCollector {
     private version?: Version;
     private client: pg.Client | undefined;
     private collectionOptions?: api.MetadataCollectionOptions;
+    private connection: Connection;
+
+    constructor(connection: Connection) {
+        this.connection = connection;
+        this.collectionOptions = {
+            relationStats: connection.getProperties()[driver_collector_relationStats] as boolean ?? driver_collector_relationStats_default,
+            relationColumnStats: connection.getProperties()[driver_collector_relationColumnStats] as boolean ?? driver_collector_relationColumnStats_default,
+            identifiers: connection.getProperties()[driver_collector_identifiers] as boolean ?? driver_collector_identifiers_default,
+            indexStats: connection.getProperties()[driver_collector_indexStats] as boolean ?? driver_collector_indexStats_default,
+            systemObjects: connection.getProperties()[driver_collector_systemObjects] as boolean ?? driver_collector_systemObjects_default,
+            builtInObjects: connection.getProperties()[driver_collector_builtInObjects] as boolean ?? driver_collector_builtInObjects_default,
+            constraints: connection.getProperties()[driver_collector_constraints] as boolean ?? driver_collector_constraints_default,
+            permissions: connection.getProperties()[driver_collector_permissions] as boolean ?? driver_collector_permissions_default,
+        };
+        this.version = connection.getVersion();
+    }
 
     setVersion(version: Version): void {
         this.version = version;
@@ -217,27 +234,15 @@ export class MetadataCollector implements api.IMetadataCollector {
             if (!this.client) {
                 throw new Error("Client is not set");
             }
-            await this.initialize(progress);
+            this.client = new pg.Client(this.connection.getProperties());
+            try {
+                await this.client.connect();
+                await this.initialize(progress);
+            } finally {
+                await this.client.end();
+            }
         }
         return this.metadata;
-    }
-
-    async updateObject(progress?: (current: string) => void, schemaName?: string, objectName?: string): Promise<void> {
-        if (schemaName && objectName) {
-            await this.updateSchemas(progress, schemaName);
-            await this.updateRelations(progress, schemaName, objectName);
-            await this.updateRelationsStats(progress, schemaName, objectName);
-            await this.updateRoutines(progress, schemaName, objectName);
-            await this.updateColumns(progress, schemaName, objectName);
-            await this.updateColumnsStats(progress, schemaName, objectName);
-            await this.updateForeignKeys(progress, schemaName, objectName);
-            await this.updateIndexes(progress, schemaName, objectName);
-            await this.updateIndexesStats(progress, schemaName, objectName);
-            await this.updatePrimaryKeys(progress, schemaName, objectName);
-            await this.updateConstraints(progress, schemaName, objectName);
-            await this.updateTypes(progress, schemaName, objectName);
-            await this.updateSequence(progress, schemaName, objectName);
-        }
     }
 
     async initialize(progress?: (current: string) => void): Promise<void> {
@@ -562,7 +567,7 @@ export class MetadataCollector implements api.IMetadataCollector {
             : "'function'";
 
         const { rows } = await this.client!.query(
-    `with kw as (
+            `with kw as (
         select lower(word) as word from pg_catalog.pg_get_keywords()
         union
         select lower(lanname) from pg_language
