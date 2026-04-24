@@ -6,10 +6,8 @@ import pg from 'pg';
 import PgCursor from 'pg-cursor';
 import logo from '../../resources/postgresql-logo.svg';
 import { DRIVER_UNIQUE_ID } from '../../common/consts';
-import path from 'path';
-import fs from 'fs/promises';
-import { DBORG_DATA_PATH, dataPath } from '../../../../src/main/api/dborg-path';
 import { MetadataCollector } from './MetadataCollector';
+import { StandardMetadataStorage } from '../../../../src/api/db/StandardMetadataStorage';
 
 const driverVersion: Version = {
     major: 1,
@@ -719,26 +717,28 @@ export class Connection extends driver.Connection {
         if (!this.metadataPromise || force) {
             this.metadataPromise = (async () => {
                 const collector = new MetadataCollector(this);
-                if (!force && this.metadataFileName) {
-                    const filePath = path.join(dataPath(DBORG_DATA_PATH), "metadata", this.metadataFileName);
-                    if (await fs.access(filePath).then(() => true).catch(() => false)) {
-                        try {
-                            progress?.("Restoring metadata from cache...");
-                            this.metadata = await collector.restoreMetadata(filePath);
-                            return this.metadata;
-                        } catch (e) {
-                            console.error("Restoring metadata failed:", e);
+                const storage: api.IMetadataStorage = new StandardMetadataStorage(this);
+                if (!force) {
+                    try {
+                        progress?.("Restoring metadata from cache...");
+                        this.metadata = {
+                            status: "pending",
                         }
+                        const metadata = await storage.restoreMetadata(this.metadata);
+                        if (metadata) {
+                            this.metadata = metadata;
+                            return this.metadata;
+                        }
+                    } catch (e) {
+                        console.error("Restoring metadata failed:", e);
                     }
                 }
 
                 this.metadata = await collector.collect(progress, force);
 
-                if (this.metadataFileName) {
-                    const filePath = path.join(dataPath(DBORG_DATA_PATH), "metadata");
-                    await fs.mkdir(filePath, { recursive: true });
+                if (this.metadata) {
                     progress?.("Storing metadata to cache...");
-                    collector.storeMetadata(path.join(filePath, this.metadataFileName)).catch((e) => console.error("Storing metadata failed:", e));
+                    await storage.storeMetadata(this.metadata);
                 }
 
                 return this.metadata;

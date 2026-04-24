@@ -14,20 +14,30 @@ const METADATA_ARCHIVE_FORMAT = 'dborg-metadata-ndjson-v1';
 const NOT_ARCHIVE_ERROR = '__NOT_DBORG_METADATA_ARCHIVE__';
 
 export class StandardMetadataStorage implements IMetadataStorage {
+    private connection: Connection;
 
-    private getFilePath(connection: Connection): string {
-        const profile = connection.getUserData("profile") as ProfileRecord;
-        const fileName = `${profile.sch_id}.json`;
+    constructor(connection: Connection) {
+        this.connection = connection;
+    }
+
+    private getFilePath(): string {
+        const profile = this.connection.getUserData("profile") as ProfileRecord;
+        const fileName = `${profile.sch_id}.ndjson`;
         return path.join(dataPath(DBORG_DATA_PATH), "metadata", fileName);
+    }
+
+    private getArchiveFilePath(filePath: string): string {
+        return `${filePath}.gz`;
     }
 
     private isObject(value: unknown): value is Record<string, unknown> {
         return typeof value === 'object' && value !== null;
     }
 
-    async storeMetadata(metadata: Metadata, connection: Connection): Promise<void> {
-        const filePath = this.getFilePath(connection);
-        await this.storeMetadataArchive(metadata, filePath);
+    async storeMetadata(metadata: Metadata): Promise<void> {
+        const filePath = this.getFilePath();
+        await fs.mkdir(path.dirname(filePath), { recursive: true });
+        await this.storeMetadataArchive(metadata, this.getArchiveFilePath(filePath));
     }
 
     private async storeMetadataArchive(metadata: Metadata, filePath: string): Promise<void> {
@@ -70,10 +80,12 @@ export class StandardMetadataStorage implements IMetadataStorage {
         }
     }
 
-    async restoreMetadata(metadata: Metadata, connection: Connection): Promise<Metadata | undefined> {
-        const filePath = this.getFilePath(connection);
-        if (await fs.access(filePath).then(() => true).catch(() => false)) {
-            return this.restoreMetadataArchive(metadata, filePath);
+    async restoreMetadata(metadata: Metadata): Promise<Metadata | undefined> {
+        const filePath = this.getFilePath();
+        const archiveFilePath = this.getArchiveFilePath(filePath);
+
+        if (await fs.access(archiveFilePath).then(() => true).catch(() => false)) {
+            return this.restoreMetadataArchive(metadata, archiveFilePath);
         }
         return undefined;
     }
@@ -136,9 +148,7 @@ export class StandardMetadataStorage implements IMetadataStorage {
                 }
 
                 if (archiveVersion !== METADATA_VERSION) {
-                    throw new Error(
-                        `Incompatible metadata version: ${archiveVersion} (expected ${METADATA_VERSION})`
-                    );
+                    throw new Error(`Incompatible metadata version: ${archiveVersion} (expected ${METADATA_VERSION})`);
                 }
 
                 manifestLoaded = true;

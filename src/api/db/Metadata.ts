@@ -559,9 +559,22 @@ export interface IMetadataCollector {
     collect(progress?: (current: string) => void, force?: boolean): Promise<Metadata>;
 }
 
+/**
+ * Interface for metadata storage (used for storing/restoring metadata on the main thread, e.g., to/from file or database)
+ */
 export interface IMetadataStorage {
-    storeMetadata(metadata: Metadata, connection: Connection): Promise<void>;
-    restoreMetadata(metadata: Metadata, connection: Connection): Promise<Metadata | undefined>;
+    /**
+     * Store metadata to storage (e.g., file, database)
+     * @param metadata metadata to store
+     */
+    storeMetadata(metadata: Metadata): Promise<void>;
+    /**
+     * Restore metadata from storage (e.g., file, database)
+     * @param metadata metadata to restore, can bee fuul, will be replaced by stored metadata, used to identify status
+     * @return restored metadata or undefined if not found, incompatible
+     * @throws error if metadata is incompatible with the stored one
+     */
+    restoreMetadata(metadata: Metadata): Promise<Metadata | undefined>;
 }
 
 /** Interface for metadata sources (driver connection on main thread) */
