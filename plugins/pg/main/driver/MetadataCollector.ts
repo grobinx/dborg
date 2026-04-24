@@ -1,15 +1,7 @@
 import * as api from '../../../../src/api/db';
 import Version, { versionToNumber } from '../../../../src/api/version';
 import pg from 'pg';
-import { createReadStream, createWriteStream } from 'fs';
-import * as readline from 'readline';
-import { Readable } from 'stream';
-import { pipeline } from 'stream/promises';
-import zlib from 'zlib';
 import { Connection, driver_collector_builtInObjects, driver_collector_builtInObjects_default, driver_collector_constraints, driver_collector_constraints_default, driver_collector_identifiers, driver_collector_identifiers_default, driver_collector_indexStats, driver_collector_indexStats_default, driver_collector_permissions, driver_collector_permissions_default, driver_collector_relationColumnStats, driver_collector_relationColumnStats_default, driver_collector_relationStats, driver_collector_relationStats_default, driver_collector_systemObjects, driver_collector_systemObjects_default } from '.';
-
-const METADATA_ARCHIVE_FORMAT = 'dborg-metadata-ndjson-v1';
-const NOT_ARCHIVE_ERROR = '__NOT_DBORG_METADATA_ARCHIVE__';
 
 export class MetadataCollector implements api.IMetadataCollector {
     private metadata: api.Metadata = { status: "pending" };
@@ -45,7 +37,6 @@ export class MetadataCollector implements api.IMetadataCollector {
         this.client = new pg.Client(this.connection.getProperties());
         try {
             await this.client.connect();
-            this.metadata = { status: "collecting" };
             await this.initialize(progress);
         } finally {
             await this.client.end();

@@ -204,8 +204,6 @@ export class Connection extends driver.Connection {
     private maxStatementRows: number;
     private version: Version<"major" | "minor" | "patch" | "toString"> | undefined;
     private context: api.SessionContext | undefined;
-    private metadataCollector: MetadataCollector;
-    private metadataPromise: Promise<api.Metadata> | null = null;
 
     constructor(properties: api.Properties, driver: Driver, client: sqlite3.Database, uniqueId?: string) {
         super(driver);
@@ -215,7 +213,7 @@ export class Connection extends driver.Connection {
         this.client = client;
         this.fetchRecordCount = this.properties[driver_fetch_record_count] as number ?? driver_fetch_record_count_default;
         this.maxStatementRows = this.properties[driver_max_statement_rows] as number ?? driver_max_statement_rows_default;
-        this.metadataCollector = new MetadataCollector();
+        this.registerCollector(new MetadataCollector(this));
     }
 
     getConnectionId(): string {
@@ -499,7 +497,7 @@ export class Connection extends driver.Connection {
 
 export class Driver extends driver.Driver {
     constructor() {
-        super(["execute", "open", "query", "store", "version"]);
+        super(["execute", "open", "query", "store", "version", "metadata"]);
     }
 
     getDriverId(): string {

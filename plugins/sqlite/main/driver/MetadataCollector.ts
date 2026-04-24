@@ -2,38 +2,31 @@
 
 import * as api from '../../../../src/api/db';
 import sqlite3 from 'sqlite3';
-
-const METADATA_ARCHIVE_FORMAT = 'dborg-metadata-ndjson-v1';
-const NOT_ARCHIVE_ERROR = '__NOT_DBORG_METADATA_ARCHIVE__';
+import { Connection } from '.';
 
 export class MetadataCollector implements api.IMetadataCollector {
     private metadata: api.Metadata = { status: "pending" };
-    private inited = false;
     private db: sqlite3.Database | undefined;
     private collectionOptions?: api.MetadataCollectionOptions;
     private mainDatabaseName: string = 'main';
+    private connection: Connection;
+
+    constructor(connection: Connection) {
+        this.connection = connection;
+        this.collectionOptions = {
+            relationStats: false,
+            relationColumnStats: false,
+            identifiers: false,
+            indexStats: false,
+            systemObjects: true,
+            builtInObjects: true,
+            constraints: true,
+            permissions: true,
+        };
+    }
 
     setDatabase(db: sqlite3.Database): void {
         this.db = db;
-    }
-
-    setCollectionOptions(options: api.MetadataCollectionOptions): void {
-        this.collectionOptions = options;
-    }
-
-    async restoreMetadata(_fileName: string): Promise<api.Metadata> {
-        // SQLite metadata restore not implemented yet
-        // Można opcjonalnie zaimplementować jeśli będzie potrzebne
-        throw new Error("Metadata restore not implemented for SQLite");
-    }
-
-    async storeMetadata(_fileName: string): Promise<void> {
-        // SQLite metadata store not implemented yet
-        throw new Error("Metadata store not implemented for SQLite");
-    }
-
-    private isObject(value: unknown): value is Record<string, unknown> {
-        return typeof value === 'object' && value !== null;
     }
 
     async query<T = any>(sql: string, params?: any[]): Promise<T[]> {
@@ -54,25 +47,14 @@ export class MetadataCollector implements api.IMetadataCollector {
         });
     }
 
-    async collect(progress?: (current: string) => void, force?: boolean): Promise<api.Metadata> {
-        if (!this.inited || force) {
-            if (!this.db) {
-                throw new Error("Database not set");
-            }
+    async collect(progress?: (current: string) => void): Promise<api.Metadata> {
+        this.db = new sqlite3.Database(this.connection.getProperties()['driver:database_location'] as string, sqlite3.OPEN_READONLY);
+        try {
             await this.initialize(progress);
+        } finally {
+            this.db!.close();
         }
         return this.metadata;
-    }
-
-    async updateObject(progress?: (current: string) => void, _schemaName?: string, objectName?: string): Promise<void> {
-        // SQLite nie ma schematów w tradycyjnym sensie, ale ma attached databases
-        if (objectName) {
-            await this.updateTables(progress, objectName);
-            await this.updateTableDetails(progress, objectName);
-            if (this.collectionOptions?.relationStats) {
-                await this.updateTableStats(progress, objectName);
-            }
-        }
     }
 
     async initialize(progress?: (current: string) => void): Promise<void> {
@@ -94,15 +76,11 @@ export class MetadataCollector implements api.IMetadataCollector {
             await this.updateForeignKeys(progress);
         }
 
-        this.inited = true;
+        this.metadata.status = "ready";
     }
 
-    private removeUnused(from: Record<string, any>, exists: Set<string>): void {
-        for (const key in from) {
-            if (!exists.has(key)) {
-                delete from[key];
-            }
-        }
+    private quoteSqliteString(value: string): string {
+        return `'${value.replace(/'/g, "''")}'`;
     }
 
     async updateDatabases(progress?: (current: string) => void): Promise<void> {
@@ -122,6 +100,7 @@ export class MetadataCollector implements api.IMetadataCollector {
             const filename = row.file || ':memory:';
 
             this.metadata.databases[dbName] = {
+                objectType: "database",
                 id: dbName,
                 name: dbName,
                 identity: dbName,
@@ -159,6 +138,7 @@ export class MetadataCollector implements api.IMetadataCollector {
 
         if (!database.schemas[schemaName]) {
             database.schemas[schemaName] = {
+                objectType: "schema",
                 id: schemaName,
                 name: schemaName,
                 identity: schemaName,
@@ -206,15 +186,12 @@ export class MetadataCollector implements api.IMetadataCollector {
             name ? [name] : []
         );
 
-        const exists = new Set<string>();
-
         for (const row of rows) {
             const isView = row.type === 'view';
             const tableName = row.name;
 
-            exists.add(tableName);
-
             const relation: api.RelationMetadata = {
+                objectType: "relation",
                 id: `${this.mainDatabaseName}.${tableName}`,
                 name: tableName,
                 identity: tableName,
@@ -235,19 +212,14 @@ export class MetadataCollector implements api.IMetadataCollector {
             };
 
             schema.relations[tableName] = relation;
+
+            await this.updateTableDetails(tableName);
         }
 
-        if (!name) {
-            this.removeUnused(schema.relations, exists);
-        }
     }
 
-    async updateTableDetails(progress?: (current: string) => void, name?: string): Promise<void> {
+    async updateTableDetails(name?: string): Promise<void> {
         const schema = this.ensureDefaultSchema();
-
-        if (progress) {
-            progress("table details");
-        }
 
         for (const [tableName, relation] of Object.entries(schema.relations)) {
             if (name && tableName !== name) continue;
@@ -261,8 +233,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                 dflt_value: string | null;
                 pk: number;
             }>(
-                `PRAGMA table_info(?);`,
-                [tableName]
+                `PRAGMA table_info(${this.quoteSqliteString(tableName)});`
             );
 
             relation.columns = columns.map(col => ({
@@ -285,8 +256,7 @@ export class MetadataCollector implements api.IMetadataCollector {
 
             // Oznacz kolumny które są w FK
             const fkList = await this.query<{ id: number; seq: number; table: string; from: string; to: string; on_delete: string; on_update: string }>(
-                `PRAGMA foreign_key_list(?);`,
-                [tableName]
+                `PRAGMA foreign_key_list(${this.quoteSqliteString(tableName)});`
             );
 
             for (const fk of fkList) {
@@ -311,7 +281,7 @@ export class MetadataCollector implements api.IMetadataCollector {
 
             try {
                 const countResult = await this.queryOne<{ count: number }>(
-                    `SELECT COUNT(*) as count FROM ${tableName};`
+                    `SELECT COUNT(*) as count FROM ${this.quoteSqliteString(tableName)};`
                 );
 
                 relation.stats = {
@@ -350,21 +320,18 @@ export class MetadataCollector implements api.IMetadataCollector {
                 cid: number;
                 name: string;
             }>(
-                `PRAGMA index_list(?);`,
-                [tableName]
+                `PRAGMA index_list(${this.quoteSqliteString(tableName)});`
             );
 
             relation.indexes = [];
 
             for (const idx of indexes) {
                 const indexInfo = await this.query<{ seqno: number; cid: number; name: string }>(
-                    `PRAGMA index_info(?);`,
-                    [idx.name]
+                    `PRAGMA index_info(${this.quoteSqliteString(idx.name)});`
                 );
 
                 const indexColumns = await this.query<{ seqno: number; cid: number; name: string }>(
-                    `PRAGMA index_info(?);`,
-                    [idx.name]
+                    `PRAGMA index_info(${this.quoteSqliteString(idx.name)});`
                 );
 
                 const indexMetadata: api.IndexMetadata = {
@@ -384,8 +351,7 @@ export class MetadataCollector implements api.IMetadataCollector {
 
             // Pobierz primary key
             const pkInfo = await this.query<{ cid: number; name: string; type: string; pk: number }>(
-                `PRAGMA table_info(?);`,
-                [tableName]
+                `PRAGMA table_info(${this.quoteSqliteString(tableName)});`
             );
 
             const pkColumns = pkInfo.filter(col => col.pk > 0).map(col => col.name);
@@ -419,8 +385,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                 on_delete: string;
                 on_update: string;
             }>(
-                `PRAGMA foreign_key_list(?);`,
-                [tableName]
+                `PRAGMA foreign_key_list(${this.quoteSqliteString(tableName)});`
             );
 
             relation.foreignKeys = fkList.map(fk => ({
