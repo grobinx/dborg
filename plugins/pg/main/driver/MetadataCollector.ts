@@ -13,7 +13,6 @@ const NOT_ARCHIVE_ERROR = '__NOT_DBORG_METADATA_ARCHIVE__';
 
 export class MetadataCollector implements api.IMetadataCollector {
     private metadata: api.Metadata = { status: "pending" };
-    private inited = false;
     private version?: Version;
     private client: pg.Client | undefined;
     private collectionOptions?: api.MetadataCollectionOptions;
@@ -41,17 +40,15 @@ export class MetadataCollector implements api.IMetadataCollector {
         this.client = client;
     }
 
-    async collect(progress?: (current: string) => void, force?: boolean): Promise<api.Metadata> {
-        if (!this.inited || force) {
-            this.version = await this.connection.getVersion();
-            this.client = new pg.Client(this.connection.getProperties());
-            try {
-                await this.client.connect();
-                this.metadata = { status: "collecting" };
-                await this.initialize(progress);
-            } finally {
-                await this.client.end();
-            }
+    async collect(progress?: (current: string) => void): Promise<api.Metadata> {
+        this.version = await this.connection.getVersion();
+        this.client = new pg.Client(this.connection.getProperties());
+        try {
+            await this.client.connect();
+            this.metadata = { status: "collecting" };
+            await this.initialize(progress);
+        } finally {
+            await this.client.end();
         }
         return this.metadata;
     }
@@ -88,7 +85,6 @@ export class MetadataCollector implements api.IMetadataCollector {
         await this.updateTypes(progress);
         await this.updateSequence(progress);
 
-        this.inited = true;
         this.metadata.status = "ready";
     }
 

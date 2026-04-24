@@ -2,7 +2,7 @@ import { ProfileRecord } from "src/api/entities";
 import * as api from "../../../api/db";
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
 import { IQueueTask, QueueTask, TaskOptions } from "@renderer/utils/QueueTask";
-import { queueMessage } from "./MessageContext";
+import { Messages, queueMessage } from "./MessageContext";
 import { getProfileSettings, PROFILE_UPDATE_MESSAGE, storeProfileSettings } from "./ProfilesContext";
 import { DataGridChangesManager, DataGridChangesOptions } from "@renderer/components/DataGrid/DataGridChangesManager";
 import { versionToNumber } from "../../../../src/api/version";
@@ -149,19 +149,23 @@ class DatabaseSession implements IDatabaseSession {
     info: api.ConnectionInfo; // Connection information
     profile: ProfileRecord; // Profile information
     settings: Map<string, Record<string, any>> = new Map();
-    metadata: api.Metadata; // Metadata of the database
     private readonly queue: QueueTask<IDatabaseSession>;
 
-    constructor(info: api.ConnectionInfo) {
+    constructor(info: api.ConnectionInfo, restored?: boolean) {
         this.info = info;
         this.profile = info.userData.profile as ProfileRecord;
-        this.metadata = { status: "pending" };
 
         this.queue = new QueueTask<IDatabaseSession>({
             id: this.info.connectionId,
             maxConcurrency: this.profile.sch_queue?.concurrency ?? 1,
             maxQueueHistory: this.profile.sch_queue?.history ?? 200,
         });
+
+        if (!restored) {
+            this.initializeMetadata();
+        } else {
+            this.closeCursors();
+        }
     }
 
     async open(sql: string, values?: unknown[], maxRowsMode?: api.CursorFetchMaxRowsMode): Promise<IDatabaseSessionCursor> {
@@ -235,41 +239,40 @@ class DatabaseSession implements IDatabaseSession {
 
     async getMetadataQuery(): Promise<MetadataQueryApi> {
         const metadataQuery = await createMetadataQueryApi(this.info.connectionId);
-        // console.log(metadataQuery);
-        // const dbList = await metadataQuery.getDatabaseList();
-        // console.log(dbList);
-        // dbList.forEach(async db => {
-        //     const schemas = await db.getSchemaList();
-        //     console.log(`Schemas in ${db.name}:`, schemas);
-        //     schemas.forEach(async schema => {
-        //         const relations = await schema.getRelationList();
-        //         console.log(`Relations in ${db.name}.${schema.name}:`, relations);
-        //         const routines = await schema.getRoutineList();
-        //         console.log(`Routines in ${db.name}.${schema.name}:`, routines);
-        //     });
-        // });
         return metadataQuery;
     }
 
-    async initializeMetadata(progress?: (current: string) => void, force?: boolean): Promise<api.Metadata> {
-        if (this.info.driver.implements.includes("metadata")) {
-            if (this.metadata.status === "ready" && !force) {
-                return this.metadata;
-            }
-            const version = versionToNumber(this.getVersion() ?? "0.0.0");
-            const supportVersion = versionToNumber(this.info.driver.supports.minVersion || "0.0.0");
-            if (version >= supportVersion) {
-                this.metadata = await window.dborg.database.connection.getMetadata(
-                    this.info.connectionId,
-                    progress,
-                    force
-                );
-                this.metadata.status = "ready";
-                return this.metadata;
-            }
-        }
-        this.metadata.status = "not-supported";
-        return this.metadata;
+    async initializeMetadata(force?: boolean): Promise<void> {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                queueMessage(Messages.SESSION_GET_METADATA_START, {
+                    connectionId: this.info.connectionId,
+                    profile: this.getProfile(),
+                } as Messages.SessionGetMetadataStart);
+
+                window.dborg.database.connection.initializeMetadata(this.info.connectionId, (current) => {
+                    queueMessage(Messages.SESSION_GET_METADATA_PROGRESS, {
+                        connectionId: this.info.connectionId,
+                        progress: current,
+                    } as Messages.SessionGetMetadataProgress);
+                }, force).then(() => {
+                    queueMessage(Messages.SESSION_GET_METADATA_SUCCESS, {
+                        connectionId: this.info.connectionId,
+                    } as Messages.SessionGetMetadataSuccess);
+                    resolve();
+                }).catch((error) => {
+                    queueMessage(Messages.SESSION_GET_METADATA_ERROR, {
+                        connectionId: this.info.connectionId,
+                        error: error.message,
+                    } as Messages.SessionGetMetadataError);
+                    reject(error);
+                }).finally(() => {
+                    queueMessage(Messages.SESSION_GET_METADATA_END, {
+                        connectionId: this.info.connectionId,
+                    } as Messages.SessionGetMetadataEnd);
+                });
+            }, force ? 0 : 2000);
+        });
     }
 
     async closeCursors(): Promise<void> {

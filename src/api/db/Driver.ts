@@ -1,6 +1,6 @@
 import Version from "../version";
 import { ColumnDataType } from "./DataType";
-import { Metadata } from "./Metadata";
+import { IMetadataSource, Metadata } from "./Metadata";
 
 /**
  * (Query) Result column information
@@ -378,7 +378,7 @@ export type CursorFetchMaxRowsMode =
 /**
  * Established connection for main and renderer
  */
-export interface Connection extends BaseConnection {
+export interface Connection extends BaseConnection, IMetadataSource {
 
     /**
      * Get the session ID for the connection
@@ -418,8 +418,6 @@ export interface Connection extends BaseConnection {
      * Get session context, if supported by database, for example current user, roles, permissions, etc. This method is optional and may not be implemented by all drivers. If the database does not support session context or if the information is not available, this method may return undefined or throw an error. The session context provides information about the current session and can be used to determine the permissions and capabilities of the session user.
      */
     getContext(reload?: boolean): Promise<SessionContext | undefined>;
-
-    getMetadata(progress?: (current: string) => void, force?: boolean): Promise<Metadata>;
 }
 
 export type DatabaseName = "PostgreSQL" | "MySQL" | "SQLite" | "Oracle" | "MSSQL" | "ClickHouse" | "MongoDB" | "Redis" | "Cassandra" | "Elasticsearch" | "InfluxDB" | "TimescaleDB" | "MariaDB";

@@ -7,7 +7,6 @@ import internal from '../../core/db/internal';
 import { handleResult, invokeResult, InvokeResult, invokeViaLocalResult } from '../../../api/ipc-helpers';
 import { handleWithLocalResult } from '../../../../src/api/rpc-http';
 import { DatabaseFilter, DatabaseDetails, getMetadata, getMetadataDatabase, getMetadataDatabaseList, IdentityOptions, MetadataDetails, SchemaFilter, getMetadataSchemaList, getMetadataSchema, SchemaDetails, getMetadataRoutineList, RoutineDetails, RoutineFilter, getMetadataRoutine, getMetadataRelationList, getMetadataRelation, RelationFilter, RelationDetails, ObjectSearchOptions, IdentifierUsageHit, searchIdentifierUsage, ObjectFindOptions, MetadataObjectHit, findObjects, MetadataAnyObjectHit, getMetadataSequenceList, getMetadataSequence, getMetadataTypeList, getMetadataType, getMetadataPackageList, getMetadataPackage, SequenceFilter, TypeFilter, PackageFilter, PackageDetails, SequenceDetails, TypeDetails } from '../../../../src/api/db/MetadataQuery';
-import { RequiredOnly } from 'src/api/types';
 
 // Driver events
 const EVENT_DRIVER_GET_DRIVERS = "dborg:database:driver:getDrivers";
@@ -25,8 +24,8 @@ const EVENT_CONNECTION_STORE = "dborg:database:connection:store";
 const EVENT_CONNECTION_QUERY = "dborg:database:connection:query";
 const EVENT_CONNECTION_OPEN = "dborg:database:connection:open";
 const EVENT_CONNECTION_EXECUTE = "dborg:database:connection:execute";
-const EVENT_CONNECTION_GET_METADATA = "dborg:database:connection:getMetadata";
-const EVENT_CONNECTION_GET_METADATA_PROGRESS = "dborg:database:connection:getMetadata:progress";
+const EVENT_CONNECTION_INITIALIZE_METADATA = "dborg:database:connection:initializeMetadata";
+const EVENT_CONNECTION_INITIALIZE_METADATA_PROGRESS = "dborg:database:connection:initializeMetadata:progress";
 const EVENT_CONNECTION_CANCEL = "dborg:database:connection:cancel";
 
 // Metadata query events
@@ -219,15 +218,15 @@ export function init(): void {
         }
     );
     handleWithLocalResult(
-        EVENT_CONNECTION_GET_METADATA,
-        async (event: IpcMainInvokeEvent, uniqueId: string, force: boolean): Promise<InvokeResult> => {
+        EVENT_CONNECTION_INITIALIZE_METADATA,
+        async (event: IpcMainInvokeEvent, uniqueId: string, force?: boolean): Promise<InvokeResult> => {
             return handleResult(async () => {
                 const foundConnection = driver.Driver.getConnection(uniqueId);
                 if (!foundConnection) {
                     throw ConnectionError(uniqueId);
                 }
-                return await foundConnection.getMetadata((current: string) => {
-                    event.sender.send(EVENT_CONNECTION_GET_METADATA_PROGRESS, uniqueId, current);
+                return await foundConnection.initializeMetadata((current: string) => {
+                    event.sender.send(EVENT_CONNECTION_INITIALIZE_METADATA_PROGRESS, uniqueId, current);
                 }, force);
             });
         }
@@ -316,15 +315,13 @@ export function init(): void {
     // Metadata query events
     ipcMain.handle(
         EVENT_METADATA_QUERY_GET_METADATA,
-        async (event: IpcMainInvokeEvent, connectionId: string, force: boolean): Promise<InvokeResult> => {
+        async (_: IpcMainInvokeEvent, connectionId: string): Promise<InvokeResult> => {
             return handleResult(async () => {
                 const foundConnection = driver.Driver.getConnection(connectionId);
                 if (!foundConnection) {
                     throw ConnectionError(connectionId);
                 }
-                return getMetadata(await foundConnection.getMetadata((current: string) => {
-                    event.sender.send(EVENT_CONNECTION_GET_METADATA_PROGRESS, connectionId, current);
-                }, force));
+                return getMetadata(await foundConnection.getMetadata());
             });
         }
     );
@@ -363,8 +360,7 @@ export function init(): void {
                 if (!foundConnection) {
                     throw ConnectionError(connectionId);
                 }
-                const metadata = await foundConnection.getMetadata();
-                return searchIdentifierUsage(metadata, options);
+                return searchIdentifierUsage(await foundConnection.getMetadata(), options);
             });
         }
     );
@@ -377,8 +373,7 @@ export function init(): void {
                 if (!foundConnection) {
                     throw ConnectionError(connectionId);
                 }
-                const metadata = await foundConnection.getMetadata();
-                return findObjects(metadata, options);
+                return findObjects(await foundConnection.getMetadata(), options);
             });
         }
     );
@@ -599,7 +594,7 @@ export const preload = {
             getPackageList: (connectionId: string, databaseId: string, schemaId: string | undefined, filter?: PackageFilter): Promise<PackageDetails[]> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_PACKAGE_LIST, connectionId, databaseId, schemaId, filter)),
             getPackage: (connectionId: string, databaseId: string, schemaId: string | undefined, id: string | IdentityOptions): Promise<PackageDetails | undefined> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_PACKAGE, connectionId, databaseId, schemaId, id)),
         },
-        getMetadata: async (uniqueId: string, progress?: (current: string) => void, force?: boolean): Promise<api.Metadata> => {
+        initializeMetadata: async (uniqueId: string, progress?: (current: string) => void, force?: boolean): Promise<api.Metadata> => {
             const listener = (_event: IpcRendererEvent, eUniqueId: string, current: string): void => {
                 if (eUniqueId !== uniqueId) {
                     return;
@@ -609,13 +604,13 @@ export const preload = {
                 }
             };
 
-            ipcRenderer.on(EVENT_CONNECTION_GET_METADATA_PROGRESS, listener);
+            ipcRenderer.on(EVENT_CONNECTION_INITIALIZE_METADATA_PROGRESS, listener);
 
             try {
-                return await invokeResult(invokeViaLocalResult(EVENT_CONNECTION_GET_METADATA, uniqueId, force));
+                return await invokeResult(invokeViaLocalResult(EVENT_CONNECTION_INITIALIZE_METADATA, uniqueId, force));
             }
             finally {
-                ipcRenderer.removeListener(EVENT_CONNECTION_GET_METADATA_PROGRESS, listener);
+                ipcRenderer.removeListener(EVENT_CONNECTION_INITIALIZE_METADATA_PROGRESS, listener);
             };
         },
     },

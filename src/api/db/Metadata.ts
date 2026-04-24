@@ -554,9 +554,16 @@ export interface TypeMetadata extends OwnedMetadataBase {
 //export type MetadataCollectorOptions = {
 
 
-/** Interface for metadata collectors */
+/** 
+ * Interface for metadata collectors 
+ */
 export interface IMetadataCollector {
-    collect(progress?: (current: string) => void, force?: boolean): Promise<Metadata>;
+    /**
+     * Collect metadata from the database
+     * @param progress Callback for reporting progress, receives current step as a parameter
+     * @returns collected metadata
+     */
+    collect(progress?: (current: string) => void): Promise<Metadata>;
 }
 
 /**
@@ -577,16 +584,27 @@ export interface IMetadataStorage {
     restoreMetadata(metadata: Metadata): Promise<Metadata | undefined>;
 }
 
-/** Interface for metadata sources (driver connection on main thread) */
+/** 
+ * Interface for metadata sources (driver connection on main thread) 
+ */
 export interface IMetadataSource {
-    metadata?: Metadata;
     registerCollector(collector: IMetadataCollector, storage?: IMetadataStorage): void;
-    initializeMetadata(progress?: (current: string) => void): Promise<void>;
+    initializeMetadata(progress?: (current: string) => void, force?: boolean): Promise<void>;
     getMetadata(): Promise<Metadata>;
 }
 
-/** Interface for metadata providers (used by database sessions on render side) */
+/** 
+ * Interface for metadata providers (used by database sessions on render side) 
+ */
 export interface IMetadataProvider {
-    initializeMetadata(progress?: (current: string) => void, force?: boolean): Promise<Metadata>;
+    /**
+     * Initialize metadata provider, e.g., by collecting metadata from the database or restoring it from storage
+     * @param progress Callback for reporting progress, receives current step as a parameter
+     */
+    initializeMetadata(force?: boolean): Promise<void>;
+    /**
+     * Get metadata query API for querying metadata from the provider
+     * @returns metadata query API
+     */
     getMetadataQuery(): Promise<MetadataQueryApi>;
 }

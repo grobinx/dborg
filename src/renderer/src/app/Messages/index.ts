@@ -137,9 +137,4 @@ export type SessionGetMetadataError = {
 export const SESSION_GET_METADATA_SUCCESS = "session:get-metadata:success";
 export type SessionGetMetadataSuccess = {
     connectionId: string; // Unique identifier for the connection
-    metadata: Metadata; // Metadata retrieved from the database
-}
-export const REFRESH_METADATA = "refresh-metadata";
-export type RefreshMetadata = {
-    connectionId: string; // Unique identifier for the connection
 }

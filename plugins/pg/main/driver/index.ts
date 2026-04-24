@@ -7,7 +7,6 @@ import PgCursor from 'pg-cursor';
 import logo from '../../resources/postgresql-logo.svg';
 import { DRIVER_UNIQUE_ID } from '../../common/consts';
 import { MetadataCollector } from './MetadataCollector';
-import { StandardMetadataStorage } from '../../../../src/api/db/StandardMetadataStorage';
 
 const driverVersion: Version = {
     major: 1,
@@ -404,10 +403,7 @@ export class Connection extends driver.Connection {
     private pool: boolean;
     private fetchRecordCount: number;
     private maxStatementRows: number;
-    private metadata: api.Metadata | null = null;
-    private metadataPromise: Promise<api.Metadata> | null = null;
     private pid: string | undefined;
-    private metadataFileName: string | undefined;
     private context: api.SessionContext | undefined;
 
     constructor(properties: api.Properties, driver: Driver, client: pg.Client | pg.Pool, uniqueId?: string, pid?: string) {
@@ -420,6 +416,7 @@ export class Connection extends driver.Connection {
         this.pool = client instanceof pg.Pool;
         this.fetchRecordCount = this.properties[driver_fetch_record_count] as number ?? driver_fetch_record_count_default;
         this.maxStatementRows = this.properties[driver_max_statement_rows] as number ?? driver_max_statement_rows_default;
+        this.registerCollector(new MetadataCollector(this));
     }
 
     getConnectionId(): string {
@@ -691,46 +688,6 @@ export class Connection extends driver.Connection {
                 await client.end();
             }
         }
-    }
-
-    async getMetadata(progress?: (current: string) => void, force?: boolean): Promise<api.Metadata> {
-        // Jeśli mamy cached metadata i nie wymuszamy force, zwróć od razu
-        if (this.metadata && !force) {
-            return this.metadata;
-        }
-
-        if (!this.metadataPromise || force) {
-            this.metadataPromise = (async () => {
-                const collector = new MetadataCollector(this);
-                const storage: api.IMetadataStorage = new StandardMetadataStorage(this);
-                if (!force) {
-                    try {
-                        progress?.("Restoring metadata from cache...");
-                        this.metadata = {
-                            status: "pending",
-                        }
-                        const metadata = await storage.restoreMetadata(this.metadata);
-                        if (metadata) {
-                            this.metadata = metadata;
-                            return this.metadata;
-                        }
-                    } catch (e) {
-                        console.error("Restoring metadata failed:", e);
-                    }
-                }
-
-                this.metadata = await collector.collect(progress, force);
-
-                if (this.metadata) {
-                    progress?.("Storing metadata to cache...");
-                    await storage.storeMetadata(this.metadata);
-                }
-
-                return this.metadata;
-            })();
-        }
-
-        return this.metadataPromise;
     }
 
 }

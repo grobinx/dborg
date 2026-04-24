@@ -10,7 +10,7 @@ import { useProfiles } from './ProfilesContext';
 import { useDatabase } from './DatabaseContext';
 import { usePluginManager } from './PluginManagerContext';
 import DatabaseSession, { IDatabaseSession } from './DatabaseSession';
-import { RefreshMetadata, SWITCH_PANEL_TAB, TabPanelChangedMessage } from '@renderer/app/Messages';
+import { SWITCH_PANEL_TAB, TabPanelChangedMessage } from '@renderer/app/Messages';
 import { CustomContainer, RenderedView, ConnectionView, CustomView, ClickableView } from 'plugins/manager/renderer/Plugin';
 import SchemaAssistant from '@renderer/containers/SchemaAssistant';
 import ProfileBook from '@renderer/containers/SchemaBook';
@@ -101,7 +101,6 @@ interface SubscriptionHandlers {
     editSchema: (schemaId: string) => void;
     cloneEditSchema: (schemaId: string) => void;
     tabConnectionsChanged: (msg: TabPanelChangedMessage) => void;
-    refreshMetadata: (msg: RefreshMetadata) => void;
     profileConnectSuccess: (connection: api.ConnectionInfo) => void;
     schemaDisconnectSuccess: (connectionId: string) => void;
 }
@@ -189,7 +188,6 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         editSchema: () => undefined,
         cloneEditSchema: () => undefined,
         tabConnectionsChanged: () => undefined,
-        refreshMetadata: () => undefined,
         profileConnectSuccess: () => undefined,
         schemaDisconnectSuccess: () => undefined,
     });
@@ -293,41 +291,6 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         if (list && list.length) return containers.find(c => c.type === "connections") || containers[0];
         return containers.find(c => c.type === "profile-list") || containers[0];
     }, [containers]);
-
-    const initMetadata = React.useCallback((session: IDatabaseSession, force?: boolean) => {
-        if (!session.info.driver.implements.includes("metadata")) return;
-        setTimeout(() => {
-            queueMessage(Messages.SESSION_GET_METADATA_START, {
-                connectionId: session.info.connectionId,
-                profile: session.profile,
-            } as Messages.SessionGetMetadataStart);
-
-            session.initializeMetadata((current) => {
-                queueMessage(Messages.SESSION_GET_METADATA_PROGRESS, {
-                    connectionId: session.info.connectionId,
-                    progress: current,
-                } as Messages.SessionGetMetadataProgress);
-            }, force).then((metadata: api.Metadata) => {
-                queueMessage(Messages.SESSION_GET_METADATA_SUCCESS, {
-                    connectionId: session.info.connectionId,
-                    metadata,
-                } as Messages.SessionGetMetadataSuccess);
-            }).catch((error) => {
-                queueMessage(Messages.SESSION_GET_METADATA_ERROR, {
-                    connectionId: session.info.connectionId,
-                    error: error.message,
-                } as Messages.SessionGetMetadataError);
-                addToast("error", "Error loading metadata", {
-                    reason: error,
-                    source: session.profile.sch_name,
-                });
-            }).finally(() => {
-                queueMessage(Messages.SESSION_GET_METADATA_END, {
-                    connectionId: session.info.connectionId,
-                } as Messages.SessionGetMetadataEnd);
-            });
-        }, force ? 500 : 2000);
-    }, [queueMessage, addToast]);
 
     const selectContainer = React.useCallback((container: SpecificContainer | null) => {
         setSelectedContainer(container);
@@ -498,15 +461,12 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
                     timeout: 0,
                 });
             }
-            else {
-                initMetadata(newSession);
-            }
             const updated = [...(prev || []), newSession];
             setSelectedSession(newSession);
             sessionsRef.current = updated;
             return updated;
         });
-    }, [initMetadata, addToast, t]);
+    }, [addToast, t]);
 
     const handleSchemaDisconnectSuccess = React.useCallback((connectionId: string) => {
         setSessions(prev => {
@@ -524,19 +484,12 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         delete sessionViewStateRef.current[connectionId];
     }, [selectedSession, chooseContainer, selectContainer]);
 
-    const handleRefreshMetadata = React.useCallback((msg: RefreshMetadata) => {
-        if (selectedSession && selectedSession.info.connectionId === msg.connectionId) {
-            initMetadata(selectedSession, true);
-        }
-    }, [selectedSession, initMetadata]);
-
     // Keep latest handler implementations without forcing re-subscriptions.
     subscriptionHandlersRef.current.switchContainer = handleSwitchContainer;
     subscriptionHandlersRef.current.switchView = handleSwitchView;
     subscriptionHandlersRef.current.editSchema = handleEditSchema;
     subscriptionHandlersRef.current.cloneEditSchema = handleCloneEditSchema;
     subscriptionHandlersRef.current.tabConnectionsChanged = handleTabConnectionsChanged;
-    subscriptionHandlersRef.current.refreshMetadata = handleRefreshMetadata;
     subscriptionHandlersRef.current.profileConnectSuccess = handleProfileConnectSuccess;
     subscriptionHandlersRef.current.schemaDisconnectSuccess = handleSchemaDisconnectSuccess;
 
@@ -565,10 +518,7 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         if (!contextInitialized) return;
         databaseConnections.list().then(async list => {
             const restored = await Promise.all(list.map(async conn => {
-                const s = new DatabaseSession(conn);
-                await s.closeCursors();
-                initMetadata(s);
-                return s;
+                return new DatabaseSession(conn, true);
             }));
             setSessions(restored);
             sessionsRef.current = restored;
@@ -597,9 +547,6 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         const onTabConnectionsChanged = (msg: TabPanelChangedMessage) => {
             subscriptionHandlersRef.current.tabConnectionsChanged(msg);
         };
-        const onRefreshMetadata = (msg: RefreshMetadata) => {
-            subscriptionHandlersRef.current.refreshMetadata(msg);
-        };
 
         const offDisconnecting = onEvent("disconnecting", e => {
             if (e.status === "success") {
@@ -617,7 +564,6 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
         subscribe(Messages.EDIT_PROFILE, onEditSchema);
         subscribe(Messages.CLONE_EDIT_PROFILE, onCloneEditSchema);
         subscribe(Messages.TAB_PANEL_CHANGED, onTabConnectionsChanged);
-        subscribe(Messages.REFRESH_METADATA, onRefreshMetadata);
 
         return () => {
             unsubscribe(Messages.SWITCH_CONTAINER, onSwitchContainer);
@@ -625,7 +571,6 @@ export const ApplicationProvider: React.FC<{ children: React.ReactNode }> = ({ c
             unsubscribe(Messages.EDIT_PROFILE, onEditSchema);
             unsubscribe(Messages.CLONE_EDIT_PROFILE, onCloneEditSchema);
             unsubscribe(Messages.TAB_PANEL_CHANGED, onTabConnectionsChanged);
-            unsubscribe(Messages.REFRESH_METADATA, onRefreshMetadata);
             offDisconnecting();
             offConnecting();
         };

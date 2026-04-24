@@ -1,5 +1,6 @@
+import { StandardMetadataStorage } from "../../../../src/api/db/StandardMetadataStorage";
 import * as api from "../../../api/db";
-import Version from "../../../api/version";
+import Version, { versionToNumber } from "../../../api/version";
 
 export abstract class Cursor implements api.Cursor {
     protected connection: Connection;
@@ -7,7 +8,7 @@ export abstract class Cursor implements api.Cursor {
     constructor(connection: Connection) {
         this.connection = connection;
     }
-    
+
     getConnection(): api.Connection {
         return this.connection;
     }
@@ -42,6 +43,11 @@ export abstract class Connection implements api.Connection {
     protected cursors: {
         [uniqueId: string]: api.Cursor
     } = {}
+
+    protected metadata?: api.Metadata;
+    private metadataPromise: Promise<void> | null = null;
+    private metadataCollector: api.IMetadataCollector | null = null;
+    private metadataStorage: api.IMetadataStorage | null = null;
 
     /**
      * call super() for add connection to global list
@@ -139,8 +145,64 @@ export abstract class Connection implements api.Connection {
         return Driver.getConnection(connectionId)?.cursors[uniqueId];
     }
 
-    async getMetadata(_progress?: (current: string) => void, _force?: boolean): Promise<api.Metadata> {
-        return { status: "not-supported" };
+    registerCollector(collector: api.IMetadataCollector, storage?: api.IMetadataStorage): void {
+        this.metadataCollector = collector;
+        if (storage) {
+            this.metadataStorage = storage;
+        } else {
+            this.metadataStorage = new StandardMetadataStorage(this);
+        }
+    }
+
+    async initializeMetadata(progress?: (current: string) => void, force?: boolean): Promise<void> {
+        const collector = this.metadataCollector;
+        const storage = this.metadataStorage;
+
+        const driver = this.getDriver();
+        const supported = driver.getImplementsMethods().includes("metadata");
+        const info = await this.getConnectionInfo();
+        const version = versionToNumber(info.version ?? "0.0.0");
+        const supportVersion = versionToNumber(driver.getSupports().minVersion || "0.0.0");
+
+        if (!supported || version < supportVersion) {
+            this.metadata = { status: "not-supported" };
+            return;
+        }
+
+        if (!this.metadataPromise && collector && storage) {
+            this.metadataPromise = (async () => {
+                try {
+                    progress?.("Restoring metadata");
+                    this.metadata = { status: "pending" };
+
+                    if (!force) {
+                        const restored = await storage.restoreMetadata(this.metadata);
+                        if (restored) {
+                            this.metadata = restored;
+                            return;
+                        }
+                    }
+
+                    this.metadata = await collector.collect(progress);
+
+                    if (this.metadata) {
+                        progress?.("Storing metadata");
+                        await storage.storeMetadata(this.metadata);
+                    }
+                } finally {
+                    this.metadataPromise = null;
+                }
+            })();
+        }
+
+        await this.metadataPromise || Promise.resolve();
+    }
+
+    async getMetadata(): Promise<api.Metadata> {
+        if (!this.metadata) {
+            return { status: "pending" };
+        }
+        return this.metadata;
     }
 }
 
@@ -268,5 +330,5 @@ export abstract class Driver implements api.Driver {
         this.connections = {};
         delete Driver.drivers[this.getDriverId()];
     }
-    
+
 }

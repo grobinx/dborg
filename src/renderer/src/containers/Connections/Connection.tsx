@@ -283,7 +283,7 @@ export const ConnectionButtons: React.FC<{ session: IDatabaseSession }> = ({ ses
             {session.info.driver.implements.includes("metadata") && (
                 <Tooltip title={t("refresh-metadata", "Refresh metadata")}>
                     <ToolButton
-                        onClick={() => queueMessage(Messages.REFRESH_METADATA, { connectionId: session.info.connectionId })}
+                        onClick={() => session.initializeMetadata(true)}
                         disabled={gettingMetadata}
                         color="main"
                         size="small"
