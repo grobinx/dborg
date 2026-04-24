@@ -188,7 +188,7 @@ export const ConnectionContent: React.FC<ConnectionsOwnProps> = (props) => {
 export const ConnectionButtons: React.FC<{ session: IDatabaseSession }> = ({ session }) => {
     const { t } = useTranslation();
     const theme = useTheme();
-    const { queueMessage, subscribe, unsubscribe } = useMessages();
+    const { subscribe, unsubscribe } = useMessages();
     const [gettingMetadata, setGettingMetadata] = React.useState(false);
     const { disconnectSession: disconnectFromDatabase } = useProfiles();
     const [runningTasks, setRunningTasks] = React.useState<number>(0);
@@ -203,18 +203,19 @@ export const ConnectionButtons: React.FC<{ session: IDatabaseSession }> = ({ ses
             setGettingMetadata(true);
         };
 
-        const metadataEndHandle = (message: Messages.SessionGetMetadataEnd) => {
+        const metadataEndHandle = async (message: Messages.SessionGetMetadataEnd) => {
             if (message.connectionId !== session.info.connectionId) {
                 return;
             }
-            setGettingMetadata(false);
+            const metadata = await session.getMetadataQuery();
+            setGettingMetadata(metadata ? metadata.status !== "ready" : true);
         };
 
         const queueTaskUpdateHandle = (message: QueueTaskMessage) => {
             if (message.queueId !== session.info.connectionId) {
                 return;
             }
-            
+
             if (message.type === "setting") {
                 return; // Ignore setting messages
             }
@@ -228,12 +229,16 @@ export const ConnectionButtons: React.FC<{ session: IDatabaseSession }> = ({ ses
         subscribe(Messages.SESSION_GET_METADATA_END, metadataEndHandle);
         subscribe(QUEUE_TASK_MESSAGE, queueTaskUpdateHandle);
 
+        session.getMetadataQuery().then(metadata => {
+            setGettingMetadata(metadata ? metadata.status !== "ready" : true);
+        });
+
         return () => {
             unsubscribe(Messages.SESSION_GET_METADATA_START, metadataStartHandle);
             unsubscribe(Messages.SESSION_GET_METADATA_END, metadataEndHandle);
             unsubscribe(QUEUE_TASK_MESSAGE, queueTaskUpdateHandle);
         };
-    }, [subscribe, unsubscribe, session, session.getQueue()]);
+    }, [session, session.getQueue()]);
 
     const handleQueueClick = (event: React.MouseEvent<HTMLButtonElement>) => {
         setQueueAnchorEl(event.currentTarget);
@@ -251,9 +256,9 @@ export const ConnectionButtons: React.FC<{ session: IDatabaseSession }> = ({ ses
                     color="main"
                     size="small"
                 >
-                    <Badge 
-                        badgeContent={queuedTasks > 0 ? `${runningTasks}/${queuedTasks}` : runningTasks} 
-                        color="primary" 
+                    <Badge
+                        badgeContent={queuedTasks > 0 ? `${runningTasks}/${queuedTasks}` : runningTasks}
+                        color="primary"
                         invisible={runningTasks === 0 && queuedTasks === 0}
                         slotProps={{
                             badge: {

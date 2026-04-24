@@ -14,7 +14,7 @@ export class MetadataCollector implements api.IMetadataCollector {
     constructor(connection: Connection) {
         this.connection = connection;
         this.collectionOptions = {
-            relationStats: false,
+            relationStats: true,
             relationColumnStats: false,
             identifiers: false,
             indexStats: false,
@@ -142,10 +142,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                 id: schemaName,
                 name: schemaName,
                 identity: schemaName,
-                owner: null,
                 description: 'Default SQLite schema',
-                default: true,
-                catalog: false,
                 created: new Date().toISOString(),
                 modified: new Date().toISOString(),
                 relations: {},
@@ -176,9 +173,8 @@ export class MetadataCollector implements api.IMetadataCollector {
             name: string;
             tbl_name: string;
             rootpage: number;
-            sql: string;
         }>(
-            `SELECT type, name, tbl_name, rootpage, sql FROM sqlite_master 
+            `SELECT type, name, tbl_name, rootpage FROM sqlite_master 
              WHERE type IN ('table', 'view')
              AND name NOT LIKE 'sqlite_%'
              ${name ? `AND name = ?` : ''}
@@ -197,12 +193,9 @@ export class MetadataCollector implements api.IMetadataCollector {
                 identity: tableName,
                 relationType: isView ? 'view' : 'table',
                 kind: 'regular',
-                owner: null,
-                description: null,
                 created: new Date().toISOString(),
                 modified: new Date().toISOString(),
                 columns: [],
-                identifiers: isView && row.sql ? [row.sql] : null,
                 permissions: {
                     select: true,
                     insert: !isView,
@@ -286,16 +279,6 @@ export class MetadataCollector implements api.IMetadataCollector {
 
                 relation.stats = {
                     rows: countResult?.count ?? null,
-                    size: null,
-                    pages: null,
-                    avgRowLength: null,
-                    reads: null,
-                    writes: null,
-                    scans: null,
-                    inserts: null,
-                    updates: null,
-                    deletes: null,
-                    lastAnalyze: null
                 };
             } catch (error) {
                 // Jeśli liczenie nie zadziała (np. widok systemowy), pomiń
