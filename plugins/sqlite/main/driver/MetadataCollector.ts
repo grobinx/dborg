@@ -8,8 +8,9 @@ export class MetadataCollector implements api.IMetadataCollector {
     private metadata: api.Metadata = { status: "pending" };
     private db: sqlite3.Database | undefined;
     private collectionOptions?: api.MetadataCollectionOptions;
-    private mainDatabaseName: string = 'main';
+    private databaseName: string = 'sqlite';
     private connection: Connection;
+    private schemaNames: string[] = [];
 
     constructor(connection: Connection) {
         this.connection = connection;
@@ -67,6 +68,7 @@ export class MetadataCollector implements api.IMetadataCollector {
         };
 
         await this.updateDatabases(progress);
+        await this.ensureAllSchemas(progress);
         await this.updateTables(progress);
         if (this.collectionOptions?.relationStats) {
             await this.updateTableStats(progress);
@@ -83,66 +85,75 @@ export class MetadataCollector implements api.IMetadataCollector {
         return `'${value.replace(/'/g, "''")}'`;
     }
 
+    private quoteSqliteIdentifier(value: string): string {
+        return `"${value.replace(/"/g, '""')}"`;
+    }
+
     async updateDatabases(progress?: (current: string) => void): Promise<void> {
         if (progress) {
             progress("databases");
         }
 
-        // SQLite ma jedno główne database 'main' i opcjonalnie attached databases
-        const rows = await this.query<{ schema: string; file: string }>(
+        // Pobierz listę wszystkich schematów (main, temp, attached databases)
+        const rows = await this.query<{ seq: number; name: string; file: string }>(
             `PRAGMA database_list;`
         );
 
+        this.schemaNames = rows.map(row => row.name);
+
         this.metadata.databases = this.metadata.databases ?? {};
 
-        for (const row of rows) {
-            const dbName = row.schema || this.mainDatabaseName;
-            const filename = row.file || ':memory:';
+        // Tworzymy jedną bazę danych "sqlite" dla całej instancji SQLite
+        const filename = rows.find(r => r.name === 'main')?.file || ':memory:';
 
-            this.metadata.databases[dbName] = {
-                objectType: "database",
-                id: dbName,
-                name: dbName,
-                identity: dbName,
-                owner: null,
-                description: filename === ':memory:' ? 'In-memory database' : filename,
-                connected: true,
-                template: false,
-                created: new Date().toISOString(),
-                modified: new Date().toISOString(),
-                schemas: {},
-                permissions: {
-                    connect: true,
-                    create: true,
-                    temp: true
-                }
-            };
-        }
+        this.metadata.databases[this.databaseName] = {
+            objectType: "database",
+            id: this.databaseName,
+            name: this.databaseName,
+            identity: this.databaseName,
+            owner: null,
+            description: filename === '' ? 'In-memory database' : filename,
+            connected: true,
+            template: false,
+            created: new Date().toISOString(),
+            modified: new Date().toISOString(),
+            schemas: {},
+            permissions: {
+                connect: true,
+                create: true,
+                temp: true
+            }
+        };
     }
 
-    private connectedDatabase(): api.DatabaseMetadata {
-        const database = this.metadata.databases?.[this.mainDatabaseName];
+    private getDatabase(): api.DatabaseMetadata {
+        const database = this.metadata.databases?.[this.databaseName];
         if (!database) {
-            throw new Error("No connected database found");
+            throw new Error("No sqlite database found");
         }
         return database;
     }
 
     /**
-     * W SQLite brak tradycyjnych schematów, więc wszystkie obiekty traktujemy
-     * jako należące do jednego "public" schematu
+     * Tworzy schematy odpowiadające wynikom PRAGMA database_list
+     * Każdy schemat (main, temp, attached databases) ma swoją SchemaMetadata
      */
-    private ensureDefaultSchema(): api.SchemaMetadata {
-        const database = this.connectedDatabase();
-        const schemaName = 'main';
+    private async ensureAllSchemas(progress?: (current: string) => void): Promise<void> {
+        if (progress) {
+            progress("schemas");
+        }
 
-        if (!database.schemas[schemaName]) {
+        const database = this.getDatabase();
+
+        for (const schemaName of this.schemaNames) {
             database.schemas[schemaName] = {
                 objectType: "schema",
                 id: schemaName,
                 name: schemaName,
                 identity: schemaName,
-                description: 'Default SQLite schema',
+                description: schemaName === 'main' ? 'Main SQLite database' : 
+                             schemaName === 'temp' ? 'Temporary database' : 
+                             `Attached database: ${schemaName}`,
                 created: new Date().toISOString(),
                 modified: new Date().toISOString(),
                 relations: {},
@@ -155,82 +166,122 @@ export class MetadataCollector implements api.IMetadataCollector {
                 }
             };
         }
-
-        return database.schemas[schemaName];
     }
 
-    async updateTables(progress?: (current: string) => void, name?: string): Promise<void> {
-        const database = this.connectedDatabase();
-        const schema = this.ensureDefaultSchema();
+    /**
+     * Pobiera sqlite_master dla danego schematu
+     */
+    private getSqliteMasterQuery(schemaName: string): string {
+        if (schemaName === 'main') {
+            return `SELECT type, name, tbl_name, rootpage FROM sqlite_master 
+                   WHERE type IN ('table', 'view') 
+                   AND name NOT LIKE 'sqlite_%'
+                   ORDER BY name`;
+        } else {
+            return `SELECT type, name, tbl_name, rootpage FROM ${this.quoteSqliteIdentifier(schemaName)}.sqlite_master 
+                   WHERE type IN ('table', 'view') 
+                   AND name NOT LIKE 'sqlite_%'
+                   ORDER BY name`;
+        }
+    }
+
+    async updateTables(progress?: (current: string) => void): Promise<void> {
+        const database = this.getDatabase();
 
         if (progress) {
             progress("tables");
         }
 
-        // Pobierz listę wszystkich tabel i widoków
-        const rows = await this.query<{
-            type: string;
-            name: string;
-            tbl_name: string;
-            rootpage: number;
-        }>(
-            `SELECT type, name, tbl_name, rootpage FROM sqlite_master 
-             WHERE type IN ('table', 'view')
-             AND name NOT LIKE 'sqlite_%'
-             ${name ? `AND name = ?` : ''}
-             ORDER BY name`,
-            name ? [name] : []
-        );
+        // Iteruj po każdym schemacie
+        for (const schemaName of this.schemaNames) {
+            const schema = database.schemas[schemaName];
+            if (!schema) continue;
 
-        for (const row of rows) {
-            const isView = row.type === 'view';
-            const tableName = row.name;
+            const sqlQuery = this.getSqliteMasterQuery(schemaName);
 
-            const relation: api.RelationMetadata = {
-                objectType: "relation",
-                id: `${this.mainDatabaseName}.${tableName}`,
-                name: tableName,
-                identity: tableName,
-                relationType: isView ? 'view' : 'table',
-                kind: 'regular',
-                created: new Date().toISOString(),
-                modified: new Date().toISOString(),
-                columns: [],
-                permissions: {
-                    select: true,
-                    insert: !isView,
-                    update: !isView,
-                    delete: !isView
-                }
-            };
+            const rows = await this.query<{
+                type: string;
+                name: string;
+                tbl_name: string;
+                rootpage: number;
+            }>(sqlQuery);
 
-            schema.relations[tableName] = relation;
+            for (const row of rows) {
+                const isView = row.type === 'view';
+                const tableName = row.name;
 
-            await this.updateTableDetails(tableName);
+                const relation: api.RelationMetadata = {
+                    objectType: "relation",
+                    id: `${this.databaseName}.${schemaName}.${tableName}`,
+                    name: tableName,
+                    identity: tableName,
+                    relationType: isView ? 'view' : 'table',
+                    kind: 'regular',
+                    created: new Date().toISOString(),
+                    modified: new Date().toISOString(),
+                    columns: [],
+                    permissions: {
+                        select: true,
+                        insert: !isView,
+                        update: !isView,
+                        delete: !isView
+                    }
+                };
+
+                schema.relations[tableName] = relation;
+
+                await this.updateTableDetails(schemaName, tableName);
+            }
         }
-
     }
 
-    async updateTableDetails(name?: string): Promise<void> {
-        const schema = this.ensureDefaultSchema();
+    async updateTableDetails(schemaName: string, tableName?: string): Promise<void> {
+        const database = this.getDatabase();
+        const schema = database.schemas[schemaName];
+        if (!schema) return;
 
-        for (const [tableName, relation] of Object.entries(schema.relations)) {
-            if (name && tableName !== name) continue;
+        for (const [currentTableName, relation] of Object.entries(schema.relations)) {
+            if (tableName && currentTableName !== tableName) continue;
 
-            // Pobierz kolumny
-            const columns = await this.query<{
-                cid: number;
-                name: string;
-                type: string;
-                notnull: number;
-                dflt_value: string | null;
-                pk: number;
-            }>(
-                `PRAGMA table_info(${this.quoteSqliteString(tableName)});`
-            );
+            // Pobierz kolumny - dla SQLite info o kolumnach pobieramy z PRAGMA table_info
+            let columns: any[] = [];
+            try {
+                if (schemaName === 'main') {
+                    columns = await this.query<{
+                        cid: number;
+                        name: string;
+                        type: string;
+                        notnull: number;
+                        dflt_value: string | null;
+                        pk: number;
+                    }>(`PRAGMA table_info(${this.quoteSqliteString(currentTableName)});`);
+                } else {
+                    // Dla attached database, SELECT z sqlite_master
+                    const masterRows = await this.query<{
+                        sql: string;
+                    }>(`SELECT sql FROM ${this.quoteSqliteIdentifier(schemaName)}.sqlite_master 
+                       WHERE type='table' AND name=${this.quoteSqliteString(currentTableName)}`);
+                    
+                    if (masterRows.length > 0 && masterRows[0].sql) {
+                        // Parsuj CREATE TABLE statement żeby wydobyć kolumny
+                        // Fallback: spróbuj SELECT * na puste dane i zobaczysz schemat
+                        columns = await this.query<{
+                            cid: number;
+                            name: string;
+                            type: string;
+                            notnull: number;
+                            dflt_value: string | null;
+                            pk: number;
+                        }>(`PRAGMA ${this.quoteSqliteIdentifier(schemaName)}.table_info(${this.quoteSqliteString(currentTableName)});`);
+                    }
+                }
+            } catch (error) {
+                console.warn(`Failed to get table info for ${schemaName}.${currentTableName}:`, error);
+                columns = [];
+            }
 
             relation.columns = columns.map(col => ({
-                id: `${tableName}.${col.name}`,
+                id: `${schemaName}.${currentTableName}.${col.name}`,
                 name: col.name,
                 identity: col.name,
                 no: col.cid,
@@ -248,9 +299,32 @@ export class MetadataCollector implements api.IMetadataCollector {
             }));
 
             // Oznacz kolumny które są w FK
-            const fkList = await this.query<{ id: number; seq: number; table: string; from: string; to: string; on_delete: string; on_update: string }>(
-                `PRAGMA foreign_key_list(${this.quoteSqliteString(tableName)});`
-            );
+            let fkList: any[] = [];
+            try {
+                if (schemaName === 'main') {
+                    fkList = await this.query<{
+                        id: number;
+                        seq: number;
+                        table: string;
+                        from: string;
+                        to: string;
+                        on_delete: string;
+                        on_update: string;
+                    }>(`PRAGMA foreign_key_list(${this.quoteSqliteString(currentTableName)});`);
+                } else {
+                    fkList = await this.query<{
+                        id: number;
+                        seq: number;
+                        table: string;
+                        from: string;
+                        to: string;
+                        on_delete: string;
+                        on_update: string;
+                    }>(`PRAGMA ${this.quoteSqliteIdentifier(schemaName)}.foreign_key_list(${this.quoteSqliteString(currentTableName)});`);
+                }
+            } catch (error) {
+                console.warn(`Failed to get foreign keys for ${schemaName}.${currentTableName}:`, error);
+            }
 
             for (const fk of fkList) {
                 const col = relation.columns.find(c => c.name === fk.from);
@@ -261,126 +335,201 @@ export class MetadataCollector implements api.IMetadataCollector {
         }
     }
 
-    async updateTableStats(progress?: (current: string) => void, name?: string): Promise<void> {
-        const schema = this.ensureDefaultSchema();
+    async updateTableStats(progress?: (current: string) => void): Promise<void> {
+        const database = this.getDatabase();
 
         if (progress) {
             progress("table statistics");
         }
 
-        for (const [tableName, relation] of Object.entries(schema.relations)) {
-            if (name && tableName !== name) continue;
-            if (relation.relationType === 'view') continue; // Widoki nie mają statystyk
+        for (const schemaName of this.schemaNames) {
+            const schema = database.schemas[schemaName];
+            if (!schema) continue;
 
-            try {
-                const countResult = await this.queryOne<{ count: number }>(
-                    `SELECT COUNT(*) as count FROM ${this.quoteSqliteString(tableName)};`
-                );
+            for (const [tableName, relation] of Object.entries(schema.relations)) {
+                if (relation.relationType === 'view') continue; // Widoki nie mają statystyk
 
-                relation.stats = {
-                    rows: countResult?.count ?? null,
-                };
-            } catch (error) {
-                // Jeśli liczenie nie zadziała (np. widok systemowy), pomiń
-                relation.stats = undefined;
+                try {
+                    let countResult: any;
+                    if (schemaName === 'main') {
+                        countResult = await this.queryOne<{ count: number }>(
+                            `SELECT COUNT(*) as count FROM ${this.quoteSqliteString(tableName)};`
+                        );
+                    } else {
+                        countResult = await this.queryOne<{ count: number }>(
+                            `SELECT COUNT(*) as count FROM ${this.quoteSqliteIdentifier(schemaName)}.${this.quoteSqliteIdentifier(tableName)};`
+                        );
+                    }
+
+                    relation.stats = {
+                        rows: countResult?.count ?? null,
+                    };
+                } catch (error) {
+                    console.warn(`Failed to get stats for ${schemaName}.${tableName}:`, error);
+                    relation.stats = undefined;
+                }
             }
         }
     }
 
-    async updateIndexes(progress?: (current: string) => void, name?: string): Promise<void> {
-        const schema = this.ensureDefaultSchema();
+    async updateIndexes(progress?: (current: string) => void): Promise<void> {
+        const database = this.getDatabase();
 
         if (progress) {
             progress("indexes");
         }
 
-        for (const [tableName, relation] of Object.entries(schema.relations)) {
-            if (name && tableName !== name) continue;
-            if (relation.relationType === 'view') continue;
+        for (const schemaName of this.schemaNames) {
+            const schema = database.schemas[schemaName];
+            if (!schema) continue;
 
-            const indexes = await this.query<{
-                seqno: number;
-                cid: number;
-                name: string;
-            }>(
-                `PRAGMA index_list(${this.quoteSqliteString(tableName)});`
-            );
+            for (const [tableName, relation] of Object.entries(schema.relations)) {
+                if (relation.relationType === 'view') continue;
 
-            relation.indexes = [];
+                let indexes: any[] = [];
+                try {
+                    if (schemaName === 'main') {
+                        indexes = await this.query<{
+                            seqno: number;
+                            cid: number;
+                            name: string;
+                        }>(`PRAGMA index_list(${this.quoteSqliteString(tableName)});`);
+                    } else {
+                        indexes = await this.query<{
+                            seqno: number;
+                            cid: number;
+                            name: string;
+                        }>(`PRAGMA ${this.quoteSqliteIdentifier(schemaName)}.index_list(${this.quoteSqliteString(tableName)});`);
+                    }
+                } catch (error) {
+                    console.warn(`Failed to get indexes for ${schemaName}.${tableName}:`, error);
+                    indexes = [];
+                }
 
-            for (const idx of indexes) {
-                const indexInfo = await this.query<{ seqno: number; cid: number; name: string }>(
-                    `PRAGMA index_info(${this.quoteSqliteString(idx.name)});`
-                );
+                relation.indexes = [];
 
-                const indexColumns = await this.query<{ seqno: number; cid: number; name: string }>(
-                    `PRAGMA index_info(${this.quoteSqliteString(idx.name)});`
-                );
+                for (const idx of indexes) {
+                    let indexColumns: any[] = [];
+                    try {
+                        if (schemaName === 'main') {
+                            indexColumns = await this.query<{
+                                seqno: number;
+                                cid: number;
+                                name: string;
+                            }>(`PRAGMA index_info(${this.quoteSqliteString(idx.name)});`);
+                        } else {
+                            indexColumns = await this.query<{
+                                seqno: number;
+                                cid: number;
+                                name: string;
+                            }>(`PRAGMA ${this.quoteSqliteIdentifier(schemaName)}.index_info(${this.quoteSqliteString(idx.name)});`);
+                        }
+                    } catch (error) {
+                        console.warn(`Failed to get index info for ${schemaName}.${idx.name}:`, error);
+                    }
 
-                const indexMetadata: api.IndexMetadata = {
-                    id: idx.name,
-                    name: idx.name,
-                    identity: idx.name,
-                    columns: indexColumns.map(col => ({
-                        name: col.name,
-                        identity: col.name
-                    })),
-                    unique: false, // SQLite PRAGMA index_list zwraca unique flag, ale nie w queryzie
-                    primary: false
-                };
+                    const indexMetadata: api.IndexMetadata = {
+                        id: `${schemaName}.${idx.name}`,
+                        name: idx.name,
+                        identity: idx.name,
+                        columns: indexColumns.map(col => ({
+                            name: col.name,
+                            identity: col.name
+                        })),
+                        unique: false,
+                        primary: false
+                    };
 
-                relation.indexes.push(indexMetadata);
-            }
+                    relation.indexes.push(indexMetadata);
+                }
 
-            // Pobierz primary key
-            const pkInfo = await this.query<{ cid: number; name: string; type: string; pk: number }>(
-                `PRAGMA table_info(${this.quoteSqliteString(tableName)});`
-            );
+                // Pobierz primary key z table_info
+                let pkInfo: any[] = [];
+                try {
+                    if (schemaName === 'main') {
+                        pkInfo = await this.query<{
+                            cid: number;
+                            name: string;
+                            type: string;
+                            pk: number;
+                        }>(`PRAGMA table_info(${this.quoteSqliteString(tableName)});`);
+                    } else {
+                        pkInfo = await this.query<{
+                            cid: number;
+                            name: string;
+                            type: string;
+                            pk: number;
+                        }>(`PRAGMA ${this.quoteSqliteIdentifier(schemaName)}.table_info(${this.quoteSqliteString(tableName)});`);
+                    }
+                } catch (error) {
+                    console.warn(`Failed to get primary key for ${schemaName}.${tableName}:`, error);
+                }
 
-            const pkColumns = pkInfo.filter(col => col.pk > 0).map(col => col.name);
-            if (pkColumns.length > 0) {
-                relation.primaryKey = {
-                    id: `${tableName}_pk`,
-                    name: `${tableName}_pk`,
-                    columns: pkColumns
-                };
+                const pkColumns = pkInfo.filter(col => col.pk > 0).map(col => col.name);
+                if (pkColumns.length > 0) {
+                    relation.primaryKey = {
+                        id: `${schemaName}.${tableName}_pk`,
+                        name: `${tableName}_pk`,
+                        columns: pkColumns
+                    };
+                }
             }
         }
     }
 
-    async updateForeignKeys(progress?: (current: string) => void, name?: string): Promise<void> {
-        const schema = this.ensureDefaultSchema();
+    async updateForeignKeys(progress?: (current: string) => void): Promise<void> {
+        const database = this.getDatabase();
 
         if (progress) {
             progress("foreign keys");
         }
 
-        for (const [tableName, relation] of Object.entries(schema.relations)) {
-            if (name && tableName !== name) continue;
-            if (relation.relationType === 'view') continue;
+        for (const schemaName of this.schemaNames) {
+            const schema = database.schemas[schemaName];
+            if (!schema) continue;
 
-            const fkList = await this.query<{
-                id: number;
-                seq: number;
-                table: string;
-                from: string;
-                to: string;
-                on_delete: string;
-                on_update: string;
-            }>(
-                `PRAGMA foreign_key_list(${this.quoteSqliteString(tableName)});`
-            );
+            for (const [tableName, relation] of Object.entries(schema.relations)) {
+                if (relation.relationType === 'view') continue;
 
-            relation.foreignKeys = fkList.map(fk => ({
-                id: `${tableName}_fk_${fk.id}`,
-                name: `${tableName}_fk_${fk.id}`,
-                column: [fk.from],
-                referencedSchema: 'main',
-                referencedTable: fk.table,
-                referencedColumn: [fk.to],
-                onDelete: fk.on_delete?.toLowerCase() as api.ForeignKeyActionType,
-                onUpdate: fk.on_update?.toLowerCase() as api.ForeignKeyActionType
-            }));
+                let fkList: any[] = [];
+                try {
+                    if (schemaName === 'main') {
+                        fkList = await this.query<{
+                            id: number;
+                            seq: number;
+                            table: string;
+                            from: string;
+                            to: string;
+                            on_delete: string;
+                            on_update: string;
+                        }>(`PRAGMA foreign_key_list(${this.quoteSqliteString(tableName)});`);
+                    } else {
+                        fkList = await this.query<{
+                            id: number;
+                            seq: number;
+                            table: string;
+                            from: string;
+                            to: string;
+                            on_delete: string;
+                            on_update: string;
+                        }>(`PRAGMA ${this.quoteSqliteIdentifier(schemaName)}.foreign_key_list(${this.quoteSqliteString(tableName)});`);
+                    }
+                } catch (error) {
+                    console.warn(`Failed to get foreign keys for ${schemaName}.${tableName}:`, error);
+                    fkList = [];
+                }
+
+                relation.foreignKeys = fkList.map(fk => ({
+                    id: `${schemaName}.${tableName}_fk_${fk.id}`,
+                    name: `${tableName}_fk_${fk.id}`,
+                    column: [fk.from],
+                    referencedSchema: fk.table.includes('.') ? fk.table.split('.')[0] : schemaName,
+                    referencedTable: fk.table.includes('.') ? fk.table.split('.')[1] : fk.table,
+                    referencedColumn: [fk.to],
+                    onDelete: fk.on_delete?.toLowerCase() as api.ForeignKeyActionType,
+                    onUpdate: fk.on_update?.toLowerCase() as api.ForeignKeyActionType
+                }));
+            }
         }
     }
 }
