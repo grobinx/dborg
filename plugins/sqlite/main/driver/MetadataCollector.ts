@@ -77,6 +77,9 @@ export class MetadataCollector implements api.IMetadataCollector {
         if (this.collectionOptions?.constraints) {
             await this.updateForeignKeys(progress);
         }
+        if (this.collectionOptions?.systemObjects) {
+            await this.updateSystemTables(progress);
+        }
 
         this.metadata.status = "ready";
     }
@@ -530,6 +533,580 @@ export class MetadataCollector implements api.IMetadataCollector {
                     onUpdate: fk.on_update?.toLowerCase() as api.ForeignKeyActionType
                 }));
             }
+        }
+    }
+
+    /**
+     * Tworzy tabele systemowe na sztywno
+     * Te tabele nie są dostępne normalnie, ale pokazujemy je w metadanych
+     * Oparte na: https://www.sqlite.org/schematab.html
+     */
+    async updateSystemTables(progress?: (current: string) => void): Promise<void> {
+        const database = this.getDatabase();
+
+        if (progress) {
+            progress("system tables");
+        }
+
+        const mainSchema = database.schemas['main'];
+        const tempSchema = database.schemas['temp'];
+
+        // Definicja kolumn dla sqlite_schema/sqlite_master
+        const schemaMasterColumns = [
+            {
+                id: 'schema_type',
+                name: 'type',
+                identity: 'type',
+                no: 0,
+                dataType: 'TEXT',
+                displayType: 'TEXT',
+                nullable: false,
+                defaultValue: null,
+                primaryKey: false,
+                foreignKey: false,
+                unique: false,
+                permissions: { select: true, update: false }
+            },
+            {
+                id: 'schema_name',
+                name: 'name',
+                identity: 'name',
+                no: 1,
+                dataType: 'TEXT',
+                displayType: 'TEXT',
+                nullable: false,
+                defaultValue: null,
+                primaryKey: false,
+                foreignKey: false,
+                unique: false,
+                permissions: { select: true, update: false }
+            },
+            {
+                id: 'schema_tbl_name',
+                name: 'tbl_name',
+                identity: 'tbl_name',
+                no: 2,
+                dataType: 'TEXT',
+                displayType: 'TEXT',
+                nullable: false,
+                defaultValue: null,
+                primaryKey: false,
+                foreignKey: false,
+                unique: false,
+                permissions: { select: true, update: false }
+            },
+            {
+                id: 'schema_rootpage',
+                name: 'rootpage',
+                identity: 'rootpage',
+                no: 3,
+                dataType: 'INTEGER',
+                displayType: 'INTEGER',
+                nullable: false,
+                defaultValue: null,
+                primaryKey: false,
+                foreignKey: false,
+                unique: false,
+                permissions: { select: true, update: false }
+            },
+            {
+                id: 'schema_sql',
+                name: 'sql',
+                identity: 'sql',
+                no: 4,
+                dataType: 'TEXT',
+                displayType: 'TEXT',
+                nullable: true,
+                defaultValue: null,
+                primaryKey: false,
+                foreignKey: false,
+                unique: false,
+                permissions: { select: true, update: false }
+            }
+        ];
+
+        // Definicja kolumn dla sqlite_sequence
+        const sequenceColumns = [
+            {
+                id: 'seq_name',
+                name: 'name',
+                identity: 'name',
+                no: 0,
+                dataType: 'TEXT',
+                displayType: 'TEXT',
+                nullable: false,
+                defaultValue: null,
+                primaryKey: true,
+                foreignKey: false,
+                unique: false,
+                permissions: { select: true, update: false }
+            },
+            {
+                id: 'seq_seq',
+                name: 'seq',
+                identity: 'seq',
+                no: 1,
+                dataType: 'INTEGER',
+                displayType: 'INTEGER',
+                nullable: false,
+                defaultValue: null,
+                primaryKey: false,
+                foreignKey: false,
+                unique: false,
+                permissions: { select: true, update: false }
+            }
+        ];
+
+        // Definicja kolumn dla sqlite_stat1
+        const stat1Columns = [
+            {
+                id: 'stat1_tbl',
+                name: 'tbl',
+                identity: 'tbl',
+                no: 0,
+                dataType: 'TEXT',
+                displayType: 'TEXT',
+                nullable: false,
+                defaultValue: null,
+                primaryKey: false,
+                foreignKey: false,
+                unique: false,
+                permissions: { select: true, update: false }
+            },
+            {
+                id: 'stat1_idx',
+                name: 'idx',
+                identity: 'idx',
+                no: 1,
+                dataType: 'TEXT',
+                displayType: 'TEXT',
+                nullable: false,
+                defaultValue: null,
+                primaryKey: false,
+                foreignKey: false,
+                unique: false,
+                permissions: { select: true, update: false }
+            },
+            {
+                id: 'stat1_stat',
+                name: 'stat',
+                identity: 'stat',
+                no: 2,
+                dataType: 'BLOB',
+                displayType: 'BLOB',
+                nullable: false,
+                defaultValue: null,
+                primaryKey: false,
+                foreignKey: false,
+                unique: false,
+                permissions: { select: true, update: false }
+            }
+        ];
+
+        // Tabele dla main schematu
+        if (mainSchema) {
+            // sqlite_schema (główna tabela schematu)
+            mainSchema.relations['sqlite_schema'] = {
+                objectType: "relation",
+                id: `${this.databaseName}.main.sqlite_schema`,
+                name: 'sqlite_schema',
+                identity: 'sqlite_schema',
+                relationType: 'table',
+                kind: 'system',
+                created: new Date().toISOString(),
+                modified: new Date().toISOString(),
+                columns: schemaMasterColumns.map(col => ({
+                    id: `main.sqlite_schema.${col.id}`,
+                    name: col.name,
+                    identity: col.identity,
+                    no: col.no,
+                    dataType: col.dataType,
+                    displayType: col.displayType,
+                    nullable: col.nullable,
+                    defaultValue: col.defaultValue,
+                    primaryKey: col.primaryKey,
+                    foreignKey: col.foreignKey,
+                    unique: col.unique,
+                    permissions: col.permissions
+                })),
+                permissions: {
+                    select: true,
+                    insert: false,
+                    update: false,
+                    delete: false
+                }
+            };
+
+            // sqlite_master (alias dla sqlite_schema)
+            mainSchema.relations['sqlite_master'] = {
+                objectType: "relation",
+                id: `${this.databaseName}.main.sqlite_master`,
+                name: 'sqlite_master',
+                identity: 'sqlite_master',
+                relationType: 'table',
+                kind: 'system',
+                created: new Date().toISOString(),
+                modified: new Date().toISOString(),
+                columns: schemaMasterColumns.map(col => ({
+                    id: `main.sqlite_master.${col.id}`,
+                    name: col.name,
+                    identity: col.identity,
+                    no: col.no,
+                    dataType: col.dataType,
+                    displayType: col.displayType,
+                    nullable: col.nullable,
+                    defaultValue: col.defaultValue,
+                    primaryKey: col.primaryKey,
+                    foreignKey: col.foreignKey,
+                    unique: col.unique,
+                    permissions: col.permissions
+                })),
+                permissions: {
+                    select: true,
+                    insert: false,
+                    update: false,
+                    delete: false
+                }
+            };
+
+            // sqlite_sequence (tworzona gdy używany AUTOINCREMENT)
+            mainSchema.relations['sqlite_sequence'] = {
+                objectType: "relation",
+                id: `${this.databaseName}.main.sqlite_sequence`,
+                name: 'sqlite_sequence',
+                identity: 'sqlite_sequence',
+                relationType: 'table',
+                kind: 'system',
+                created: new Date().toISOString(),
+                modified: new Date().toISOString(),
+                columns: sequenceColumns.map(col => ({
+                    id: `main.sqlite_sequence.${col.id}`,
+                    name: col.name,
+                    identity: col.identity,
+                    no: col.no,
+                    dataType: col.dataType,
+                    displayType: col.displayType,
+                    nullable: col.nullable,
+                    defaultValue: col.defaultValue,
+                    primaryKey: col.primaryKey,
+                    foreignKey: col.foreignKey,
+                    unique: col.unique,
+                    permissions: col.permissions
+                })),
+                permissions: {
+                    select: true,
+                    insert: false,
+                    update: false,
+                    delete: false
+                }
+            };
+
+            // sqlite_stat1 (statystyki z ANALYZE)
+            mainSchema.relations['sqlite_stat1'] = {
+                objectType: "relation",
+                id: `${this.databaseName}.main.sqlite_stat1`,
+                name: 'sqlite_stat1',
+                identity: 'sqlite_stat1',
+                relationType: 'table',
+                kind: 'system',
+                created: new Date().toISOString(),
+                modified: new Date().toISOString(),
+                columns: stat1Columns.map(col => ({
+                    id: `main.sqlite_stat1.${col.id}`,
+                    name: col.name,
+                    identity: col.identity,
+                    no: col.no,
+                    dataType: col.dataType,
+                    displayType: col.displayType,
+                    nullable: col.nullable,
+                    defaultValue: col.defaultValue,
+                    primaryKey: col.primaryKey,
+                    foreignKey: col.foreignKey,
+                    unique: col.unique,
+                    permissions: col.permissions
+                })),
+                permissions: {
+                    select: true,
+                    insert: false,
+                    update: false,
+                    delete: false
+                }
+            };
+
+            // sqlite_stat3 (rozszerzone statystyki, opcjonalne)
+            mainSchema.relations['sqlite_stat3'] = {
+                objectType: "relation",
+                id: `${this.databaseName}.main.sqlite_stat3`,
+                name: 'sqlite_stat3',
+                identity: 'sqlite_stat3',
+                relationType: 'table',
+                kind: 'system',
+                created: new Date().toISOString(),
+                modified: new Date().toISOString(),
+                columns: [
+                    {
+                        id: `main.sqlite_stat3.tbl`,
+                        name: 'tbl',
+                        identity: 'tbl',
+                        no: 0,
+                        dataType: 'TEXT',
+                        displayType: 'TEXT',
+                        nullable: false,
+                        defaultValue: null,
+                        primaryKey: false,
+                        foreignKey: false,
+                        unique: false,
+                        permissions: { select: true, update: false }
+                    },
+                    {
+                        id: `main.sqlite_stat3.idx`,
+                        name: 'idx',
+                        identity: 'idx',
+                        no: 1,
+                        dataType: 'TEXT',
+                        displayType: 'TEXT',
+                        nullable: false,
+                        defaultValue: null,
+                        primaryKey: false,
+                        foreignKey: false,
+                        unique: false,
+                        permissions: { select: true, update: false }
+                    },
+                    {
+                        id: `main.sqlite_stat3.neq`,
+                        name: 'neq',
+                        identity: 'neq',
+                        no: 2,
+                        dataType: 'BLOB',
+                        displayType: 'BLOB',
+                        nullable: false,
+                        defaultValue: null,
+                        primaryKey: false,
+                        foreignKey: false,
+                        unique: false,
+                        permissions: { select: true, update: false }
+                    },
+                    {
+                        id: `main.sqlite_stat3.nlt`,
+                        name: 'nlt',
+                        identity: 'nlt',
+                        no: 3,
+                        dataType: 'BLOB',
+                        displayType: 'BLOB',
+                        nullable: false,
+                        defaultValue: null,
+                        primaryKey: false,
+                        foreignKey: false,
+                        unique: false,
+                        permissions: { select: true, update: false }
+                    },
+                    {
+                        id: `main.sqlite_stat3.ndlt`,
+                        name: 'ndlt',
+                        identity: 'ndlt',
+                        no: 4,
+                        dataType: 'BLOB',
+                        displayType: 'BLOB',
+                        nullable: false,
+                        defaultValue: null,
+                        primaryKey: false,
+                        foreignKey: false,
+                        unique: false,
+                        permissions: { select: true, update: false }
+                    },
+                    {
+                        id: `main.sqlite_stat3.sample`,
+                        name: 'sample',
+                        identity: 'sample',
+                        no: 5,
+                        dataType: 'BLOB',
+                        displayType: 'BLOB',
+                        nullable: false,
+                        defaultValue: null,
+                        primaryKey: false,
+                        foreignKey: false,
+                        unique: false,
+                        permissions: { select: true, update: false }
+                    }
+                ],
+                permissions: {
+                    select: true,
+                    insert: false,
+                    update: false,
+                    delete: false
+                }
+            };
+
+            // sqlite_stat4 (nowsza wersja sqlite_stat3)
+            mainSchema.relations['sqlite_stat4'] = {
+                objectType: "relation",
+                id: `${this.databaseName}.main.sqlite_stat4`,
+                name: 'sqlite_stat4',
+                identity: 'sqlite_stat4',
+                relationType: 'table',
+                kind: 'system',
+                created: new Date().toISOString(),
+                modified: new Date().toISOString(),
+                columns: [
+                    {
+                        id: `main.sqlite_stat4.tbl`,
+                        name: 'tbl',
+                        identity: 'tbl',
+                        no: 0,
+                        dataType: 'TEXT',
+                        displayType: 'TEXT',
+                        nullable: false,
+                        defaultValue: null,
+                        primaryKey: false,
+                        foreignKey: false,
+                        unique: false,
+                        permissions: { select: true, update: false }
+                    },
+                    {
+                        id: `main.sqlite_stat4.idx`,
+                        name: 'idx',
+                        identity: 'idx',
+                        no: 1,
+                        dataType: 'TEXT',
+                        displayType: 'TEXT',
+                        nullable: false,
+                        defaultValue: null,
+                        primaryKey: false,
+                        foreignKey: false,
+                        unique: false,
+                        permissions: { select: true, update: false }
+                    },
+                    {
+                        id: `main.sqlite_stat4.neq`,
+                        name: 'neq',
+                        identity: 'neq',
+                        no: 2,
+                        dataType: 'BLOB',
+                        displayType: 'BLOB',
+                        nullable: false,
+                        defaultValue: null,
+                        primaryKey: false,
+                        foreignKey: false,
+                        unique: false,
+                        permissions: { select: true, update: false }
+                    },
+                    {
+                        id: `main.sqlite_stat4.nlt`,
+                        name: 'nlt',
+                        identity: 'nlt',
+                        no: 3,
+                        dataType: 'BLOB',
+                        displayType: 'BLOB',
+                        nullable: false,
+                        defaultValue: null,
+                        primaryKey: false,
+                        foreignKey: false,
+                        unique: false,
+                        permissions: { select: true, update: false }
+                    },
+                    {
+                        id: `main.sqlite_stat4.ndlt`,
+                        name: 'ndlt',
+                        identity: 'ndlt',
+                        no: 4,
+                        dataType: 'BLOB',
+                        displayType: 'BLOB',
+                        nullable: false,
+                        defaultValue: null,
+                        primaryKey: false,
+                        foreignKey: false,
+                        unique: false,
+                        permissions: { select: true, update: false }
+                    },
+                    {
+                        id: `main.sqlite_stat4.sample`,
+                        name: 'sample',
+                        identity: 'sample',
+                        no: 5,
+                        dataType: 'BLOB',
+                        displayType: 'BLOB',
+                        nullable: false,
+                        defaultValue: null,
+                        primaryKey: false,
+                        foreignKey: false,
+                        unique: false,
+                        permissions: { select: true, update: false }
+                    }
+                ],
+                permissions: {
+                    select: true,
+                    insert: false,
+                    update: false,
+                    delete: false
+                }
+            };
+        }
+
+        // Tabele dla temp schematu
+        if (tempSchema) {
+            // sqlite_temp_schema
+            tempSchema.relations['sqlite_temp_schema'] = {
+                objectType: "relation",
+                id: `${this.databaseName}.temp.sqlite_temp_schema`,
+                name: 'sqlite_temp_schema',
+                identity: 'sqlite_temp_schema',
+                relationType: 'table',
+                kind: 'system',
+                created: new Date().toISOString(),
+                modified: new Date().toISOString(),
+                columns: schemaMasterColumns.map(col => ({
+                    id: `temp.sqlite_temp_schema.${col.id}`,
+                    name: col.name,
+                    identity: col.identity,
+                    no: col.no,
+                    dataType: col.dataType,
+                    displayType: col.displayType,
+                    nullable: col.nullable,
+                    defaultValue: col.defaultValue,
+                    primaryKey: col.primaryKey,
+                    foreignKey: col.foreignKey,
+                    unique: col.unique,
+                    permissions: col.permissions
+                })),
+                permissions: {
+                    select: true,
+                    insert: false,
+                    update: false,
+                    delete: false
+                }
+            };
+
+            // sqlite_temp_master (alias)
+            tempSchema.relations['sqlite_temp_master'] = {
+                objectType: "relation",
+                id: `${this.databaseName}.temp.sqlite_temp_master`,
+                name: 'sqlite_temp_master',
+                identity: 'sqlite_temp_master',
+                relationType: 'table',
+                kind: 'system',
+                created: new Date().toISOString(),
+                modified: new Date().toISOString(),
+                columns: schemaMasterColumns.map(col => ({
+                    id: `temp.sqlite_temp_master.${col.id}`,
+                    name: col.name,
+                    identity: col.identity,
+                    no: col.no,
+                    dataType: col.dataType,
+                    displayType: col.displayType,
+                    nullable: col.nullable,
+                    defaultValue: col.defaultValue,
+                    primaryKey: col.primaryKey,
+                    foreignKey: col.foreignKey,
+                    unique: col.unique,
+                    permissions: col.permissions
+                })),
+                permissions: {
+                    select: true,
+                    insert: false,
+                    update: false,
+                    delete: false
+                }
+            };
         }
     }
 }

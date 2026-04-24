@@ -224,7 +224,7 @@ export interface RoutineArgumentMetadata extends MetadataBase {
 }
 
 export type RelationType = "table" | "view";
-export type RelationKind = "regular" | "foreign" | "partitioned" | "temporary" | "materialized";
+export type RelationKind = "regular" | "foreign" | "partitioned" | "temporary" | "materialized" | "system";
 
 export type TriggerEvent = "insert" | "update" | "delete";
 export type TriggerTiming = "before" | "after" | "instead of";
