@@ -420,7 +420,6 @@ export class Connection extends driver.Connection {
         this.pool = client instanceof pg.Pool;
         this.fetchRecordCount = this.properties[driver_fetch_record_count] as number ?? driver_fetch_record_count_default;
         this.maxStatementRows = this.properties[driver_max_statement_rows] as number ?? driver_max_statement_rows_default;
-        this.setMetadataFileName();
     }
 
     getConnectionId(): string {
@@ -692,20 +691,6 @@ export class Connection extends driver.Connection {
                 await client.end();
             }
         }
-    }
-
-    private setMetadataFileName(): void {
-        this.metadataFileName =
-            'pg_'
-            + [
-                this.properties?.user,
-                this.properties?.host,
-                this.properties?.port,
-                this.properties?.database
-            ]
-                .filter(Boolean)
-                .join("_")
-            + "_metadata";
     }
 
     async getMetadata(progress?: (current: string) => void, force?: boolean): Promise<api.Metadata> {
