@@ -8,7 +8,6 @@ import { init as initDatabase } from './api/db'
 import path from 'node:path'
 import { init as initInternal } from './core/db/internal'
 import logo from '../../resources/dborg.png?asset'
-import { startLocalResultServer } from '../../src/api/rpc-http'
 
 function createWindow(): BrowserWindow {
     // Create the browser window.
@@ -50,8 +49,6 @@ function createWindow(): BrowserWindow {
 
     return mainWindow
 }
-
-startLocalResultServer();
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.

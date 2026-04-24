@@ -4,8 +4,7 @@ import * as driver from './Driver';
 import * as api from '../../../api/db';
 import { ipcMain, ipcRenderer, IpcMainInvokeEvent, IpcRendererEvent } from "electron";
 import internal from '../../core/db/internal';
-import { handleResult, invokeResult, InvokeResult, invokeViaLocalResult } from '../../../api/ipc-helpers';
-import { handleWithLocalResult } from '../../../../src/api/rpc-http';
+import { handleResult, invokeResult, InvokeResult } from '../../../api/ipc-helpers';
 import { DatabaseFilter, DatabaseDetails, getMetadata, getMetadataDatabase, getMetadataDatabaseList, IdentityOptions, MetadataDetails, SchemaFilter, getMetadataSchemaList, getMetadataSchema, SchemaDetails, getMetadataRoutineList, RoutineDetails, RoutineFilter, getMetadataRoutine, getMetadataRelationList, getMetadataRelation, RelationFilter, RelationDetails, ObjectSearchOptions, IdentifierUsageHit, searchIdentifierUsage, ObjectFindOptions, MetadataObjectHit, findObjects, MetadataAnyObjectHit, getMetadataSequenceList, getMetadataSequence, getMetadataTypeList, getMetadataType, getMetadataPackageList, getMetadataPackage, SequenceFilter, TypeFilter, PackageFilter, PackageDetails, SequenceDetails, TypeDetails } from '../../../../src/api/db/MetadataQuery';
 
 // Driver events
@@ -217,7 +216,8 @@ export function init(): void {
             });
         }
     );
-    handleWithLocalResult(
+
+    ipcMain.handle(
         EVENT_CONNECTION_INITIALIZE_METADATA,
         async (event: IpcMainInvokeEvent, uniqueId: string, force?: boolean): Promise<InvokeResult> => {
             return handleResult(async () => {
@@ -231,6 +231,7 @@ export function init(): void {
             });
         }
     );
+
     ipcMain.handle(
         EVENT_CONNECTION_CANCEL,
         async (_: IpcMainInvokeEvent, uniqueId: string): Promise<InvokeResult> => {
@@ -607,7 +608,7 @@ export const preload = {
             ipcRenderer.on(EVENT_CONNECTION_INITIALIZE_METADATA_PROGRESS, listener);
 
             try {
-                return await invokeResult(invokeViaLocalResult(EVENT_CONNECTION_INITIALIZE_METADATA, uniqueId, force));
+                return await invokeResult(ipcRenderer.invoke(EVENT_CONNECTION_INITIALIZE_METADATA, uniqueId, force));
             }
             finally {
                 ipcRenderer.removeListener(EVENT_CONNECTION_INITIALIZE_METADATA_PROGRESS, listener);

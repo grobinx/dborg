@@ -78,28 +78,3 @@ export async function invokeResult<T>(promise: Promise<unknown>): Promise<T> {
         return result.result as T;
     });
 }
-
-const PORT = process.env.DBORG_API_PORT;
-const TOKEN = process.env.DBORG_API_TOKEN;
-const BASE = `http://127.0.0.1:${PORT}`;
-
-export async function invokeViaLocalResult(channel: string, ...args: any[]) {
-    const id = await ipcRenderer.invoke(channel, ...args); // otrzymasz id zwrócone przez handleWithLocalResult
-    const url = `${BASE}/rpc/result/${id}`;
-    const headers: HeadersInit | undefined = TOKEN ? { 'x-dborg-token': TOKEN } : undefined;
-
-    while (true) {
-        try {
-            const resp = await fetch(url, { headers });
-            if (resp.status === 204) {
-                // long-poll timeout — spróbuj ponownie
-                await new Promise(r => setTimeout(r, 50));
-                continue;
-            }
-            return await resp.json();
-        } catch (err) {
-            console.error('Error fetching local result:', err);
-            return { type: 'error', error: { message: 'Failed to fetch result from local server' } };
-        }
-    }
-}
