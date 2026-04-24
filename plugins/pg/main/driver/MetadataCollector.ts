@@ -31,7 +31,6 @@ export class MetadataCollector implements api.IMetadataCollector {
             constraints: connection.getProperties()[driver_collector_constraints] as boolean ?? driver_collector_constraints_default,
             permissions: connection.getProperties()[driver_collector_permissions] as boolean ?? driver_collector_permissions_default,
         };
-        this.version = connection.getVersion();
     }
 
     setVersion(version: Version): void {
@@ -231,9 +230,7 @@ export class MetadataCollector implements api.IMetadataCollector {
 
     async collect(progress?: (current: string) => void, force?: boolean): Promise<api.Metadata> {
         if (!this.inited || force) {
-            if (!this.client) {
-                throw new Error("Client is not set");
-            }
+            this.version = await this.connection.getVersion();
             this.client = new pg.Client(this.connection.getProperties());
             try {
                 await this.client.connect();
