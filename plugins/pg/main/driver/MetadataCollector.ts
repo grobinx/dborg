@@ -2,6 +2,7 @@ import * as api from '../../../../src/api/db';
 import Version, { versionToNumber } from '../../../../src/api/version';
 import pg from 'pg';
 import { Connection, driver_collector_builtInObjects, driver_collector_builtInObjects_default, driver_collector_constraints, driver_collector_constraints_default, driver_collector_identifiers, driver_collector_identifiers_default, driver_collector_indexStats, driver_collector_indexStats_default, driver_collector_permissions, driver_collector_permissions_default, driver_collector_relationColumnStats, driver_collector_relationColumnStats_default, driver_collector_relationStats, driver_collector_relationStats_default, driver_collector_systemObjects, driver_collector_systemObjects_default } from '.';
+import { Tokenizer, getUniqueIdentifierPaths } from '../../../../src/main/api/SqlParser';
 
 export class MetadataCollector implements api.IMetadataCollector {
     private metadata: api.Metadata = { status: "pending" };
@@ -9,6 +10,7 @@ export class MetadataCollector implements api.IMetadataCollector {
     private client: pg.Client | undefined;
     private collectionOptions?: api.MetadataCollectionOptions;
     private connection: Connection;
+    private keywords: Set<string> = new Set();
 
     constructor(connection: Connection) {
         this.connection = connection;
@@ -53,6 +55,8 @@ export class MetadataCollector implements api.IMetadataCollector {
             collected: this.collectionOptions,
         };
 
+        await this.updateKeywords();
+
         await this.updateDatabases(progress);
         await this.updateSchemas(progress);
         await this.updateRelations(progress);
@@ -77,6 +81,11 @@ export class MetadataCollector implements api.IMetadataCollector {
         await this.updateSequence(progress);
 
         this.metadata.status = "ready";
+    }
+
+    async updateKeywords(): Promise<void> {
+        const { rows } = await this.client!.query(`select lower(word) as word from pg_catalog.pg_get_keywords() union select lower(lanname) from pg_language`);
+        this.keywords = new Set(rows.map((row: any) => row.word));
     }
 
     async updateDatabases(progress?: (current: string) => void, name?: string): Promise<void> {
@@ -219,22 +228,11 @@ export class MetadataCollector implements api.IMetadataCollector {
                     'update', pg_catalog.has_table_privilege(current_user, c.oid, 'UPDATE'),
                     'delete', pg_catalog.has_table_privilege(current_user, c.oid, 'DELETE')
                 ) as permissions` : ''}
-                ${this.collectionOptions?.identifiers ? `, ids.identifiers` : ''}
+                ${this.collectionOptions?.identifiers ? `, pg_catalog.pg_get_viewdef(c.oid, true) as viewdef` : ''}
             from pg_catalog.pg_class c
                 join pg_catalog.pg_namespace n on c.relnamespace = n.oid
                 left join pg_catalog.pg_description d on d.classoid = 'pg_class'::regclass and d.objoid = c.oid and d.objsubid = 0
                 left join pg_catalog.pg_inherits inh on c.oid = inh.inhrelid
-                ${this.collectionOptions?.identifiers ? `left join lateral (
-                    select array_agg(distinct lower(m[1]) order by lower(m[1])) as identifiers
-                    from regexp_matches(
-                            pg_catalog.pg_get_viewdef(c.oid, true),
-                            '([A-Za-z_][A-Za-z0-9_]*)',
-                            'g'
-                        ) as m
-                    where lower(m[1]) not in (select word from kw)
-                        and m[1] not in ('', '_')
-                        and c.relkind in ('v', 'm')  -- tylko dla widoków
-                ) ids on true` : ''}
             where c.relkind in ('r', 'f', 'p', 't', 'v', 'm')
             and n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
             ${this.collectionOptions?.systemObjects ? '' : `and n.nspname not in ('pg_catalog', 'information_schema')`}
@@ -248,10 +246,16 @@ export class MetadataCollector implements api.IMetadataCollector {
         let schema: api.SchemaMetadata | undefined;
         let schema_name: string | undefined;
 
-        for (const row of rows as api.RelationMetadata[]) {
+        for (const row of rows as (api.RelationMetadata & { viewdef?: string })[]) {
             if (schema_name !== row["schema_name"]) {
                 schema = database.schemas[row["schema_name"]];
                 schema_name = row["schema_name"];
+            }
+
+            if (this.collectionOptions?.identifiers && row.viewdef) {
+                const tokens = new Tokenizer(row.viewdef, { dialect: "postgres" }).tokenize();
+                row.identifiers = getUniqueIdentifierPaths(tokens, { excludeKeywords: this.keywords });
+                delete row.viewdef;
             }
 
             delete row["schema_name"];
@@ -365,12 +369,7 @@ export class MetadataCollector implements api.IMetadataCollector {
             : "'function'";
 
         const { rows } = await this.client!.query(
-            `with kw as (
-        select lower(word) as word from pg_catalog.pg_get_keywords()
-        union
-        select lower(lanname) from pg_language
-    ),
-    routines_base as (
+            `with routines_base as (
         select
             f.oid::text as id,
             n.nspname as schema_name,
@@ -416,7 +415,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                     from pg_catalog.generate_series(1, f.pronargs::int) n
                 ) a
             ) as arguments
-            ${this.collectionOptions?.identifiers ? `, ids.identifiers` : ''},
+            ${this.collectionOptions?.identifiers ? `, f.prosrc` : ''},
             json_build_object(
                 'is_security_definer', f.prosecdef,
                 'execute_as', case when f.prosecdef then 'definer' else 'invoker' end,
@@ -433,16 +432,6 @@ export class MetadataCollector implements api.IMetadataCollector {
             left join pg_catalog.pg_namespace n on f.pronamespace = n.oid
             left join pg_catalog.pg_type t on f.prorettype = t.oid
             left join pg_catalog.pg_description d on d.classoid = f.tableoid and d.objoid = f.oid and d.objsubid = 0
-            ${this.collectionOptions?.identifiers ? `left join lateral (
-                select array_agg(distinct lower(m[1]) order by lower(m[1])) as identifiers
-                from regexp_matches(
-                    f.prosrc,
-                    '([A-Za-z_][A-Za-z0-9_]*)',
-                    'g'
-                ) as m
-                where lower(m[1]) not in (select word from kw)
-                    and m[1] not in ('', '_')
-            ) ids on true` : ''}
         where (n.nspname = $1 or $1 is null)
             and (f.proname = $2 or $2 is null)
             and n.nspname not ilike 'pg_toast%'
@@ -464,10 +453,16 @@ export class MetadataCollector implements api.IMetadataCollector {
         let schema: api.SchemaMetadata | undefined;
         let schema_name: string | undefined;
 
-        for (const row of rows as api.RoutineMetadata[]) {
+        for (const row of rows as (api.RoutineMetadata & { prosrc?: string })[]) {
             if (schema_name !== row["schema_name"]) {
                 schema = database.schemas[row["schema_name"]];
                 schema_name = row["schema_name"];
+            }
+
+            if (this.collectionOptions?.identifiers && row.prosrc) {
+                const tokens = new Tokenizer(row.prosrc, { dialect: "postgres" }).tokenize();
+                row.identifiers = getUniqueIdentifierPaths(tokens, { excludeKeywords: this.keywords });
+                delete row.prosrc;
             }
 
             delete row["schema_name"];

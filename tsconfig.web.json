@@ -8,7 +8,7 @@
     "src/api/**/*",
     "plugins/*/renderer/**/*",
     "plugins/*/common/**/*"
-  ],
+, "src/main/api/SqlParser"  ],
   "compilerOptions": {
     "skipLibCheck": true,
     "incremental": true,

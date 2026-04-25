@@ -172,10 +172,10 @@ export abstract class Connection implements api.Connection {
         if (!this.metadataPromise && collector && storage) {
             this.metadataPromise = (async () => {
                 try {
-                    progress?.("Restoring metadata");
                     this.metadata = { status: "pending" };
 
                     if (!force) {
+                        progress?.("Restoring metadata");
                         const restored = await storage.restoreMetadata(this.metadata);
                         if (restored) {
                             this.metadata = restored;

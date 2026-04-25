@@ -1,9 +1,7 @@
 import { ColumnDefinition } from "@renderer/components/DataGrid/DataGridTypes";
-import { Definition, Interpreter } from "@renderer/utils/SqlParser/interpreter";
-import { Tokenizer } from "@renderer/utils/SqlParser/tokenizer";
 import { RelationType, RoutineType } from "../../../../../../src/api/db/Metadata";
-import { DatabaseQueryApi, MetadataAnyObjectHit, MetadataObjectHit, MetadataQueryApi } from "../../../../../../src/api/db/MetadataQuery";
-import { RequiredOnly } from "src/api/types";
+import { MetadataAnyObjectHit, MetadataQueryApi } from "../../../../../../src/api/db/MetadataQuery";
+import { Tokenizer, Interpreter, Definition } from "../../../../../../src/main/api/SqlParser";
 
 export type ObjectType = "relation" | "routine" | "schema" | null;
 

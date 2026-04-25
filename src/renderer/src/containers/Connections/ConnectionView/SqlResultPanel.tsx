@@ -47,8 +47,7 @@ import DataPresentationGrid from "@renderer/components/DataGrid/DataPresentation
 import { Ellipsis } from "@renderer/components/useful/Elipsis";
 import { useSetting } from "@renderer/contexts/SettingsContext";
 import Banner from "@renderer/components/Banner";
-import { Tokenizer } from "@renderer/utils/SqlParser/tokenizer";
-import { Scoper } from "@renderer/utils/SqlParser/scoper";
+import { Scoper, Tokenizer } from "../../../../../../src/main/api/SqlParser";
 
 export const SQL_RESULT_SQL_QUERY_EXECUTING = "sqlResult:sqlQueryExecuting";
 
