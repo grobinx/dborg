@@ -55,30 +55,39 @@ export class MetadataCollector implements api.IMetadataCollector {
             collected: this.collectionOptions,
         };
 
+        const internalProgress = async (current: string): Promise<void> => {
+            if (progress) {
+                progress(current);
+            }
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+
         await this.updateKeywords();
 
-        await this.updateDatabases(progress);
-        await this.updateSchemas(progress);
-        await this.updateRelations(progress);
-        if (this.collectionOptions?.relationStats) {
-            await this.updateRelationsStats(progress);
+        await this.updateDatabases(internalProgress);
+        await this.updateSchemas(internalProgress);
+        for (const schema of Object.values(this.connectedDatabase().schemas)) {
+            await this.updateRelations(schema, internalProgress);
+            if (this.collectionOptions?.relationStats) {
+                await this.updateRelationsStats(schema, internalProgress);
+            }
+            await this.updateRoutines(schema, internalProgress);
+            await this.updateColumns(schema, internalProgress);
+            if (this.collectionOptions?.relationColumnStats) {
+                await this.updateColumnsStats(schema, internalProgress);
+            }
+            await this.updateIndexes(schema, internalProgress);
+            if (this.collectionOptions?.indexStats) {
+                await this.updateIndexesStats(schema, internalProgress);
+            }
+            if (this.collectionOptions?.constraints) {
+                await this.updateForeignKeys(schema, internalProgress);
+                await this.updatePrimaryKeys(schema, internalProgress);
+                await this.updateConstraints(schema, internalProgress);
+            }
+            await this.updateTypes(schema, internalProgress);
+            await this.updateSequence(schema, internalProgress);
         }
-        await this.updateRoutines(progress);
-        await this.updateColumns(progress);
-        if (this.collectionOptions?.relationColumnStats) {
-            await this.updateColumnsStats(progress);
-        }
-        await this.updateIndexes(progress);
-        if (this.collectionOptions?.indexStats) {
-            await this.updateIndexesStats(progress);
-        }
-        if (this.collectionOptions?.constraints) {
-            await this.updateForeignKeys(progress);
-            await this.updatePrimaryKeys(progress);
-            await this.updateConstraints(progress);
-        }
-        await this.updateTypes(progress);
-        await this.updateSequence(progress);
 
         this.metadata.status = "ready";
     }
@@ -88,10 +97,8 @@ export class MetadataCollector implements api.IMetadataCollector {
         this.keywords = new Set(rows.map((row: any) => row.word));
     }
 
-    async updateDatabases(progress?: (current: string) => void, name?: string): Promise<void> {
-        if (progress) {
-            progress("databases");
-        }
+    async updateDatabases(progress: (current: string) => Promise<void>, name?: string): Promise<void> {
+        await progress("databases");
         const { rows } = await this.client!.query(
             `select d.oid::text as id, 
                     d.datname as name, 
@@ -144,12 +151,10 @@ export class MetadataCollector implements api.IMetadataCollector {
         return database;
     }
 
-    async updateSchemas(progress?: (current: string) => void, name?: string): Promise<void> {
+    async updateSchemas(progress: (current: string) => Promise<void>, name?: string): Promise<void> {
         const database = this.connectedDatabase();
 
-        if (progress) {
-            progress("schemas");
-        }
+        await progress("schemas");
         const { rows } = await this.client!.query(
             `select n.oid::text as id,
                     n.nspname as name,
@@ -194,19 +199,10 @@ export class MetadataCollector implements api.IMetadataCollector {
         }
     }
 
-    async updateRelations(progress?: (current: string) => void, schemaName?: string, name?: string): Promise<void> {
-        const database = this.connectedDatabase();
-
-        if (progress) {
-            progress("relations" + (schemaName ? (" of " + schemaName) : ""));
-        }
+    async updateRelations(schema: api.SchemaMetadata, progress: (current: string) => Promise<void>, name?: string): Promise<void> {
+        await progress(schema.name + " relations");
         const { rows } = await this.client!.query(
-            `with kw as (
-                select lower(word) as word from pg_catalog.pg_get_keywords()
-                union
-                select lower(lanname) from pg_language
-            )
-            select c.oid::text as id, n.nspname as schema_name, 
+            `select c.oid::text as id, 
                 c.relname as name, 
                 format('%I', c.relname) as identity,
                 d.description,
@@ -238,66 +234,31 @@ export class MetadataCollector implements api.IMetadataCollector {
             ${this.collectionOptions?.systemObjects ? '' : `and n.nspname not in ('pg_catalog', 'information_schema')`}
             and (n.nspname = $1 or $1 is null)
             and (c.relname = $2 or $2 is null)
-            and inh.inhrelid is null
-            order by schema_name`,
-            [schemaName, name]
+            and inh.inhrelid is null`,
+            [schema.name, name]
         );
 
-        let schema: api.SchemaMetadata | undefined;
-        let schema_name: string | undefined;
-
         for (const row of rows as (api.RelationMetadata & { viewdef?: string })[]) {
-            if (schema_name !== row["schema_name"]) {
-                schema = database.schemas[row["schema_name"]];
-                schema_name = row["schema_name"];
-            }
-
             if (this.collectionOptions?.identifiers && row.viewdef) {
                 const tokens = new Tokenizer(row.viewdef, { dialect: "postgres" }).tokenize();
                 row.identifiers = getUniqueIdentifierPaths(tokens, { excludeKeywords: this.keywords });
                 delete row.viewdef;
             }
 
-            delete row["schema_name"];
-            if (schema) {
-                if (schema.relations[row.name]) {
-                    schema.relations[row.name] = {
-                        ...schema.relations[row.name],
-                        ...row,
-                    };
-                }
-                else {
-                    schema.relations[row.name] = {
-                        ...row,
-                        columns: [],
-                        objectType: "relation",
-                    };
-                }
-            }
-        }
-
-        if (rows.length === 0 && schemaName && name) {
-            delete schema?.[schemaName].tables[name];
-        }
-
-        if (rows.length === 0 && !schemaName && name) {
-            for (const schema of Object.values(database.schemas).filter(s => s.default)) {
-                delete schema.relations[name];
-            }
+            schema.relations[row.name] = {
+                ...row,
+                columns: [],
+                objectType: "relation",
+            };
         }
     }
 
-    async updateRelationsStats(progress?: (current: string) => void, schemaName?: string, name?: string): Promise<void> {
-        const database = this.connectedDatabase();
-
-        if (progress) {
-            progress('relation statistics' + (schemaName ? (" of " + schemaName) : ""));
-        }
+    async updateRelationsStats(schema: api.SchemaMetadata, progress: (current: string) => Promise<void>, name?: string): Promise<void> {
+        await progress(schema.name + ' relation statistics');
 
         const { rows } = await this.client!.query<api.RelationStatsMetadata>(
             `
-    SELECT n.nspname AS schema_name,
-           c.relname AS relation_name,
+    SELECT c.relname AS relation_name,
            pg_total_relation_size(c.oid) AS size,
            (pg_relation_size(c.oid) / current_setting('block_size')::bigint) AS pages,
            COALESCE(s.n_live_tup, c.reltuples::bigint) AS rows,
@@ -323,18 +284,15 @@ export class MetadataCollector implements api.IMetadataCollector {
       ${this.collectionOptions?.systemObjects ? '' : `and n.nspname not in ('pg_catalog', 'information_schema')`}
       AND ($1::text IS NULL OR n.nspname = $1)
       AND ($2::text IS NULL OR c.relname = $2)
-    ORDER BY schema_name, relation_name
+    ORDER BY relation_name
     `,
-            [schemaName ?? null, name ?? null]
+            [schema.name ?? null, name ?? null]
         );
 
         for (const row of rows) {
-            const schema = database.schemas[row["schema_name"]];
-            if (!schema) continue;
             const rel = schema.relations[row["relation_name"]];
             if (!rel) continue;
 
-            delete row["schema_name"];
             delete row["relation_name"];
 
             rel.stats = {
@@ -354,12 +312,8 @@ export class MetadataCollector implements api.IMetadataCollector {
         }
     }
 
-    async updateRoutines(progress?: (current: string) => void, schemaName?: string, name?: string): Promise<void> {
-        const database = this.connectedDatabase();
-
-        if (progress) {
-            progress("routines" + (schemaName ? (" of " + schemaName) : ""));
-        }
+    async updateRoutines(schema: api.SchemaMetadata, progress: (current: string) => Promise<void>, name?: string): Promise<void> {
+        await progress(schema.name + " routines");
 
         const v11OrHigher = this.version?.major !== undefined && this.version.major >= 11;
         const versionNumber = versionToNumber(this.version?.toString() ?? "");
@@ -372,7 +326,6 @@ export class MetadataCollector implements api.IMetadataCollector {
             `with routines_base as (
         select
             f.oid::text as id,
-            n.nspname as schema_name,
             pg_get_userbyid(f.proowner) as owner,
             f.proname as name,
             format('%I(%s)', f.proname, pg_get_function_identity_arguments(f.oid)) as identity,
@@ -442,75 +395,44 @@ export class MetadataCollector implements api.IMetadataCollector {
     select
         rb.*,
         row_number() over (
-            partition by rb.schema_name, rb.name, rb."routineType"
+            partition by rb.name, rb."routineType"
             order by rb.identity, rb.id::bigint
         )::int as overload
     from routines_base rb
-    order by rb.schema_name, rb.name, rb."routineType", overload`,
-            [schemaName, name]
+    order by rb.name, rb."routineType", overload`,
+            [schema.name, name]
         );
 
-        let schema: api.SchemaMetadata | undefined;
-        let schema_name: string | undefined;
-
         for (const row of rows as (api.RoutineMetadata & { prosrc?: string })[]) {
-            if (schema_name !== row["schema_name"]) {
-                schema = database.schemas[row["schema_name"]];
-                schema_name = row["schema_name"];
-            }
-
             if (this.collectionOptions?.identifiers && row.prosrc) {
                 const tokens = new Tokenizer(row.prosrc, { dialect: "postgres" }).tokenize();
                 row.identifiers = getUniqueIdentifierPaths(tokens, { excludeKeywords: this.keywords });
                 delete row.prosrc;
             }
 
-            delete row["schema_name"];
-            if (schema) {
-                if (schema.routines![row.name]) {
-                    schema.routines![row.name] = [
-                        ...schema.routines![row.name],
-                        {
-                            ...row,
-                            objectType: "routine"
-                        }
-                    ];
-                }
-                else {
-                    schema.routines![row.name] = [{
+            if (schema.routines![row.name]) {
+                schema.routines![row.name] = [
+                    ...schema.routines![row.name],
+                    {
                         ...row,
                         objectType: "routine"
-                    }];
-                }
+                    }
+                ];
             }
-        }
-
-        if (rows.length === 0 && schemaName && name) {
-            delete schema?.[schemaName].routines[name];
-        }
-
-        if (rows.length === 0 && !schemaName && name) {
-            for (const schema of Object.values(database.schemas).filter(s => s.default)) {
-                delete schema.routines![name];
+            else {
+                schema.routines![row.name] = [{
+                    ...row,
+                    objectType: "routine"
+                }];
             }
         }
     }
 
-    async updateColumns(progress?: (current: string) => void, schemaName?: string, name?: string): Promise<void> {
-        const database = this.connectedDatabase();
+    async updateColumns(schema: api.SchemaMetadata, progress: (current: string) => Promise<void>, name?: string): Promise<void> {
+        await progress(schema.name + ' columns');
 
-        // Pobierz schematy do przetworzenia
-        const schemasToProcess = schemaName
-            ? [database.schemas[schemaName]]
-            : Object.values(database.schemas);
-
-        for (const schema of schemasToProcess) {
-            if (progress) {
-                progress(`columns on schema: ${schema.name}`);
-            }
-
-            const { rows } = await this.client!.query(
-                `select cl.relname as relation_name, 
+        const { rows } = await this.client!.query(
+            `select cl.relname as relation_name, 
                         json_agg(json_build_object(
                             'id', (cl.oid::bigint *10000 +att.attnum)::text, 
                             'name', att.attname, 
@@ -544,35 +466,23 @@ export class MetadataCollector implements api.IMetadataCollector {
                     and (cl.relname = $2 or $2 is null)
                     and inh.inhrelid is null
                 group by cl.relname`,
-                [schema.name, name]
-            );
+            [schema.name, name]
+        );
 
-            for (const row of rows as { relation_name: string; columns: api.ColumnMetadata[] }[]) {
-                const relation = schema.relations[row.relation_name];
-                if (relation) {
-                    relation.columns = row.columns;
-                }
+        for (const row of rows as { relation_name: string; columns: api.ColumnMetadata[] }[]) {
+            const relation = schema.relations[row.relation_name];
+            if (relation) {
+                relation.columns = row.columns;
             }
         }
     }
 
-    async updateColumnsStats(progress?: (current: string) => void, schemaName?: string, name?: string): Promise<void> {
-        const database = this.connectedDatabase();
+    async updateColumnsStats(schema: api.SchemaMetadata, progress: (current: string) => Promise<void>, name?: string): Promise<void> {
+        await progress(schema.name + ' columns statistics');
 
-        // Pobierz schematy do przetworzenia
-        const schemasToProcess = schemaName
-            ? [database.schemas[schemaName]]
-            : Object.values(database.schemas);
-
-        for (const schema of schemasToProcess) {
-            if (progress) {
-                progress(`columns statistics on schema: ${schema.name}`);
-            }
-
-            const { rows } = await this.client!.query(
-                `
-    SELECT st.schemaname AS schema_name,
-           st.tablename AS relation_name,
+        const { rows } = await this.client!.query(
+            `
+    SELECT st.tablename AS relation_name,
            st.attname AS column_name,
            st.null_frac,
            st.avg_width,
@@ -584,40 +494,34 @@ export class MetadataCollector implements api.IMetadataCollector {
     WHERE ($1::text IS NULL OR st.schemaname = $1)
       AND ($2::text IS NULL OR st.tablename = $2)
       and st.schemaname not ilike 'pg_toast%' and st.schemaname not ilike 'pg_temp%'
-      and ${this.collectionOptions?.systemObjects ? '' : `and st.schemaname not in ('pg_catalog', 'information_schema')`}
-    ORDER BY st.schemaname, st.tablename, st.attname
+      ${this.collectionOptions?.systemObjects ? '' : `and st.schemaname not in ('pg_catalog', 'information_schema')`}
+    ORDER BY st.tablename, st.attname
     `,
-                [schema.name, name ?? null]
-            );
+            [schema.name, name ?? null]
+        );
 
-            for (const row of rows as any[]) {
-                const rel = schema.relations[row.relation_name];
-                if (!rel) continue;
+        for (const row of rows as any[]) {
+            const rel = schema.relations[row.relation_name];
+            if (!rel) continue;
 
-                const col = rel.columns.find(c => c.name === row.column_name);
-                if (!col) continue;
+            const col = rel.columns.find(c => c.name === row.column_name);
+            if (!col) continue;
 
-                col.stats = Object.assign(col.stats || {}, {
-                    nullFraction: row.null_frac != null ? Number(row.null_frac) : null,
-                    avgWidth: row.avg_width != null ? Number(row.avg_width) : null,
-                    nDistinct: row.n_distinct != null ? Number(row.n_distinct) : null,
-                    mostCommonValues: row.most_common_vals ?? null,
-                    mostCommonFreqs: row.most_common_freqs ?? null,
-                    histogram: row.histogram ?? null
-                });
-            }
+            col.stats = Object.assign(col.stats || {}, {
+                nullFraction: row.null_frac != null ? Number(row.null_frac) : null,
+                avgWidth: row.avg_width != null ? Number(row.avg_width) : null,
+                nDistinct: row.n_distinct != null ? Number(row.n_distinct) : null,
+                mostCommonValues: row.most_common_vals ?? null,
+                mostCommonFreqs: row.most_common_freqs ?? null,
+                histogram: row.histogram ?? null
+            });
         }
     }
 
-    async updateForeignKeys(progress?: (current: string) => void, schemaName?: string, name?: string): Promise<void> {
-        const database = this.connectedDatabase();
-
-        if (progress) {
-            progress("foreign keys" + (schemaName ? (" of " + schemaName) : ""));
-        }
+    async updateForeignKeys(schema: api.SchemaMetadata, progress: (current: string) => Promise<void>, name?: string): Promise<void> {
+        await progress(schema.name + " foreign keys");
         const { rows } = await this.client!.query(
             `select
-                n.nspname as schema_name,
                 cl.relname as relation_name,
                 json_agg(json_build_object(
                     'id', con.oid::text,
@@ -658,27 +562,21 @@ export class MetadataCollector implements api.IMetadataCollector {
                 and (n.nspname = $1 or $1 is null)
                 and (cl.relname = $2 or $2 is null)
             group by
-                n.nspname, cl.relname
+                cl.relname
             order by
-                schema_name, relation_name`,
-            [schemaName, name]
+                cl.relname`,
+            [schema.name, name]
         );
 
         for (const row of rows as object[] as { schema_name: string; relation_name: string; foreignKeys: api.ForeignKeyMetadata[] }[]) {
-            if (database.schemas[row.schema_name] !== undefined && database.schemas[row.schema_name].relations[row.relation_name] !== undefined) {
-                database.schemas[row.schema_name].relations[row.relation_name].foreignKeys = row.foreignKeys;
-            }
+            schema.relations[row.relation_name].foreignKeys = row.foreignKeys;
         }
     }
 
-    async updateIndexes(progress?: (current: string) => void, schemaName?: string, name?: string): Promise<void> {
-        const database = this.connectedDatabase();
-
-        if (progress) {
-            progress("indexes" + (schemaName ? (" of " + schemaName) : ""));
-        }
+    async updateIndexes(schema: api.SchemaMetadata, progress: (current: string) => Promise<void>, name?: string): Promise<void> {
+        await progress(schema.name + " indexes");
         const { rows } = await this.client!.query(
-            `select i.schema_name, i.relation_name,
+            `select i.relation_name,
                 json_agg(json_build_object(
                     'id', i.id::text,
                     'name', i.name,
@@ -724,27 +622,23 @@ export class MetadataCollector implements api.IMetadataCollector {
                 group by
                     n.nspname, ct.relname, ci.relname, ix.indexrelid, ix.indisunique, ix.indisprimary) i
             group by
-                i.schema_name, i.relation_name
+                i.relation_name
             order by
-                i.schema_name, i.relation_name`,
-            [schemaName, name]
+                i.relation_name`,
+            [schema.name, name]
         );
 
         for (const row of rows as object[] as { schema_name: string; relation_name: string; indexes: api.IndexMetadata[] }[]) {
-            if (database.schemas[row.schema_name] !== undefined && database.schemas[row.schema_name].relations[row.relation_name] !== undefined) {
-                database.schemas[row.schema_name].relations[row.relation_name].indexes = row.indexes;
-            }
+            schema.relations[row.relation_name].indexes = row.indexes;
         }
     }
 
-    async updateIndexesStats(progress?: (current: string) => void, schemaName?: string, name?: string): Promise<void> {
-        const database = this.connectedDatabase();
-        if (progress) progress('index statistics' + (schemaName ? (" of " + schemaName) : ""));
+    async updateIndexesStats(schema: api.SchemaMetadata, progress: (current: string) => Promise<void>, name?: string): Promise<void> {
+        await progress(schema.name + ' indexes statistics');
 
         const { rows } = await this.client!.query(
             `
-    SELECT n.nspname AS schema_name,
-           ct.relname AS relation_name,
+    SELECT ct.relname AS relation_name,
            ci.relname AS index_name,
            ix.indexrelid AS index_oid,
            pg_relation_size(ix.indexrelid) AS size,
@@ -763,14 +657,12 @@ export class MetadataCollector implements api.IMetadataCollector {
       ${this.collectionOptions?.systemObjects ? '' : `and n.nspname not in ('pg_catalog', 'information_schema')`}
       AND ($1::text IS NULL OR n.nspname = $1)
       AND ($2::text IS NULL OR ct.relname = $2)
-    ORDER BY schema_name, relation_name, index_name
+    ORDER BY relation_name, index_name
     `,
-            [schemaName ?? null, name ?? null]
+            [schema.name ?? null, name ?? null]
         );
 
         for (const row of rows as any[]) {
-            const schema = database.schemas[row.schema_name];
-            if (!schema) continue;
             const rel = schema.relations[row.relation_name];
             if (!rel || !rel.indexes) continue;
 
@@ -788,15 +680,10 @@ export class MetadataCollector implements api.IMetadataCollector {
         }
     }
 
-    async updatePrimaryKeys(progress?: (current: string) => void, schemaName?: string, name?: string): Promise<void> {
-        const database = this.connectedDatabase();
-
-        if (progress) {
-            progress("primary keys" + (schemaName ? (" of " + schemaName) : ""));
-        }
+    async updatePrimaryKeys(schema: api.SchemaMetadata, progress: (current: string) => Promise<void>, name?: string): Promise<void> {
+        await progress(schema.name + " primary keys");
         const { rows } = await this.client!.query(
             `select
-                n.nspname as schema_name,
                 cl.relname as relation_name,
                 json_build_object(
                     'id', con.oid::text,
@@ -818,28 +705,21 @@ export class MetadataCollector implements api.IMetadataCollector {
                 and (n.nspname = $1 or $1 is null)
                 and (cl.relname = $2 or $2 is null)
             group by
-                n.nspname, cl.relname, con.oid, con.conname
+                cl.relname, con.oid, con.conname
             order by
-                schema_name, relation_name`,
-            [schemaName, name]
+                cl.relname`,
+            [schema.name, name]
         );
 
         for (const row of rows as { schema_name: string; relation_name: string; primaryKey: api.PrimaryKeyMetadata }[]) {
-            if (database.schemas[row.schema_name] !== undefined && database.schemas[row.schema_name].relations[row.relation_name] !== undefined) {
-                database.schemas[row.schema_name].relations[row.relation_name].primaryKey = row.primaryKey;
-            }
+            schema.relations[row.relation_name].primaryKey = row.primaryKey;
         }
     }
 
-    async updateConstraints(progress?: (current: string) => void, schemaName?: string, name?: string): Promise<void> {
-        const database = this.connectedDatabase();
-        if (progress) {
-            progress("constraints" + (schemaName ? (" of " + schemaName) : ""));
-        }
-        // only constraints that are not primary keys, foreign keys or (unique) indexes
+    async updateConstraints(schema: api.SchemaMetadata, progress: (current: string) => Promise<void>, name?: string): Promise<void> {
+        await progress(schema.name + " constraints");
         const { rows } = await this.client!.query(
             `select 
-                c.schema_name,
                 c.relation_name,
                 json_agg(json_build_object(
                     'id', c.id::text,
@@ -877,28 +757,21 @@ export class MetadataCollector implements api.IMetadataCollector {
                     and (ct.relname = $2 or $2 is null)
             ) c
             group by
-                c.schema_name, c.relation_name
+                c.relation_name
             order by
-                c.schema_name, c.relation_name`,
-            [schemaName, name]
+                c.relation_name`,
+            [schema.name, name]
         );
 
         for (const row of rows as { schema_name: string; relation_name: string; constraints: api.ConstraintMetadata[] }[]) {
-            if (database.schemas[row.schema_name] !== undefined && database.schemas[row.schema_name].relations[row.relation_name] !== undefined) {
-                database.schemas[row.schema_name].relations[row.relation_name].constraints = row.constraints;
-            }
+            schema.relations[row.relation_name].constraints = row.constraints;
         }
     }
 
-    async updateTypes(progress?: (current: string) => void, schemaName?: string, name?: string): Promise<void> {
-        const database = this.connectedDatabase();
-
-        if (progress) {
-            progress("types" + (schemaName ? (" of " + schemaName) : ""));
-        }
+    async updateTypes(schema: api.SchemaMetadata, progress: (current: string) => Promise<void>, name?: string): Promise<void> {
+        await progress(schema.name + " types");
         const { rows } = await this.client!.query(
             `select
-                n.nspname as schema_name,
                 t.oid::text as id,
                 t.typname as name,
                 format('%I', t.typname) as identity,
@@ -950,62 +823,25 @@ export class MetadataCollector implements api.IMetadataCollector {
                 and c.oid is null
                 and te.oid is null
                 and (n.nspname = $1 or $1 is null)
-                and (t.typname = $2 or $2 is null)
-            order by
-                schema_name`,
-            [schemaName, name]
+                and (t.typname = $2 or $2 is null)`,
+            [schema.name, name]
         );
 
-        let schema: api.SchemaMetadata | undefined;
-        let schema_name: string | undefined;
-
         for (const row of rows as api.TypeMetadata[]) {
-            if (schema_name !== row["schema_name"]) {
-                schema = database.schemas[row["schema_name"]];
-                schema_name = row["schema_name"];
-            }
-
-            delete row["schema_name"];
-            if (schema) {
-                if (schema.types![row.name]) {
-                    schema.types![row.name] = {
-                        ...schema.types![row.name],
-                        ...row,
-                    };
-                }
-                else {
-                    schema.types![row.name] = {
-                        ...row,
-                        objectType: "type"
-                    };
-                }
-            }
-        }
-
-        if (rows.length === 0 && schemaName && name) {
-            delete schema?.[schemaName].types[name];
-        }
-
-        if (rows.length === 0 && !schemaName && name) {
-            for (const schema of Object.values(database.schemas).filter(s => s.default)) {
-                delete schema.types![name];
-            }
+            schema.types![row.name] = {
+                ...row,
+                objectType: "type"
+            };
         }
     }
 
-    async updateSequence(progress?: (current: string) => void, schemaName?: string, name?: string): Promise<void> {
+    async updateSequence(schema: api.SchemaMetadata, progress: (current: string) => Promise<void>, name?: string): Promise<void> {
         if (this.version?.major !== undefined && this.version.major < 10) {
             return; // DBORG not supported versions lower than 10 for sequences
         }
-
-        const database = this.connectedDatabase();
-
-        if (progress) {
-            progress("sequences" + (schemaName ? (" of " + schemaName) : ""));
-        }
+        await progress(schema.name + " sequences");
         const { rows } = await this.client!.query(
             `select
-                n.nspname as schema_name,
                 seq.oid::text as id,
                 seq.relname as name,
                 format('%I', seq.relname) as identity,
@@ -1031,46 +867,15 @@ export class MetadataCollector implements api.IMetadataCollector {
                 and n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
                 ${this.collectionOptions?.systemObjects ? '' : `and n.nspname not in ('pg_catalog', 'information_schema')`}
                 and (n.nspname = $1 or $1 is null)
-                and (seq.relname = $2 or $2 is null)
-            order by
-                schema_name`,
-            [schemaName, name]
+                and (seq.relname = $2 or $2 is null)`,
+            [schema.name, name]
         );
 
-        let schema: api.SchemaMetadata | undefined;
-        let schema_name: string | undefined;
-
         for (const row of rows as api.SequenceMetadata[]) {
-            if (schema_name !== row["schema_name"]) {
-                schema = database.schemas[row["schema_name"]];
-                schema_name = row["schema_name"];
-            }
-
-            delete row["schema_name"];
-            if (schema) {
-                if (schema.sequences![row.name]) {
-                    schema.sequences![row.name] = {
-                        ...schema.sequences![row.name],
-                        ...row,
-                    };
-                }
-                else {
-                    schema.sequences![row.name] = {
-                        ...row,
-                        objectType: "sequence",
-                    };
-                }
-            }
-        }
-
-        if (rows.length === 0 && schemaName && name) {
-            delete schema?.[schemaName].sequences[name];
-        }
-
-        if (rows.length === 0 && !schemaName && name) {
-            for (const schema of Object.values(database.schemas).filter(s => s.default)) {
-                delete schema.sequences![name];
-            }
+            schema.sequences![row.name] = {
+                ...row,
+                objectType: "sequence",
+            };
         }
     }
 }
