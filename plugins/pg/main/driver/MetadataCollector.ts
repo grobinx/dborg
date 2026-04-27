@@ -232,7 +232,7 @@ export class MetadataCollector implements api.IMetadataCollector {
             where c.relkind in ('r', 'f', 'p', 't', 'v', 'm')
             and n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
             ${this.collectionOptions?.systemObjects ? '' : `and n.nspname not in ('pg_catalog', 'information_schema')`}
-            and (n.nspname = $1 or $1 is null)
+            and n.nspname = $1
             and (c.relname = $2 or $2 is null)
             and inh.inhrelid is null`,
             [schema.name, name]
@@ -282,7 +282,7 @@ export class MetadataCollector implements api.IMetadataCollector {
     WHERE c.relkind IN ('r','f','p','t','v','m')
       AND n.nspname NOT ILIKE 'pg_toast%' AND n.nspname NOT ILIKE 'pg_temp%'
       ${this.collectionOptions?.systemObjects ? '' : `and n.nspname not in ('pg_catalog', 'information_schema')`}
-      AND ($1::text IS NULL OR n.nspname = $1)
+      AND n.nspname = $1::text
       AND ($2::text IS NULL OR c.relname = $2)
     ORDER BY relation_name
     `,
@@ -385,7 +385,7 @@ export class MetadataCollector implements api.IMetadataCollector {
             left join pg_catalog.pg_namespace n on f.pronamespace = n.oid
             left join pg_catalog.pg_type t on f.prorettype = t.oid
             left join pg_catalog.pg_description d on d.classoid = f.tableoid and d.objoid = f.oid and d.objsubid = 0
-        where (n.nspname = $1 or $1 is null)
+        where n.nspname = $1::text
             and (f.proname = $2 or $2 is null)
             and n.nspname not ilike 'pg_toast%'
             and n.nspname not ilike 'pg_temp%'
@@ -462,7 +462,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                     and cl.relkind in ('r', 'f', 'p', 't', 'v', 'm')
                     and na.nspname not ilike 'pg_toast%' and na.nspname not ilike 'pg_temp%'
                     ${this.collectionOptions?.systemObjects ? '' : `and na.nspname not in ('pg_catalog', 'information_schema')`}
-                    and na.nspname = $1
+                    and na.nspname = $1::text
                     and (cl.relname = $2 or $2 is null)
                     and inh.inhrelid is null
                 group by cl.relname`,
@@ -491,8 +491,8 @@ export class MetadataCollector implements api.IMetadataCollector {
            array_to_json(st.most_common_freqs) AS most_common_freqs,
            array_to_json(st.histogram_bounds) AS histogram
     FROM pg_stats st
-    WHERE ($1::text IS NULL OR st.schemaname = $1)
-      AND ($2::text IS NULL OR st.tablename = $2)
+    WHERE st.schemaname = $1::text
+      AND ($2::text IS NULL OR st.tablename = $2::text)
       and st.schemaname not ilike 'pg_toast%' and st.schemaname not ilike 'pg_temp%'
       ${this.collectionOptions?.systemObjects ? '' : `and st.schemaname not in ('pg_catalog', 'information_schema')`}
     ORDER BY st.tablename, st.attname
@@ -559,8 +559,8 @@ export class MetadataCollector implements api.IMetadataCollector {
                 and n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
                 ${this.collectionOptions?.systemObjects ? '' : `and n.nspname not in ('pg_catalog', 'information_schema')`}
                 and inh.inhrelid is null
-                and (n.nspname = $1 or $1 is null)
-                and (cl.relname = $2 or $2 is null)
+                and n.nspname = $1::text
+                and (cl.relname = $2::text or $2::text is null)
             group by
                 cl.relname
             order by
@@ -617,8 +617,8 @@ export class MetadataCollector implements api.IMetadataCollector {
                     n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
                     ${this.collectionOptions?.systemObjects ? '' : `and n.nspname not in ('pg_catalog', 'information_schema')`}
                     and inh.inhrelid is null
-                    and (n.nspname = $1 or $1 is null)
-                    and (ct.relname = $2 or $2 is null)
+                    and n.nspname = $1::text
+                    and (ct.relname = $2::text or $2::text is null)
                 group by
                     n.nspname, ct.relname, ci.relname, ix.indexrelid, ix.indisunique, ix.indisprimary) i
             group by
@@ -655,8 +655,8 @@ export class MetadataCollector implements api.IMetadataCollector {
     LEFT JOIN pg_statio_all_indexes st ON st.indexrelid = ix.indexrelid
     WHERE n.nspname NOT ILIKE 'pg_toast%' AND n.nspname NOT ILIKE 'pg_temp%'
       ${this.collectionOptions?.systemObjects ? '' : `and n.nspname not in ('pg_catalog', 'information_schema')`}
-      AND ($1::text IS NULL OR n.nspname = $1)
-      AND ($2::text IS NULL OR ct.relname = $2)
+      AND n.nspname = $1::text
+      AND ($2::text IS NULL OR ct.relname = $2::text)
     ORDER BY relation_name, index_name
     `,
             [schema.name ?? null, name ?? null]
@@ -702,8 +702,8 @@ export class MetadataCollector implements api.IMetadataCollector {
                 and n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
                 ${this.collectionOptions?.systemObjects ? '' : `and n.nspname not in ('pg_catalog', 'information_schema')`}
                 and inh.inhrelid is null
-                and (n.nspname = $1 or $1 is null)
-                and (cl.relname = $2 or $2 is null)
+                and n.nspname = $1::text
+                and (cl.relname = $2::text or $2::text is null)
             group by
                 cl.relname, con.oid, con.conname
             order by
@@ -753,8 +753,8 @@ export class MetadataCollector implements api.IMetadataCollector {
                     ${this.collectionOptions?.systemObjects ? '' : `and n.nspname not in ('pg_catalog', 'information_schema')`}
                     and con.contype not in ('p', 'f', 'u') 
                     and inh.inhrelid is null
-                    and (n.nspname = $1 or $1 is null)
-                    and (ct.relname = $2 or $2 is null)
+                    and n.nspname = $1::text
+                    and (ct.relname = $2::text or $2::text is null)
             ) c
             group by
                 c.relation_name
@@ -822,8 +822,8 @@ export class MetadataCollector implements api.IMetadataCollector {
                 and t.typtype in ('b', 'c', 'd', 'e', 'p', 'r', 'm')
                 and c.oid is null
                 and te.oid is null
-                and (n.nspname = $1 or $1 is null)
-                and (t.typname = $2 or $2 is null)`,
+                and n.nspname = $1::text
+                and (t.typname = $2::text or $2::text is null)`,
             [schema.name, name]
         );
 
@@ -866,8 +866,8 @@ export class MetadataCollector implements api.IMetadataCollector {
                 seq.relkind = 'S'
                 and n.nspname not ilike 'pg_toast%' and n.nspname not ilike 'pg_temp%'
                 ${this.collectionOptions?.systemObjects ? '' : `and n.nspname not in ('pg_catalog', 'information_schema')`}
-                and (n.nspname = $1 or $1 is null)
-                and (seq.relname = $2 or $2 is null)`,
+                and n.nspname = $1::text
+                and (seq.relname = $2::text or $2::text is null)`,
             [schema.name, name]
         );
 
