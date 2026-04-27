@@ -128,7 +128,7 @@ declare global {
                         getPackageList: (connectionId: string, databaseId: string, schemaId: string | undefined, filter?: PackageFilter) => Promise<PackageDetails[]>,
                         getPackage: (connectionId: string, databaseId: string, schemaId: string | undefined, id: string | IdentityOptions) => Promise<PackageDetails | undefined>,
                     },
-                    initializeMetadata: (uniqueId: string, progress?: (current: string) => void, force?: boolean) => Promise<void>,
+                    initializeMetadata: (uniqueId: string, progress?: (current: string) => void, forceReload?: boolean) => Promise<void>,
                 },
                 internal: {
                     query: <R extends api.QueryResultRow = api.QueryResultRow>(sql: string, values?: unknown[]) => Promise<QueryResult<R>>,

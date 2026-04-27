@@ -589,7 +589,7 @@ export interface IMetadataStorage {
  */
 export interface IMetadataSource {
     registerCollector(collector: IMetadataCollector, storage?: IMetadataStorage): void;
-    initializeMetadata(progress?: (current: string) => void, force?: boolean): Promise<void>;
+    initializeMetadata(progress?: (current: string) => void, forceReload?: boolean): Promise<void>;
     getMetadata(): Promise<Metadata>;
 }
 

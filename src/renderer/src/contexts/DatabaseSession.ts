@@ -242,7 +242,7 @@ class DatabaseSession implements IDatabaseSession {
         return metadataQuery;
     }
 
-    async initializeMetadata(force?: boolean): Promise<void> {
+    async initializeMetadata(forceReload?: boolean): Promise<void> {
         return new Promise((resolve, reject) => {
             setTimeout(() => {
                 queueMessage(Messages.SESSION_GET_METADATA_START, {
@@ -255,7 +255,7 @@ class DatabaseSession implements IDatabaseSession {
                         connectionId: this.info.connectionId,
                         progress: current,
                     } as Messages.SessionGetMetadataProgress);
-                }, force).then(() => {
+                }, forceReload).then(() => {
                     queueMessage(Messages.SESSION_GET_METADATA_SUCCESS, {
                         connectionId: this.info.connectionId,
                     } as Messages.SessionGetMetadataSuccess);
@@ -271,7 +271,7 @@ class DatabaseSession implements IDatabaseSession {
                         connectionId: this.info.connectionId,
                     } as Messages.SessionGetMetadataEnd);
                 });
-            }, force ? 0 : 2000);
+            }, forceReload ? 0 : 2000);
         });
     }
 

@@ -154,7 +154,7 @@ export abstract class Connection implements api.Connection {
         }
     }
 
-    async initializeMetadata(progress?: (current: string) => void, force?: boolean): Promise<void> {
+    async initializeMetadata(progress?: (current: string) => void, forceReload?: boolean): Promise<void> {
         const collector = this.metadataCollector;
         const storage = this.metadataStorage;
 
@@ -174,7 +174,7 @@ export abstract class Connection implements api.Connection {
                 try {
                     this.metadata = { status: "pending" };
 
-                    if (!force) {
+                    if (!forceReload) {
                         progress?.("Restoring metadata");
                         const restored = await storage.restoreMetadata(this.metadata);
                         if (restored) {

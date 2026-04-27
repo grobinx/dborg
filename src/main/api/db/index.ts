@@ -219,7 +219,7 @@ export function init(): void {
 
     ipcMain.handle(
         EVENT_CONNECTION_INITIALIZE_METADATA,
-        async (event: IpcMainInvokeEvent, uniqueId: string, force?: boolean): Promise<InvokeResult> => {
+        async (event: IpcMainInvokeEvent, uniqueId: string, forceReload?: boolean): Promise<InvokeResult> => {
             return handleResult(async () => {
                 const foundConnection = driver.Driver.getConnection(uniqueId);
                 if (!foundConnection) {
@@ -227,7 +227,7 @@ export function init(): void {
                 }
                 return await foundConnection.initializeMetadata((current: string) => {
                     event.sender.send(EVENT_CONNECTION_INITIALIZE_METADATA_PROGRESS, uniqueId, current);
-                }, force);
+                }, forceReload);
             });
         }
     );
@@ -595,7 +595,7 @@ export const preload = {
             getPackageList: (connectionId: string, databaseId: string, schemaId: string | undefined, filter?: PackageFilter): Promise<PackageDetails[]> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_PACKAGE_LIST, connectionId, databaseId, schemaId, filter)),
             getPackage: (connectionId: string, databaseId: string, schemaId: string | undefined, id: string | IdentityOptions): Promise<PackageDetails | undefined> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_PACKAGE, connectionId, databaseId, schemaId, id)),
         },
-        initializeMetadata: async (uniqueId: string, progress?: (current: string) => void, force?: boolean): Promise<api.Metadata> => {
+        initializeMetadata: async (uniqueId: string, progress?: (current: string) => void, forceReload?: boolean): Promise<api.Metadata> => {
             const listener = (_event: IpcRendererEvent, eUniqueId: string, current: string): void => {
                 if (eUniqueId !== uniqueId) {
                     return;
@@ -608,7 +608,7 @@ export const preload = {
             ipcRenderer.on(EVENT_CONNECTION_INITIALIZE_METADATA_PROGRESS, listener);
 
             try {
-                return await invokeResult(ipcRenderer.invoke(EVENT_CONNECTION_INITIALIZE_METADATA, uniqueId, force));
+                return await invokeResult(ipcRenderer.invoke(EVENT_CONNECTION_INITIALIZE_METADATA, uniqueId, forceReload));
             }
             finally {
                 ipcRenderer.removeListener(EVENT_CONNECTION_INITIALIZE_METADATA_PROGRESS, listener);
