@@ -55,18 +55,22 @@ export class MetadataCollector implements api.IMetadataCollector {
             collected: this.collectionOptions,
         };
 
+        let schemaCount = 0;
+        let currentSchema = 0;
         const internalProgress = async (current: string): Promise<void> => {
             if (progress) {
-                progress(current);
+                progress(`(${currentSchema}/${schemaCount}) ` + current);
             }
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise(resolve => setTimeout(resolve, 10));
         }
 
         await this.updateKeywords();
 
         await this.updateDatabases(internalProgress);
         await this.updateSchemas(internalProgress);
+        schemaCount = Object.keys(this.connectedDatabase().schemas).length;
         for (const schema of Object.values(this.connectedDatabase().schemas)) {
+            currentSchema++;
             await this.updateRelations(schema, internalProgress);
             if (this.collectionOptions?.relationStats) {
                 await this.updateRelationsStats(schema, internalProgress);
