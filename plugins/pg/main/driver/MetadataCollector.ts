@@ -265,15 +265,23 @@ export class MetadataCollector implements api.IMetadataCollector {
     SELECT c.relname AS relation_name,
            pg_total_relation_size(c.oid) AS size,
            (pg_relation_size(c.oid) / current_setting('block_size')::bigint) AS pages,
-           COALESCE(s.n_live_tup, c.reltuples::bigint) AS rows,
-           CASE WHEN COALESCE(s.n_live_tup, c.reltuples::bigint) > 0
-                THEN (pg_total_relation_size(c.oid)::float / GREATEST(COALESCE(s.n_live_tup, c.reltuples::bigint),1))
+           COALESCE(s.n_live_tup, NULLIF(c.reltuples, -1)::bigint) AS rows,
+           CASE
+               WHEN COALESCE(s.n_live_tup, NULLIF(c.reltuples, -1)::bigint) > 0
+                    AND c.relkind IN ('r','f','m','t')
+               THEN (c.relpages::numeric * current_setting('block_size')::bigint)
+                    / GREATEST(COALESCE(s.n_live_tup, NULLIF(c.reltuples, -1)::bigint), 1)
+               ELSE NULL
            END AS avg_row_length,
-           (COALESCE(st.heap_blks_read,0) * current_setting('block_size')::bigint) AS reads,
+           (COALESCE(st.heap_blks_read, 0) * current_setting('block_size')::bigint) AS reads,
            ((COALESCE(s.n_tup_ins,0) + COALESCE(s.n_tup_upd,0) + COALESCE(s.n_tup_del,0)) *
-            CASE WHEN COALESCE(s.n_live_tup, c.reltuples::bigint) > 0
-                 THEN (pg_total_relation_size(c.oid)::float / GREATEST(COALESCE(s.n_live_tup, c.reltuples::bigint),1))
-                 ELSE 0 END)::bigint AS writes,
+            CASE
+                WHEN COALESCE(s.n_live_tup, NULLIF(c.reltuples, -1)::bigint) > 0
+                     AND c.relkind IN ('r','f','m','t')
+                THEN (c.relpages::numeric * current_setting('block_size')::bigint)
+                     / GREATEST(COALESCE(s.n_live_tup, NULLIF(c.reltuples, -1)::bigint), 1)
+                ELSE 0
+            END)::bigint AS writes,
            (COALESCE(s.seq_scan,0) + COALESCE(s.idx_scan,0)) AS scans,
            COALESCE(s.n_tup_ins,0) AS inserts,
            COALESCE(s.n_tup_upd,0) AS updates,
@@ -283,7 +291,7 @@ export class MetadataCollector implements api.IMetadataCollector {
     JOIN pg_namespace n ON c.relnamespace = n.oid
     LEFT JOIN pg_stat_all_tables s ON s.relid = c.oid
     LEFT JOIN pg_statio_all_tables st ON st.relid = c.oid
-    WHERE c.relkind IN ('r','f','p','t','v','m')
+    WHERE c.relkind IN ('r','f','m','t')
       AND n.nspname NOT ILIKE 'pg_toast%' AND n.nspname NOT ILIKE 'pg_temp%'
       ${this.collectionOptions?.systemObjects ? '' : `and n.nspname not in ('pg_catalog', 'information_schema')`}
       AND n.nspname = $1::text
