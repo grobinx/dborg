@@ -281,7 +281,7 @@ export type DatabaseIdentifierKind =
     /**
      * Schemat, baza danych lub inny kontener obiektów, który może być częścią kwalifikowanej nazwy (np. schema.table).
      */
-    | "group"
+    | "catalog"
     /**
      * Tabela, widok lub inny obiekt, który może być źródłem danych w klauzuli FROM lub podobnej. 
      */
