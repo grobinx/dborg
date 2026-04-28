@@ -71,18 +71,20 @@ export interface MetadataBase {
     description?: string | null;
     /** Custom data */
     data?: Record<string, any>;
+    /** Timestamp when the metadata was last refreshed (milliseconds since epoch) */
+    refreshedAt?: number;
 }
 
 export interface OwnedMetadataBase extends MetadataBase {
     objectType: MetadataObjectType;
     /** Owner of the object */
     owner?: string | null;
-    /** Creation timestamp */
+    /** Creation timestamp (SQL format) */
     created?: string | null;
-    /** Last modification timestamp */
+    /** Last modification timestamp (SQL format) */
     modified?: string | null;
-    /** CRC checksum of the object */
-    crc?: string | null;
+    /** Hash of the object for detecting changes */
+    refreshHash?: string | null;
 }
 
 export interface DatabasePermissions {
