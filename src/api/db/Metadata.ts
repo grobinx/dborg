@@ -61,6 +61,13 @@ export interface Metadata {
 }
 
 export interface MetadataBase {
+    /** Custom data */
+    data?: Record<string, any>;
+    /** Timestamp when the metadata was last refreshed (milliseconds since epoch) */
+    refreshedAt?: number;
+}
+
+export interface MetadataIdentity extends MetadataBase {
     /** Unique identifier of the object */
     id: string;
     /** Object name */
@@ -69,13 +76,9 @@ export interface MetadataBase {
     identity?: string | null;
     /** Description of the object */
     description?: string | null;
-    /** Custom data */
-    data?: Record<string, any>;
-    /** Timestamp when the metadata was last refreshed (milliseconds since epoch) */
-    refreshedAt?: number;
 }
 
-export interface OwnedMetadataBase extends MetadataBase {
+export interface OwnedMetadataBase extends MetadataIdentity {
     objectType: MetadataObjectType;
     /** Owner of the object */
     owner?: string | null;
@@ -87,7 +90,7 @@ export interface OwnedMetadataBase extends MetadataBase {
     refreshHash?: string | null;
 }
 
-export interface DatabasePermissions {
+export interface DatabasePermissions extends MetadataBase {
     /** User have permission for connect */
     connect?: boolean | null;
     /** User have permission for create schema */
@@ -123,7 +126,7 @@ export interface DatabaseMetadata extends OwnedMetadataBase {
 }
 
 /** List of permissions? assigned to the schema */
-export type SchemaPermissions = {
+export interface SchemaPermissions extends MetadataBase {
     /** User have permission for create object */
     create?: boolean | null;
 
@@ -160,7 +163,7 @@ export interface SchemaMetadata extends OwnedMetadataBase {
     types?: Record<string, TypeMetadata>;
 }
 
-export interface RoutinePermissions {
+export interface RoutinePermissions extends MetadataBase {
     /** User have permission for execute */
     execute: boolean;
 }
@@ -211,7 +214,7 @@ export interface RoutineMetadata extends OwnedMetadataBase {
 export type RoutineArgumentMode = "in" | "out" | "inout";
 
 /** Structure describing a routine argument */
-export interface RoutineArgumentMetadata extends MetadataBase {
+export interface RoutineArgumentMetadata extends MetadataIdentity {
     /** Argument number in the function/procedure */
     no: number;
 
@@ -234,7 +237,7 @@ export type TriggerLevel = "statement" | "row";
 export type TriggerEnabled = "enabled" | "disabled" | "replica" | "always";
 
 /** Structure describing a trigger */
-export interface TriggerMetadata extends MetadataBase {
+export interface TriggerMetadata extends MetadataIdentity {
     /** Timing of the trigger */
     timing?: TriggerTiming | null;
 
@@ -249,7 +252,7 @@ export interface TriggerMetadata extends MetadataBase {
 }
 
 /** Structure describing permissions? */
-export interface RelationPermissions {
+export interface RelationPermissions extends MetadataBase {
     /** User have permission for select */
     select?: boolean | null;
 
@@ -263,7 +266,7 @@ export interface RelationPermissions {
     delete?: boolean | null;
 }
 
-export interface RelationStatsMetadata {
+export interface RelationStatsMetadata extends MetadataBase {
     /** Size of the relation (bytes) */
     size?: number | null;
 
@@ -338,7 +341,7 @@ export interface RelationMetadata extends OwnedMetadataBase {
     identifiers?: string[] | null;
 }
 
-export type ColumnPermissions = {
+export interface ColumnPermissions extends MetadataBase {
     /** User have permission for select */
     select?: boolean | null;
 
@@ -346,7 +349,7 @@ export type ColumnPermissions = {
     update?: boolean | null;
 }
 
-export type ColumnStatsMetadata = {
+export interface ColumnStatsMetadata extends MetadataBase {
     /** Fraction of NULL values in the column */
     nullFraction?: number | null;
 
@@ -369,7 +372,7 @@ export type ColumnStatsMetadata = {
 }
 
 /** Structure describing a column */
-export interface ColumnMetadata extends MetadataBase {
+export interface ColumnMetadata extends MetadataIdentity {
     /** Column number in the relation */
     no: number;
 
@@ -403,7 +406,7 @@ export interface ColumnMetadata extends MetadataBase {
 export type ForeignKeyActionType = 'cascade' | 'set null' | 'set default' | 'no action' | 'restrict';
 
 /** Structure describing a foreign key */
-export interface ForeignKeyMetadata extends MetadataBase {
+export interface ForeignKeyMetadata extends MetadataIdentity {
     /** Column name in the relation */
     column: string[];
 
@@ -427,7 +430,7 @@ export type SortOrder = "asc" | "desc";
 export type NullsPosition = "first" | "last";
 
 /** Structure describing an index column */
-export interface IndexColumnMetadata {
+export interface IndexColumnMetadata extends MetadataBase {
     /** Column name in the index */
     name: string;
 
@@ -441,7 +444,7 @@ export interface IndexColumnMetadata {
     nulls?: NullsPosition | null;
 }
 
-export interface IndexStatsMetadata {
+export interface IndexStatsMetadata extends MetadataBase {
     /** Number of rows in the index */
     rows?: number | null;
 
@@ -461,7 +464,7 @@ export interface IndexStatsMetadata {
 }
 
 /** Structure describing an index */
-export interface IndexMetadata extends MetadataBase {
+export interface IndexMetadata extends MetadataIdentity {
     /** List of columns in the index */
     columns: IndexColumnMetadata[];
 
@@ -475,14 +478,14 @@ export interface IndexMetadata extends MetadataBase {
     stats?: IndexStatsMetadata;
 }
 
-export interface PrimaryKeyMetadata extends MetadataBase {
+export interface PrimaryKeyMetadata extends MetadataIdentity {
     /** List of columns in the primary key */
     columns: string[];
 }
 
 export type ConstraintType = "check" | "unique" | "primary key" | "foreign key" | "trigger" | "exclude" | "not null" | string;
 
-export interface ConstraintMetadata extends MetadataBase {
+export interface ConstraintMetadata extends MetadataIdentity {
     /** Type of the constraint (e.g., CHECK, UNIQUE) */
     type: ConstraintType;
 
@@ -491,7 +494,7 @@ export interface ConstraintMetadata extends MetadataBase {
 }
 
 /** Structure describing permissions? for the sequence */
-export type SequencePermissions = {
+export interface SequencePermissions extends MetadataBase {
     /** User have permission for select current value */
     select?: boolean | null;
 
@@ -531,7 +534,7 @@ export interface SequenceMetadata extends OwnedMetadataBase {
 export type TypeKind = "enum" | "composite" | "base" | "domain" | "range" | "pseudo" | "xml" | "json" | "jsonb" | "hstore" | "array";
 
 /** Structure describing permissions? for the type */
-export type TypePermissions = {
+export interface TypePermissions extends MetadataBase {
     /** User have permission for usage type */
     usage?: boolean | null;
 }

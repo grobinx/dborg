@@ -128,6 +128,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                 this.metadata.databases[row.name] = {
                     ...this.metadata.databases[row.name],
                     ...row,
+                    refreshedAt: Date.now(),
                 };
             }
             else {
@@ -138,6 +139,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                     builtInRelations: {},
                     builtInRoutines: {},
                     builtInTypes: {},
+                    refreshedAt: Date.now(),
                 }
             }
         }
@@ -184,6 +186,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                 database.schemas[row.name] = {
                     ...database.schemas[row.name],
                     ...row,
+                    refreshedAt: Date.now(),
                 };
             }
             else {
@@ -194,6 +197,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                     routines: {},
                     types: {},
                     sequences: {},
+                    refreshedAt: Date.now(),
                 }
             }
         }
@@ -249,11 +253,20 @@ export class MetadataCollector implements api.IMetadataCollector {
                 delete row.viewdef;
             }
 
-            schema.relations[row.name] = {
-                ...row,
-                columns: [],
-                objectType: "relation",
-            };
+            if (schema.relations[row.name]) {
+                schema.relations[row.name] = {
+                    ...schema.relations[row.name],
+                    ...row,
+                    refreshedAt: Date.now(),
+                };
+            } else {
+                schema.relations[row.name] = {
+                    ...row,
+                    columns: [],
+                    objectType: "relation",
+                    refreshedAt: Date.now(),
+                };
+            }
         }
     }
 
@@ -318,7 +331,8 @@ export class MetadataCollector implements api.IMetadataCollector {
                 inserts: row.inserts != null ? Number(row.inserts) : null,
                 updates: row.updates != null ? Number(row.updates) : null,
                 deletes: row.deletes != null ? Number(row.deletes) : null,
-                lastAnalyze: row.last_analyze != null ? row.last_analyze : null
+                lastAnalyze: row.last_analyze != null ? row.last_analyze : null,
+                refreshedAt: Date.now(),
             };
 
         }
@@ -427,14 +441,16 @@ export class MetadataCollector implements api.IMetadataCollector {
                     ...schema.routines![row.name],
                     {
                         ...row,
-                        objectType: "routine"
+                        objectType: "routine",
+                        refreshedAt: Date.now(),
                     }
                 ];
             }
             else {
                 schema.routines![row.name] = [{
                     ...row,
-                    objectType: "routine"
+                    objectType: "routine",
+                    refreshedAt: Date.now(),
                 }];
             }
         }
@@ -485,6 +501,7 @@ export class MetadataCollector implements api.IMetadataCollector {
             const relation = schema.relations[row.relation_name];
             if (relation) {
                 relation.columns = row.columns;
+                relation.refreshedAt = Date.now();
             }
         }
     }
@@ -525,7 +542,8 @@ export class MetadataCollector implements api.IMetadataCollector {
                 nDistinct: row.n_distinct != null ? Number(row.n_distinct) : null,
                 mostCommonValues: row.most_common_vals ?? null,
                 mostCommonFreqs: row.most_common_freqs ?? null,
-                histogram: row.histogram ?? null
+                histogram: row.histogram ?? null,
+                refreshedAt: Date.now(),
             });
         }
     }
@@ -582,6 +600,7 @@ export class MetadataCollector implements api.IMetadataCollector {
 
         for (const row of rows as object[] as { schema_name: string; relation_name: string; foreignKeys: api.ForeignKeyMetadata[] }[]) {
             schema.relations[row.relation_name].foreignKeys = row.foreignKeys;
+            schema.relations[row.relation_name].refreshedAt = Date.now();
         }
     }
 
@@ -642,6 +661,7 @@ export class MetadataCollector implements api.IMetadataCollector {
 
         for (const row of rows as object[] as { schema_name: string; relation_name: string; indexes: api.IndexMetadata[] }[]) {
             schema.relations[row.relation_name].indexes = row.indexes;
+            schema.relations[row.relation_name].refreshedAt = Date.now();
         }
     }
 
@@ -688,6 +708,7 @@ export class MetadataCollector implements api.IMetadataCollector {
                 reads: row.reads != null ? Number(row.reads) : null,
                 hits: row.hits != null ? Number(row.hits) : null,
                 scans: row.scans != null ? Number(row.scans) : null,
+                refreshedAt: Date.now(),
             });
         }
     }
@@ -725,6 +746,7 @@ export class MetadataCollector implements api.IMetadataCollector {
 
         for (const row of rows as { schema_name: string; relation_name: string; primaryKey: api.PrimaryKeyMetadata }[]) {
             schema.relations[row.relation_name].primaryKey = row.primaryKey;
+            schema.relations[row.relation_name].refreshedAt = Date.now();
         }
     }
 
@@ -777,6 +799,7 @@ export class MetadataCollector implements api.IMetadataCollector {
 
         for (const row of rows as { schema_name: string; relation_name: string; constraints: api.ConstraintMetadata[] }[]) {
             schema.relations[row.relation_name].constraints = row.constraints;
+            schema.relations[row.relation_name].refreshedAt = Date.now();
         }
     }
 
@@ -840,10 +863,19 @@ export class MetadataCollector implements api.IMetadataCollector {
         );
 
         for (const row of rows as api.TypeMetadata[]) {
-            schema.types![row.name] = {
-                ...row,
-                objectType: "type"
-            };
+            if (schema.types![row.name]) {
+                schema.types![row.name] = {
+                    ...schema.types![row.name],
+                    ...row,
+                    refreshedAt: Date.now(),
+                };
+            } else {
+                schema.types![row.name] = {
+                    ...row,
+                    objectType: "type",
+                    refreshedAt: Date.now(),
+                };
+            }
         }
     }
 
@@ -884,10 +916,19 @@ export class MetadataCollector implements api.IMetadataCollector {
         );
 
         for (const row of rows as api.SequenceMetadata[]) {
-            schema.sequences![row.name] = {
-                ...row,
-                objectType: "sequence",
-            };
+            if (schema.sequences![row.name]) {
+                schema.sequences![row.name] = {
+                    ...schema.sequences![row.name],
+                    ...row,
+                    refreshedAt: Date.now(),
+                };
+            } else {
+                schema.sequences![row.name] = {
+                    ...row,
+                    objectType: "sequence",
+                    refreshedAt: Date.now(),
+                };
+            }
         }
     }
 }
