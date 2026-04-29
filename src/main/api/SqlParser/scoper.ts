@@ -231,7 +231,7 @@ export interface SourceBlock extends BlockBase {
     alias: Token | null;
     options: BlockItem[] | null;
     columns: BlockItem[] | null;
-    reference?: CteBlock | null;
+    reference?: CteBlock | DatabaseObject | null;
 }
 
 export type Statement =

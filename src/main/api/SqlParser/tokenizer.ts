@@ -146,7 +146,7 @@ export class Tokenizer {
             identifierQuotePairs: [['"', '"']],    
             stringQuotes: ["'", /^\$[A-Za-z0-9_]*\$/],
             stringEscapeChar: "'",
-            operators: ["+", "-", "*", "/", "%", "=", "<", ">", "!", "&", "|", "^", "~", ":", "?"],
+            operators: ["+", "-", "*", "/", "%", "=", "<", ">", "!", "&", "|", "^", "~", ":", "?", "@"],
             punctuators: [".", ",", ";", "(", ")", "{", "}", "[", "]"],
             allowHexNumbers: false,
             allowBinaryNumbers: false,
