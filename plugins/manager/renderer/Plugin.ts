@@ -5,6 +5,22 @@ import { IContentSlot } from "./CustomSlots";
 import { ConnectionActionsFactory, ConnectionSqlResultTabFactory, ConnectionViewSlotKind } from "./ConnectionSlots";
 import * as monaco from "monaco-editor";
 import { DataGridActionContext } from "@renderer/components/DataGrid/DataGridTypes";
+import { RichNode } from "@renderer/components/RichContent";
+
+/**
+ * Type representing the content of a plugin, which can be a string, text, URL, markdown, or file path.
+ */
+export type PluginContent =
+    | string
+    | { type: "text"; value: string }
+    /* URL content */
+    | { type: "url"; href: string }
+    /** Rich subsystem content node */
+    | { type: "rich"; content: RichNode}
+    /** Markdown content */
+    | { type: "markdown"; text: string }
+    /** File path content */
+    | { type: "file"; path: string }
 
 /**
  * Interface representing a future feature or functionality of a plugin.
@@ -15,9 +31,9 @@ export interface PluginManifestFeature {
      */
     name: string;
     /**
-     * Description or URL of the future feature or functionality.
+     * Description of the future feature or functionality.
      */
-    description: string;
+    description: PluginContent;
 }
 
 /**
@@ -33,13 +49,13 @@ export interface PluginManifest {
      */
     name: string;
     /**
-     * Description or URL of the plugin.
+     * Description of the plugin.
      */
-    description: string;
+    description: PluginContent;
     /**
      * Optional details about the plugin.
      */
-    details?: string;
+    details?: PluginContent;
     /**
      * List of futures provided by the plugin.
      */
@@ -55,7 +71,7 @@ export interface PluginManifest {
     /**
      * Icon or URL for the plugin.
      */
-    icon: string;
+    icon: PluginContent;
     /**
      * Author of the plugin.
      */
@@ -65,9 +81,9 @@ export interface PluginManifest {
      */
     licenseType: string;
     /**
-     * Text or URL of the license or URL to the license.
+     * Text of the license or URL to the license.
      */
-    license?: string;
+    license?: PluginContent;
     /**
      * Keywords associated with the plugin.
      */
