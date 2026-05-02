@@ -8,19 +8,71 @@ import { DataGridActionContext } from "@renderer/components/DataGrid/DataGridTyp
 import { RichNode } from "@renderer/components/RichContent";
 
 /**
+ * Type representing a valid HTTP or HTTPS URL for plugin-related content.
+ */
+export type PluginHttpUrl = `${"http" | "https"}://${string}`;
+
+export type PluginTextType = { type: "text"; value: string };
+export type PluginUrlType = { type: "url"; href: PluginHttpUrl };
+export type PluginRichType = { type: "rich"; content: RichNode };
+export type PluginMarkdownType = { type: "markdown"; text: string };
+export type PluginFileType = { type: "file"; path: string };
+export type PluginAssetType = { type: "asset"; path: string };
+export type PluginRawType = { type: "raw"; raw: string; contentType: string };
+
+export function isPluginContentString(content: any): content is string {
+    return typeof content === "string";
+}
+export function isPluginContentText(content: any): content is PluginTextType {
+    return typeof content === "object" && content.type === "text";
+}
+export function isPluginContentUrl(content: any): content is PluginUrlType {
+    return typeof content === "object" && content.type === "url";
+}
+export function isPluginContentRich(content: any): content is PluginRichType {
+    return typeof content === "object" && content.type === "rich";
+}
+export function isPluginContentMarkdown(content: any): content is PluginMarkdownType {
+    return typeof content === "object" && content.type === "markdown";
+}
+export function isPluginContentFile(content: any): content is PluginFileType {
+    return typeof content === "object" && content.type === "file";
+}
+export function isPluginIconAsset(icon: any): icon is PluginAssetType {
+    return typeof icon === "object" && icon.type === "asset";
+}
+export function isPluginIconUrl(icon: any): icon is PluginUrlType {
+    return typeof icon === "object" && icon.type === "url";
+}
+export function isPluginIconRaw(icon: any): icon is PluginRawType {
+    return typeof icon === "object" && icon.type === "raw";
+}
+
+/**
  * Type representing the content of a plugin, which can be a string, text, URL, markdown, or file path.
  */
 export type PluginContent =
     | string
-    | { type: "text"; value: string }
+    | PluginTextType
     /* URL content */
-    | { type: "url"; href: string }
+    | PluginUrlType
     /** Rich subsystem content node */
-    | { type: "rich"; content: RichNode}
+    | PluginRichType
     /** Markdown content */
-    | { type: "markdown"; text: string }
+    | PluginMarkdownType
     /** File path content */
-    | { type: "file"; path: string }
+    | PluginFileType
+
+/**
+ * Icon reference for a plugin, which can be an asset path, URL, or raw content with a specified content type.
+ */
+export type PluginIconRef =
+    /* Asset path content */
+    | PluginAssetType
+    /* URL content */
+    | PluginUrlType
+    /* Raw content with specified content type */
+    | PluginRawType; // e.g., SVG content with "image/svg+xml" content type;
 
 /**
  * Interface representing a future feature or functionality of a plugin.
@@ -69,9 +121,9 @@ export interface PluginManifest {
      */
     categories?: string[];
     /**
-     * Icon or URL for the plugin.
+     * Icon for the plugin.
      */
-    icon: PluginContent;
+    icon: PluginIconRef;
     /**
      * Author of the plugin.
      */
@@ -91,11 +143,11 @@ export interface PluginManifest {
     /**
      * Optional homepage URL of the plugin.
      */
-    homepage?: string;
+    homepage?: PluginHttpUrl;
     /**
      * Optional repository URL of the plugin.
      */
-    repository?: string;
+    repository?: PluginHttpUrl;
 }
 
 /**

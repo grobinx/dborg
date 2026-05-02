@@ -29,7 +29,7 @@ const PostgresPlugin: RuntimePlugin = {
         description: "A plugin to integrate PostgreSQL database functionality into ORBADA.", // Description of the plugin
         version: "1.0.0", // Version of the plugin
         categories: ["database"], // Categories the plugin belongs to
-        icon: logo, // Icon for the plugin
+        icon: { type: "raw", raw: logo, contentType: "image/svg+xml" }, // Icon for the plugin
         author: "Andrzej Kałuża", // Author of the plugin
         licenseType: "MIT", // License type of the plugin
         keywords: ["postgresql", "database"], // Keywords associated with the plugin
