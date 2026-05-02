@@ -1,4 +1,4 @@
-import { Plugin } from "plugins/manager/renderer/Plugin";
+import { RuntimePlugin } from "plugins/manager/renderer/Plugin";
 import logo from "../resources/postgresql-logo.svg"; // Importing the PostgreSQL logo
 import { IPluginContext } from "plugins/manager/renderer/Plugin";
 import { DRIVER_UNIQUE_ID } from "../common/consts"; // Importing the unique ID for the PostgreSQL driver
@@ -22,16 +22,18 @@ import { functionsView } from "./views/functions/functionsView";
 
 export const PLUGIN_ID = "orbada-postgres-plugin"; // Unique identifier for the plugin
 
-const PostgresPlugin: Plugin = {
-    id: PLUGIN_ID, // Unique identifier for the plugin
-    name: "PostgreSQL Plugin for ORBADA", // Name of the plugin
-    description: "A plugin to integrate PostgreSQL database functionality into ORBADA.", // Description of the plugin
-    version: "1.0.0", // Version of the plugin
-    categories: ["database"], // Categories the plugin belongs to
-    icon: logo, // Icon for the plugin
-    author: "Andrzej Kałuża", // Author of the plugin
-    licenseType: "MIT", // License type of the plugin
-    keywords: ["postgresql", "database"], // Keywords associated with the plugin
+const PostgresPlugin: RuntimePlugin = {
+    manifest: {
+        id: PLUGIN_ID, // Unique identifier for the plugin
+        name: "PostgreSQL Plugin for ORBADA", // Name of the plugin
+        description: "A plugin to integrate PostgreSQL database functionality into ORBADA.", // Description of the plugin
+        version: "1.0.0", // Version of the plugin
+        categories: ["database"], // Categories the plugin belongs to
+        icon: logo, // Icon for the plugin
+        author: "Andrzej Kałuża", // Author of the plugin
+        licenseType: "MIT", // License type of the plugin
+        keywords: ["postgresql", "database"], // Keywords associated with the plugin
+    },
 
     initialize(context: IPluginContext): void {
         context.registerConnectionViewsFactory((session) => {

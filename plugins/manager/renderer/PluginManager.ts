@@ -1,5 +1,5 @@
 import { DatabaseInternalContext } from "@renderer/contexts/DatabaseContext";
-import { Plugin, ConnectionViewsFactory, ConnectionView } from "./Plugin";
+import { RuntimePlugin, ConnectionViewsFactory, ConnectionView } from "./Plugin";
 import { IDatabaseSession } from "@renderer/contexts/DatabaseSession";
 import { Action } from "@renderer/components/CommandPalette/ActionManager";
 import * as monaco from "monaco-editor";
@@ -29,11 +29,11 @@ export interface IPluginManager {
      * Get all registered plugins
      * @returns array of registered plugins
      */
-    getPlugins(): Plugin[];
+    getPlugins(): RuntimePlugin[];
 }
 
 class PluginManager implements IPluginManager {
-    private plugins: Map<string, Plugin> = new Map();
+    private plugins: Map<string, RuntimePlugin> = new Map();
     pluginConnectionViewsFactories: ConnectionViewsFactory[] = []; // Array to hold connection view factories
     pluginConnectionActionsFactories: Map<ConnectionActionType, ConnectionActionsFactory<any>[]> = new Map(); // Map to hold connection action factories
     pluginConnectionSqlResultTabFactories: ConnectionSqlResultTabFactory[] = []; // Array to hold connection sql result tab factories
@@ -41,8 +41,8 @@ class PluginManager implements IPluginManager {
     constructor() {
     }
 
-    registerPlugin(plugin: Plugin, internal: DatabaseInternalContext): void {
-        if (this.plugins.has(plugin.id)) {
+    registerPlugin(plugin: RuntimePlugin, internal: DatabaseInternalContext): void {
+        if (this.plugins.has(plugin.manifest.id)) {
             return;
         }
 
@@ -62,7 +62,7 @@ class PluginManager implements IPluginManager {
             },
         });
 
-        this.plugins.set(plugin.id, plugin);
+        this.plugins.set(plugin.manifest.id, plugin);
     }
 
     getConnectionViews(session: IDatabaseSession): ConnectionView[] | null {
@@ -82,7 +82,7 @@ class PluginManager implements IPluginManager {
         return tabs;
     }
 
-    getPlugins(): Plugin[] {
+    getPlugins(): RuntimePlugin[] {
         return Array.from(this.plugins.values());
     }
 }

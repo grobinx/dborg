@@ -9,21 +9,21 @@ import { DataGridActionContext } from "@renderer/components/DataGrid/DataGridTyp
 /**
  * Interface representing a future feature or functionality of a plugin.
  */
-export interface Future {
+export interface PluginManifestFeature {
     /**
      * Name of the future feature or functionality.
      */
     name: string;
     /**
-     * Description of the future feature or functionality.
+     * Description or URL of the future feature or functionality.
      */
-    description: string | URL;
+    description: string;
 }
 
 /**
- * Interface representing a plugin in the DBorg application.
+ * Interface representing the manifest of a plugin, containing metadata and information about the plugin.
  */
-export interface Plugin {
+export interface PluginManifest {
     /**
      * Unique identifier for the plugin.
      */
@@ -33,17 +33,17 @@ export interface Plugin {
      */
     name: string;
     /**
-     * Description of the plugin.
+     * Description or URL of the plugin.
      */
     description: string;
     /**
      * Optional details about the plugin.
      */
-    details?: string | URL;
+    details?: string;
     /**
      * List of futures provided by the plugin.
      */
-    futures?: Future[] | URL;
+    futures?: PluginManifestFeature[];
     /**
      * Version of the plugin.
      */
@@ -53,9 +53,9 @@ export interface Plugin {
      */
     categories?: string[];
     /**
-     * Icon for the plugin.
+     * Icon or URL for the plugin.
      */
-    icon: string | URL;
+    icon: string;
     /**
      * Author of the plugin.
      */
@@ -65,9 +65,9 @@ export interface Plugin {
      */
     licenseType: string;
     /**
-     * Text of the license or URL to the license.
+     * Text or URL of the license or URL to the license.
      */
-    license?: string | URL;
+    license?: string;
     /**
      * Keywords associated with the plugin.
      */
@@ -75,11 +75,21 @@ export interface Plugin {
     /**
      * Optional homepage URL of the plugin.
      */
-    homepage?: URL; // Homepage URL of the plugin
+    homepage?: string;
     /**
      * Optional repository URL of the plugin.
      */
-    repository?: URL;
+    repository?: string;
+}
+
+/**
+ * Interface representing a plugin in the DBorg application.
+ */
+export interface RuntimePlugin {
+    /**
+     * Manifest containing metadata and information about the plugin.
+     */
+    manifest: PluginManifest;
     /**
      * Initializes the plugin with the given context.
      * 
