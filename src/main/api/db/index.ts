@@ -595,7 +595,7 @@ export const preload = {
             getPackageList: (connectionId: string, databaseId: string, schemaId: string | undefined, filter?: PackageFilter): Promise<PackageDetails[]> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_PACKAGE_LIST, connectionId, databaseId, schemaId, filter)),
             getPackage: (connectionId: string, databaseId: string, schemaId: string | undefined, id: string | IdentityOptions): Promise<PackageDetails | undefined> => invokeResult(ipcRenderer.invoke(EVENT_METADATA_QUERY_GET_PACKAGE, connectionId, databaseId, schemaId, id)),
         },
-        initializeMetadata: async (uniqueId: string, progress?: (current: string) => void, forceReload?: boolean): Promise<api.Metadata> => {
+        initializeMetadata: async (uniqueId: string, progress?: (current: string) => void, forceReload?: boolean): Promise<void> => {
             const listener = (_event: IpcRendererEvent, eUniqueId: string, current: string): void => {
                 if (eUniqueId !== uniqueId) {
                     return;
