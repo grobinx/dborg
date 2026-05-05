@@ -122,11 +122,6 @@ export class CommandProcessor {
                         }
                     ],
                     action: async (values) => {
-                        if (["select", "with", "delete", "update", "insert", "alter", "show"].includes(values.soo?.schema?.toLowerCase() ?? "") ||
-                            ["select", "with", "delete", "update", "insert", "alter", "show"].includes(values.soo?.object?.toLowerCase() ?? "")) {
-                            return null;
-                        }
-
                         if (!values.soo?.schema && values.soo?.object) {
                             const schemas = await MCP.findSchemas(metadata, values.soo.object);
                             if (schemas.status === "one") {

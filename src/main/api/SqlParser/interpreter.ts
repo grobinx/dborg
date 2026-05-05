@@ -235,9 +235,6 @@ export class Interpreter<R = any> {
      * Zwraca tablicę wyników dla każdej dopasowanej akcji.
      */
     public async interpret(): Promise<R | null> {
-        // Pomiń tokeny whitespace
-        this.skipWhitespace();
-
         // Próbuj dopasować każdy z definiowanych wzorców w sekwencji aż do końca tokenów
         while (this.position < this.tokens.length) {
             const savedPosition = this.position;
@@ -248,14 +245,17 @@ export class Interpreter<R = any> {
                 const values = this.matchSequence(actionDef.sequence);
 
                 if (values !== null) {
-                    // Wzorzec został dopasowany, wykonaj akcję
-                    return await actionDef.action(values);
+                    // Uniwersalna zasada: pełne dopasowanie całego wejścia
+                    const startsFromBeginning = savedPosition === 0;
+                    const consumesWholeInput = this.position === this.tokens.length;
+
+                    if (startsFromBeginning && consumesWholeInput) {
+                        return await actionDef.action(values);
+                    }
                 }
             }
 
             this.position++;
-
-            this.skipWhitespace();
         }
 
         return null;
@@ -270,9 +270,6 @@ export class Interpreter<R = any> {
         const savedPosition = this.position;
 
         for (const matcher of sequence) {
-            // Pomijaj whitespace przed każdym dopasowaniem
-            this.skipWhitespace();
-
             const result = this.matchToken(matcher);
 
             if (result === null) {
@@ -518,8 +515,6 @@ export class Interpreter<R = any> {
             return null;
         }
 
-        this.skipWhitespace();
-
         // Jeśli następnie pojawia się zamykający znak, zwróć pustą tablicę
         if (this.position < this.tokens.length) {
             const token = this.tokens[this.position];
@@ -540,15 +535,12 @@ export class Interpreter<R = any> {
             }
 
             results.push(values);
-            this.skipWhitespace();
 
             // Sprawdź czy następuje separator
             if (!this.expectPunctuator(separator)) {
                 // Jeśli nie ma separatora, zakończ pętlę
                 break;
             }
-
-            this.skipWhitespace();
         }
 
         // Sprawdź czy istnieje zamykający znak
@@ -614,16 +606,6 @@ export class Interpreter<R = any> {
         }
 
         return false;
-    }
-
-    private skipWhitespace(): void {
-        while (this.position < this.tokens.length) {
-            const token = this.tokens[this.position];
-            if (token.type !== "whitespace" && token.type !== "comment") {
-                break;
-            }
-            this.position++;
-        }
     }
 
     public static createMask(pattern: string | null): RegExp {
