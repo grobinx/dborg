@@ -81,6 +81,7 @@ export enum pgTypes {
     OID_ARRAY = 1028,
     POINT_ARRAY = 1017,
     REF_CURSOR_ARRAY = 2201,
+    REGOPERATOR_ARRAY = 2210,
     TEXT_ARRAY = 1009,
     TIME_ARRAY = 1183,
     TIMESTAMP_ARRAY = 1115,
@@ -111,6 +112,9 @@ pg.types.setTypeParser(pgTypes.MONEY_ARRAY as unknown as number, function (val: 
     return parseArray(val, item => item);
 });
 pg.types.setTypeParser(pgTypes.NAME_ARRAY as unknown as number, function (val: string) {
+    return parseArray(val, item => item);
+});
+pg.types.setTypeParser(pgTypes.REGOPERATOR_ARRAY as unknown as number, function (val: string) {
     return parseArray(val, item => item);
 });
 
@@ -220,6 +224,7 @@ export function mapPostgresTypeToColumnDataType(pgType: number): api.ColumnDataT
         case pgTypes.NAME_ARRAY:
         case pgTypes.TEXT_ARRAY:
         case pgTypes.VARCHAR_ARRAY:
+        case pgTypes.REGOPERATOR_ARRAY:
             return ['string'];
         case pgTypes.BYTEA_ARRAY:
             return ['binary'];
