@@ -1,8 +1,7 @@
 import { ThemeColor } from "@renderer/types/colors";
 import { Size } from "@renderer/types/sizes";
 import { FormattedContentItem } from "../useful/FormattedText";
-import { SxProps } from "@mui/material";
-import { Theme } from "@mui/system";
+import { SxProps, Theme } from "@mui/material";
 import { Action } from "../CommandPalette/ActionManager";
 
 export interface BaseButtonProps {

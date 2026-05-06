@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { List, ListItem, ListItemText, ListItemButton, useTheme, Menu, MenuItem, Paper, Divider, ListItemIcon } from '@mui/material';
-import { styled } from '@mui/system';
+import { List, ListItem, ListItemText, ListItemButton, useTheme, Menu, MenuItem, Paper, Divider, ListItemIcon, styled } from '@mui/material';
 import { Action, ActionGroup, ActionGroupOption, IActionManager } from './ActionManager';
 import { isKeybindingMatch, normalizeKeybinding } from './KeyBinding';
 import { useTranslation } from 'react-i18next';
