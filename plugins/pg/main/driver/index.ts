@@ -3,6 +3,7 @@ import Version from '../../../../src/api/version';
 import * as driver from '../../../../src/main/api/db';
 import { uuidv7 } from "uuidv7";
 import pg from 'pg';
+import { parse as parseArray } from 'postgres-array';
 import PgCursor from 'pg-cursor';
 import logo from '../../resources/postgresql-logo.svg';
 import { DRIVER_UNIQUE_ID } from '../../common/consts';
@@ -101,16 +102,16 @@ pg.types.setTypeParser(pg.types.builtins.MONEY, function (val) {
     return val;
 });
 pg.types.setTypeParser(pgTypes.NUMERIC_ARRAY as unknown as number, function (val: string) {
-    return pg.types.arrayParser(val, item => item);
+    return parseArray(val, item => item);
 });
 pg.types.setTypeParser(pgTypes.INT8_ARRAY as unknown as number, function (val: string) {
-    return pg.types.arrayParser(val, item => item);
+    return parseArray(val, item => item);
 });
 pg.types.setTypeParser(pgTypes.MONEY_ARRAY as unknown as number, function (val: string) {
-    return pg.types.arrayParser(val, item => item);
+    return parseArray(val, item => item);
 });
 pg.types.setTypeParser(pgTypes.NAME_ARRAY as unknown as number, function (val: string) {
-    return pg.types.arrayParser(val, item => item);
+    return parseArray(val, item => item);
 });
 
 // Prosta obsługa błędów z pg, żeby nie wywalały procesu gdy backend zostanie ubity
@@ -120,7 +121,11 @@ function attachPgErrorHandlers(clientOrPool: pg.Client | pg.Pool, scope: string)
         const message = err?.message ?? String(err);
         console.warn(`[pg][${scope}]`, code ? `${code}: ${message}` : message);
     };
-    clientOrPool.on("error", handler);
+    if (clientOrPool instanceof pg.Pool) {
+        clientOrPool.on("error", handler);
+    } else {
+        clientOrPool.on("error", handler);
+    }
 }
 
 const isTerminatedError = (err: unknown): boolean => {
